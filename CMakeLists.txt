@@ -14,18 +14,16 @@ set(BOOST_LIB_PATH /home/edaniley/Toolbox/boost_1_72_0/stage/lib )
 include_directories(
     ${BOOST_INCLUDE_PATH}
 )
-# link_directories(
-#     ${BOOST_LIB_PATH}
-# )
-add_library(boost_program_options STATIC IMPORTED)  
-set_target_properties( boost_program_options PROPERTIES
-    IMPORTED_LOCATION "${BOOST_LIB_PATH}/libboost_program_options.a"
-)
+
+add_library(            boost_program_options   STATIC IMPORTED)
+set_target_properties(  boost_program_options   PROPERTIES IMPORTED_LOCATION "${BOOST_LIB_PATH}/libboost_program_options.a")
+add_library(            boost_filesystem        STATIC IMPORTED)
+set_target_properties(  boost_filesystem        PROPERTIES IMPORTED_LOCATION "${BOOST_LIB_PATH}/libboost_filesystem.a")
 
 link_libraries(
-    boost_program_options /home/edaniley/Toolbox/boost_1_72_0/stage/lib/libboost_program_options.a
+    boost_program_options
+    boost_filesystem
 )
-
 
 add_subdirectory(taq-prep)
 add_subdirectory(tick-calc)
