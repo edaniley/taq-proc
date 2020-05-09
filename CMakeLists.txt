@@ -19,10 +19,13 @@ add_library(            boost_program_options   STATIC IMPORTED)
 set_target_properties(  boost_program_options   PROPERTIES IMPORTED_LOCATION "${BOOST_LIB_PATH}/libboost_program_options.a")
 add_library(            boost_filesystem        STATIC IMPORTED)
 set_target_properties(  boost_filesystem        PROPERTIES IMPORTED_LOCATION "${BOOST_LIB_PATH}/libboost_filesystem.a")
+add_library(            boost_date_time         STATIC IMPORTED)
+set_target_properties(  boost_date_time         PROPERTIES IMPORTED_LOCATION "${BOOST_LIB_PATH}/libboost_date_time.a")
 
 link_libraries(
     boost_program_options
     boost_filesystem
+    boost_date_time
 )
 
 add_subdirectory(taq-prep)

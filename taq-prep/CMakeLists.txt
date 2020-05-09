@@ -1,6 +1,9 @@
-set(This taq-prep)
-set(Sources taq-prep.cpp)
-add_executable(${This} ${Sources})
 
-#set_property(This boost_program_options PROPERTY IMPORTED_LOCATION ${BOOST_LIB_PATH}/libboost_program_options.a)
-
+add_executable(
+  taq-prep
+  taq-prep.cpp
+  taq-time.cpp
+  taq-prep-secmaster.cpp
+  taq-prep-quotes.cpp
+  taq-prep-trades.cpp
+)
