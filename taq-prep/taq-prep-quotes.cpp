@@ -239,7 +239,10 @@ static bool HandleQuote(const string & timestamp, const string & symbol, const s
   bool update_nbbo = UpdateNbboSide(entry, NbboSide::BID, exch_idx, bbo.bid);
   update_nbbo |= UpdateNbboSide(entry, NbboSide::OFFER, exch_idx, bbo.offer);
   if (update_nbbo) {
-    cout << "new NBBO" //"time:" << boost::posix_time::to_simple_string(MkTaqTime(timestamp))
+    boost::posix_time::time_duration td = MkTaqTime(timestamp);
+    const string ts = boost::posix_time::to_simple_string(td);
+    cout << "Timestamp in:" << timestamp << " out:" << ts << " sizeof:" << sizeof(td) << endl;
+    cout << "new NBBO" "time:" << boost::posix_time::to_simple_string(MkTaqTime(timestamp))
       << " symbol:" << symbol
       << " bid:" << entry.current_nbbo.bid.toString(NbboSide::BID)
       << " offer:" << entry.current_nbbo.offer.toString(NbboSide::OFFER)
@@ -255,7 +258,7 @@ static void PrintTaqRecord(const vector<string> rec) {
     here++;
   }
   cout << "rec_no:" << ++rec_no
-       // << " time:" << rec[QCOL_Time] 
+       << " time:" << rec[QCOL_Time]
        << " exch:"  << rec[QCOL_Exchange]
        << " src:"  << rec[QCOL_Source_Of_Quote]
        << " symb:"  << rec[QCOL_Symbol]

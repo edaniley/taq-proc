@@ -9,6 +9,8 @@ set(CXX_FLAGS_RELEASE "-O3")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  ${CXX_FLAGS} ${CXX_FLAGS_DEBUG}")
 
+add_definitions(-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
+
 set(BOOST_INCLUDE_PATH /home/edaniley/Toolbox/boost_1_72_0 )
 set(BOOST_LIB_PATH /home/edaniley/Toolbox/boost_1_72_0/stage/lib )
 include_directories(
