@@ -10,7 +10,48 @@
 
 namespace taq_prep
 {
-  enum QuoteColum {
+  enum SecMasterColumn {
+    MCOL_Symbol,
+    MCOL_Security_Description,
+    MCOL_CUSIP,
+    MCOL_Security_Type,
+    MCOL_SIP_Symbol,
+    MCOL_Old_Symbol,
+    MCOL_Test_Symbol_Flag,
+    MCOL_Listed_Exchange,
+    MCOL_Tape,
+    MCOL_Unit_Of_Trade,
+    MCOL_Round_Lot,
+    MCOL_NYSE_Industry_Code,
+    MCOL_Shares_Outstanding,
+    MCOL_Halt_Delay_Reason,
+    MCOL_Specialist_Clearing_Agent,
+    MCOL_Specialist_Clearing_Number,
+    MCOL_Specialist_Post_Number,
+    MCOL_Specialist_Panel,
+    MCOL_TradedOnNYSEMKT,
+    MCOL_TradedOnNASDAQBX,
+    MCOL_TradedOnNSX,
+    MCOL_TradedOnFINRA,
+    MCOL_TradedOnISE,
+    MCOL_TradedOnEdgeA,
+    MCOL_TradedOnEdgeX,
+    MCOL_TradedOnCHX,
+    MCOL_TradedOnNYSE,
+    MCOL_TradedOnArca,
+    MCOL_TradedOnNasdaq,
+    MCOL_TradedOnCBOE,
+    MCOL_TradedOnPSX,
+    MCOL_TradedOnBATSY,
+    MCOL_TradedOnBATS,
+    MCOL_TradedOnIEX,
+    MCOL_Tick_Pilot_Indicator,
+    MCOL_Effective_Date,
+    MCOL_TradedOnLTSE,
+    MCOL_Max
+  };
+
+  enum QuoteColumn {
     QCOL_Time,
     QCOL_Exchange,
     QCOL_Symbol,
@@ -36,6 +77,7 @@ namespace taq_prep
     QCOL_Security_Status_Indicator,
     QCOL_Max
   };
+
 
   struct AppContext {
     std::string date;

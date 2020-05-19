@@ -1,7 +1,10 @@
-#ifndef TAQ_POC_INCLUDED
-#define TAQ_POC_INCLUDED
+#ifndef TAQ_PROC_INCLUDED
+#define TAQ_PROC_INCLUDED
 
-#include "taq-proc.h"
+
+#include <bitset>
+#include <string>
+
 #include "taq-time.h"
 
 namespace Taq{
@@ -29,7 +32,26 @@ enum Exchange {
   Exch_Max
 };
 
-typedef char Symbol[16];
+typedef char Symbol[18];
+typedef std::bitset<Exch_Max> ExchangeMask;
+
+struct Security {
+  Symbol symb;
+  char CUSIP[10];
+  char type[4];
+  Symbol sip_symb;
+  Symbol prev_symb;
+  char test_flag;
+  char exch;
+  char tape;
+  uint8_t trd_unit;
+  uint8_t lot_size;
+  ExchangeMask exch_mask;
+  char industry_code[5];
+  char halt_reason;
+  uint32_t shares_outstanding_m;
+  Date eff_date;
+};
 
 struct SymbolMap {
   Symbol symb;
@@ -37,7 +59,7 @@ struct SymbolMap {
   size_t end;
   SymbolMap() = delete;
   SymbolMap(const std::string &symbol, size_t start, size_t end) : start(start), end(end) {
-    std::memset(symb, sizeof(symb), 0);
+    std::memset(symb, 0, sizeof(symb));
     std::strncpy(symb, symbol.c_str(), sizeof(symb) - 1);
   }
 };
@@ -55,13 +77,13 @@ struct FileHeader {
 };
 
 struct Nbbo {
-  const boost::posix_time::time_duration time;
+  const Time time;
   const double bidp;
   const double aidp;
   const int bids;
   const int aids;
   Nbbo() = delete;
-  Nbbo(const boost::posix_time::time_duration & time, double bidp, double aidp, int bids, int aids)
+  Nbbo(const Time & time, double bidp, double aidp, int bids, int aids)
     : time(time), bidp(bidp), aidp(aidp), bids(bids), aids(aids) {}
 };
 

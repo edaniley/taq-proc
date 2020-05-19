@@ -5,8 +5,12 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-typedef boost::posix_time::time_duration TaqTime;
-inline TaqTime MkTaqTime(const std::string & timestamp) {
+namespace Taq {
+
+typedef boost::posix_time::time_duration Time;
+typedef boost::gregorian::date Date;
+
+inline Time MkTaqTime(const std::string & timestamp) {
   return  boost::posix_time::hours(                 stoi(timestamp.substr(0,2)) )
         + boost::posix_time::minutes(               stoi(timestamp.substr(2,2)) )
         + boost::posix_time::seconds(               stoi(timestamp.substr(4,2)) )
@@ -14,5 +18,10 @@ inline TaqTime MkTaqTime(const std::string & timestamp) {
         + boost::posix_time::nanoseconds(           stoi(timestamp.substr(6,9)) );
 }
 
+inline Date MkTaqDate(const std::string & yyyymmdd) {
+  return  boost::gregorian::from_undelimited_string(yyyymmdd);
+}
+
+}
 
 #endif

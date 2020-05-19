@@ -55,7 +55,7 @@ static int ProcessFiles(taq_prep::AppContext &ctx) {
   return retval;
 }
 /* ===================================================== page ========================================================*/
-static bool ValidateCmdArgs(const po::variables_map & vm, taq_prep::AppContext & ctx) {
+static bool ValidateCmdArgs(taq_prep::AppContext & ctx) {
   if (false == fs::exists(ctx.output_dir) && fs::is_directory(ctx.output_dir)) {
     cerr << "Invalid --out-dir: " << ctx.output_dir << endl;
     return false;
@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
   if (vm.count("help")) {
     cout << desc << endl;
     return 1;
-  } if (false == ValidateCmdArgs(vm, ctx)) {
+  } if (false == ValidateCmdArgs(ctx)) {
     return 2;
   }
   try {

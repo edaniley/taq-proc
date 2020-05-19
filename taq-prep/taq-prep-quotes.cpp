@@ -3,21 +3,18 @@
 #include <vector>
 #include <unordered_map>
 #include <map>
-#include <bitset>
 #include <algorithm>
 #include <iterator>
 #include <numeric>
 #include <limits>
 #include <sstream>
 #include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
 
 #include "taq-prep.h"
 #include "taq-time.h"
 
 using namespace std;
 using namespace Taq;
-namespace fs = boost::filesystem;
 
 namespace taq_prep {
 
@@ -37,8 +34,6 @@ struct Bbo {
     bid(row[QCOL_Bid_Price], row[QCOL_Bid_Size]),
     offer(row[QCOL_Offer_Price], row[QCOL_Offer_Size]) { }
 };
-
-typedef std::bitset<Exch_Max> ExchangeMask;
 
 struct NbboSide{
   enum Side {BID, OFFER};
@@ -113,9 +108,9 @@ static void ResetNbboSide(NbboTableEntry & entry, NbboSide::Side side) {
   }
 }
 /* ===================================================== page ========================================================*/
-static bool UpdateNbboSide(NbboTableEntry & nbbo, NbboSide::Side side, int exch_idx, const BboSide & new_quote) {
-  BboSide & current_quote = side == NbboSide::BID ? nbbo.exchange_bids[exch_idx] : nbbo.exchange_offers[exch_idx];
-  NbboSide & best_quote = side == NbboSide::BID ? nbbo.current_nbbo.bid : nbbo.current_nbbo.offer;
+static bool UpdateNbboSide(NbboTableEntry & entry, NbboSide::Side side, int exch_idx, const BboSide & new_quote) {
+  BboSide & current_quote = side == NbboSide::BID ? entry.exchange_bids[exch_idx] : entry.exchange_offers[exch_idx];
+  NbboSide & best_quote = side == NbboSide::BID ? entry.current_nbbo.bid : entry.current_nbbo.offer;
   const double previous_best_price = best_quote.price;
   const int previous_best_size = best_quote.size;
   auto is_better = side == NbboSide::BID
@@ -140,7 +135,7 @@ static bool UpdateNbboSide(NbboTableEntry & nbbo, NbboSide::Side side, int exch_
         best_quote.exch_mask.set(exch_idx, 0);
       } else {                                                        // was the sole conributor - reset best quote
         current_quote = new_quote;
-        ResetNbboSide(nbbo, side);
+        ResetNbboSide(entry, side);
       }
     } else if (best_quote.exch_mask.count() == 0) {
       throw(logic_error("should not be here"));
@@ -151,7 +146,7 @@ static bool UpdateNbboSide(NbboTableEntry & nbbo, NbboSide::Side side, int exch_
         best_quote.exch_mask.set(exch_idx, 0);
       } else {                                                      // was the sole conributor - reset best quote
         current_quote = new_quote;
-        ResetNbboSide(nbbo, side);
+        ResetNbboSide(entry, side);
       }
   }
   current_quote = new_quote;
@@ -213,8 +208,8 @@ int ProcessQuotes(AppContext & ctx, istream & is) {
     start += symb.second.out_nbbo.size();
   }
   for (const auto & symb : nbbo) {
-    for (const auto & nbbo : symb.second.out_nbbo) {
-      ctx.output.write((const char*)&nbbo, sizeof(nbbo));
+    for (const auto & symb_nbbo : symb.second.out_nbbo) {
+      ctx.output.write((const char*)&symb_nbbo, sizeof(symb_nbbo));
     }
   }
 
