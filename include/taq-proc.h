@@ -2,8 +2,9 @@
 #define TAQ_POC_INCLUDED
 
 #include "taq-proc.h"
+#include "taq-time.h"
 
-namespace taq_proc {
+namespace Taq{
 
 enum Exchange {
   Exch_A = 'A' - 'A',// NYSE American,LLC (NYSE American)
@@ -26,6 +27,42 @@ enum Exchange {
   Exch_Y = 'Y' - 'A',// Cboe BYX Exchange,Inc (Cboe BYX)
   Exch_Z = 'Z' - 'A',// Cboe BZX Exchange,Inc (Cboe BZX)
   Exch_Max
+};
+
+typedef char Symbol[16];
+
+struct SymbolMap {
+  Symbol symb;
+  size_t start;
+  size_t end;
+  SymbolMap() = delete;
+  SymbolMap(const std::string &symbol, size_t start, size_t end) : start(start), end(end) {
+    std::memset(symb, sizeof(symb), 0);
+    std::strncpy(symb, symbol.c_str(), sizeof(symb) - 1);
+  }
+};
+
+struct FileHeader {
+  enum Type {
+    SecMaster, Nbbo, Trade
+  };
+  const size_t size;
+  const Type type;
+  const int version;
+  size_t symb_cnt;
+  FileHeader() = delete;
+  FileHeader(FileHeader::Type type, int version) : size(sizeof(FileHeader)), type(type), version(version), symb_cnt(0) { }
+};
+
+struct Nbbo {
+  const boost::posix_time::time_duration time;
+  const double bidp;
+  const double aidp;
+  const int bids;
+  const int aids;
+  Nbbo() = delete;
+  Nbbo(const boost::posix_time::time_duration & time, double bidp, double aidp, int bids, int aids)
+    : time(time), bidp(bidp), aidp(aidp), bids(bids), aids(aids) {}
 };
 
 }

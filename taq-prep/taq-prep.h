@@ -39,9 +39,11 @@ namespace taq_prep
 
   struct AppContext {
     std::string date;
+    std::string symb;
     std::string input_type;
     std::vector<std::string> input_files;
     std::string output_dir;
+    std::ofstream output;
   };
 
 int ProcessSecMaster(AppContext &, std::istream & is);
