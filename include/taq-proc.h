@@ -4,6 +4,8 @@
 
 #include <bitset>
 #include <string>
+#include <exception>
+#include <boost/filesystem.hpp>
 
 #include "taq-time.h"
 
@@ -49,8 +51,19 @@ struct Security {
   ExchangeMask exch_mask;
   char industry_code[5];
   char halt_reason;
-  uint32_t shares_outstanding_m;
+  double shares_outstanding_m;
   Date eff_date;
+};
+
+struct Nbbo {
+  const Time time;
+  const double bidp;
+  const double aidp;
+  const int bids;
+  const int aids;
+  Nbbo() = delete;
+  Nbbo(const Time& time, double bidp, double aidp, int bids, int aids)
+    : time(time), bidp(bidp), aidp(aidp), bids(bids), aids(aids) {}
 };
 
 struct SymbolMap {
@@ -65,27 +78,53 @@ struct SymbolMap {
 };
 
 struct FileHeader {
-  enum Type {
+  enum class Type {
     SecMaster, Nbbo, Trade
   };
   const size_t size;
-  const Type type;
+  Type type;
   const int version;
   size_t symb_cnt;
+  size_t rec_cnt;
   FileHeader() = delete;
-  FileHeader(FileHeader::Type type, int version) : size(sizeof(FileHeader)), type(type), version(version), symb_cnt(0) { }
+  FileHeader(int version) : size(sizeof(FileHeader)), version(version), symb_cnt(0), rec_cnt(0) { }
 };
 
-struct Nbbo {
-  const Time time;
-  const double bidp;
-  const double aidp;
-  const int bids;
-  const int aids;
-  Nbbo() = delete;
-  Nbbo(const Time & time, double bidp, double aidp, int bids, int aids)
-    : time(time), bidp(bidp), aidp(aidp), bids(bids), aids(aids) {}
-};
+inline
+boost::filesystem::path MkDataFilePath(const std::string& data_dir, FileHeader::Type type, Date date, char symbol_group = 0) {
+  std::ostringstream ss;
+  boost::filesystem::path file_path(data_dir);
+  const std::string yyyymmdd = boost::gregorian::to_iso_string(date);
+  if (type == FileHeader::Type::SecMaster) {
+    ss << yyyymmdd << ".sec-master" << ".dat";
+  }
+  else if (type == FileHeader::Type::Nbbo) {
+    ss << yyyymmdd << ".quotes" << symbol_group << ".dat";
+  }
+  else if (type == FileHeader::Type::Trade) {
+    ss << yyyymmdd << ".trades" << symbol_group << ".dat";
+  }
+  file_path /= ss.str();
+  if (false == boost::filesystem::exists(file_path) && boost::filesystem::is_regular_file(file_path)) {
+    throw std::domain_error("Input file not found : " + file_path.string());
+  }
+  return std::move(file_path);
+}
+
+inline
+boost::filesystem::path MkDataFilePath(const std::string& data_dir, const std::string file_type, Date date, char symbol_group = 0) {
+  if (file_type == "master") {
+    return MkDataFilePath(data_dir, FileHeader::Type::SecMaster, date, symbol_group);
+  }
+  else if (file_type == "quote") {
+    return MkDataFilePath(data_dir, FileHeader::Type::SecMaster, date, symbol_group);
+  }
+  else if (file_type == "trade") {
+    return MkDataFilePath(data_dir, FileHeader::Type::SecMaster, date, symbol_group);
+  } else {
+    return boost::filesystem::path(data_dir);
+  }
+}
 
 }
 

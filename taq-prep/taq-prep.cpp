@@ -10,26 +10,22 @@ using namespace std;
 using namespace Taq;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
-
+/* ===================================================== page ========================================================*/
 static void OpenOutputStream(taq_prep::AppContext& ctx) {
-  ostringstream ss;
-  fs::path out_path(ctx.output_dir);
-  if (ctx.input_type == "master") {
-    ss << ctx.date << ".sec-master." << ".dat";
-  }
-  else if (ctx.input_type == "quote") {
-    ss << ctx.date << ".quotes." << ctx.symb << ".dat";
-  }
-  else if (ctx.input_type == "trade") {
-    ss << ctx.date << ".trades." << ctx.symb << ".dat";
-  }
-  out_path /= ss.str();
+  fs::path out_path = MkDataFilePath(ctx.output_dir, ctx.input_type , MkTaqDate(ctx.date), ctx.symb.size() ? ctx.symb[0] : '\0');
   if (fs::exists(out_path) && fs::is_regular_file(out_path)) {
     fs::remove(out_path);
   }
-  ctx.output.open(out_path.string(), ios::out | ios::binary);
+  ctx.output_file = out_path.string();
+  ctx.output.open(ctx.output_file, ios::out | ios::binary);
 }
+/* ===================================================== page ========================================================*/
 static void CloseOutputStream(taq_prep::AppContext& ctx) {
+  const bool rewrite_header = ctx.input_type == "quote" || ctx.input_type == "trade";
+  if (rewrite_header) {
+    ctx.output.seekp(ios_base::beg);
+    ctx.output.write((const char*)&ctx.output_file_hdr, sizeof(ctx.output_file_hdr));
+  }
   ctx.output.close();
 }
 /* ===================================================== page ========================================================*/
@@ -56,7 +52,7 @@ static int ProcessFiles(taq_prep::AppContext &ctx) {
 }
 /* ===================================================== page ========================================================*/
 static bool ValidateCmdArgs(taq_prep::AppContext & ctx) {
-  if (false == fs::exists(ctx.output_dir) && fs::is_directory(ctx.output_dir)) {
+  if (false == (fs::exists(ctx.output_dir) && fs::is_directory(ctx.output_dir))) {
     cerr << "Invalid --out-dir: " << ctx.output_dir << endl;
     return false;
   }

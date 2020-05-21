@@ -54,7 +54,7 @@ struct NbboTableEntry {
   Nbbo current_nbbo;
   BboSide exchange_bids[Exch_Max];
   BboSide exchange_offers[Exch_Max];
-  vector<Taq::Nbbo> out_nbbo;
+  //vector<Taq::Nbbo> out_nbbo;
   NbboTableEntry() = default;
 };
 
@@ -158,25 +158,30 @@ static bool UpdateNbboSide(NbboTableEntry & entry, NbboSide::Side side, int exch
   return best_quote.size != previous_best_size ||best_quote.price != previous_best_price;
 }
 /* ===================================================== page ========================================================*/
-static void HandleQuote(const string & timestamp, const string & symbol, const string & exchange, const Bbo & bbo) {
+static bool UpdateNbbo(const string & timestamp, const string & symbol, const string & exchange, const Bbo & bbo, ofstream & os) {
   const int exch_idx = exchange[0] - 'A';
   NbboTableEntry & entry = nbbo[symbol];
   bool update_nbbo = UpdateNbboSide(entry, NbboSide::BID, exch_idx, bbo.bid);
   update_nbbo |= UpdateNbboSide(entry, NbboSide::OFFER, exch_idx, bbo.offer);
   if (update_nbbo) {
-    entry.out_nbbo.emplace_back(Taq::Nbbo(MkTaqTime(timestamp),
-                                          entry.current_nbbo.bid.price, entry.current_nbbo.offer.price,
-                                          entry.current_nbbo.bid.size, entry.current_nbbo.offer.size));
+    Taq::Nbbo record(MkTaqTime(timestamp),
+      entry.current_nbbo.bid.price, entry.current_nbbo.offer.price,
+      entry.current_nbbo.bid.size, entry.current_nbbo.offer.size);
+    os.write((const char*)&record, sizeof(record));
+    //entry.out_nbbo.emplace_back(Taq::Nbbo(MkTaqTime(timestamp),
+    //                                      entry.current_nbbo.bid.price, entry.current_nbbo.offer.price,
+    //                                      entry.current_nbbo.bid.size, entry.current_nbbo.offer.size));
   }
+   return update_nbbo;
 }
 /* ===================================================== page ========================================================*/
 static bool ValidateInputRecord(const vector<string> & row) {
   if (row[QCOL_Time] == "Time")
     return false;
   if (row.size() != QCOL_Max) {
-    char msg[128];
-    sprintf(msg, "Input record size mismatch: expected %d columns, received %d", QCOL_Max, (int)row.size());
-    throw(domain_error(msg));
+    ostringstream ss;
+    ss << "Input record size mismatch: expected " << QCOL_Max << " columns, received "<< row.size();
+    throw(domain_error(ss.str()));
   }
   if (row[QCOL_Time].size() != 15) {
     throw(domain_error("Unrecognized Time format"));
@@ -185,34 +190,41 @@ static bool ValidateInputRecord(const vector<string> & row) {
 }
 /* ===================================================== page ========================================================*/
 int ProcessQuotes(AppContext & ctx, istream & is) {
-  FileHeader fh(FileHeader::Nbbo, 1);
-  int reccnt = 0;
+  vector<SymbolMap> symbol_map;
+  SymbolMap * current = nullptr;
+  size_t rec_cnt = 0;
   while (false == is.eof()) {
-    if (++reccnt == 10000) break;
     string line;
     getline(is, line);
     vector<string> row;
     boost::split(row, line, boost::is_any_of("|"));
+    if (row[0] == "END")
+      break;
     if (ValidateInputRecord(row)) {
       Bbo bbo(row);
       ValidateQuote(row, bbo);
-      HandleQuote(row[QCOL_Time], row[QCOL_Symbol], row[QCOL_Exchange], bbo);
+      if (UpdateNbbo(row[QCOL_Time], row[QCOL_Symbol], row[QCOL_Exchange], bbo, ctx.output)) {
+        rec_cnt++;
+        if (!current || current->symb != row[QCOL_Symbol]) {
+          if (current) {
+            current->end = rec_cnt - 1;
+          }
+          symbol_map.push_back(SymbolMap(row[QCOL_Symbol], rec_cnt, 0));
+          current = &*symbol_map.rbegin();
+        }
+        //if (rec_cnt == 1000000) break;
+      }
     }
   }
-  fh.symb_cnt = nbbo.size();
-  ctx.output.write((const char *)&fh, sizeof(fh));
-  size_t start = 0;
-  for(const auto & symb : nbbo) {
-    SymbolMap sm(symb.first , start, start + symb.second.out_nbbo.size() - 1);
+  if (current) {
+    current->end = rec_cnt;
+  }
+  for (const auto & sm : symbol_map) {
     ctx.output.write((const char*)&sm, sizeof(sm));
-    start += symb.second.out_nbbo.size();
   }
-  for (const auto & symb : nbbo) {
-    for (const auto & symb_nbbo : symb.second.out_nbbo) {
-      ctx.output.write((const char*)&symb_nbbo, sizeof(symb_nbbo));
-    }
-  }
-
+  ctx.output_file_hdr.symb_cnt = symbol_map.size();
+  ctx.output_file_hdr.rec_cnt = rec_cnt;
+  ctx.output_file_hdr.type = FileHeader::Type::Nbbo;
   return 0;
 }
 

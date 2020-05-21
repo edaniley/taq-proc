@@ -85,7 +85,10 @@ namespace taq_prep
     std::string input_type;
     std::vector<std::string> input_files;
     std::string output_dir;
+    std::string output_file;
     std::ofstream output;
+    Taq::FileHeader output_file_hdr;
+    AppContext() : output_file_hdr(1) {}
   };
 
 int ProcessSecMaster(AppContext &, std::istream & is);
