@@ -12,7 +12,7 @@ namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 /* ===================================================== page ========================================================*/
 static void OpenOutputStream(taq_prep::AppContext& ctx) {
-  fs::path out_path = MkDataFilePath(ctx.output_dir, ctx.input_type , MkTaqDate(ctx.date), ctx.symb.size() ? ctx.symb[0] : '\0');
+  fs::path out_path = MkDataFilePath(ctx.output_dir, ctx.output_file_hdr.type, MkTaqDate(ctx.date), ctx.symb.size() ? ctx.symb[0] : '\0');
   if (fs::exists(out_path) && fs::is_regular_file(out_path)) {
     fs::remove(out_path);
   }
@@ -69,15 +69,17 @@ static bool ValidateCmdArgs(taq_prep::AppContext & ctx) {
     cerr << "--date required for stdin" << endl;
     return false;
   }
-  if (ctx.input_type != "master" && ctx.input_type != "quote" && ctx.input_type != "trade") {
+
+  ctx.output_file_hdr.type = RecordTypeFromString(ctx.input_type);
+  if (ctx.output_file_hdr.type == RecordType::NA) {
       cerr << "Invalid --in-type:" << ctx.input_type << endl;
       return false;
   }
-  if (ctx.input_type != "master" && ctx.symb.empty()) {
+  if (ctx.output_file_hdr.type == RecordType::SecMaster && ctx.symb.empty()) {
     cerr << "--symbol-group required for stdin" << endl;
     return false;
   }
-  if (ctx.input_type != "master" && ctx.symb.size() > 1) {
+  if (ctx.output_file_hdr.type == RecordType::SecMaster && ctx.symb.size() > 1) {
     cerr << "Invalid --symbol-group:" << ctx.symb << endl;
     return false;
   }

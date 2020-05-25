@@ -34,7 +34,7 @@ void SecMasterManager::trim() {
     }
   }
 }
-
+/* ===================================================== page ========================================================*/
 const SecMaster&  SecMasterManager::Load(Date date) {
   SecMaster* retval = nullptr;
   lock_guard<mutex> lock(mtx_);
@@ -44,7 +44,7 @@ const SecMaster&  SecMasterManager::Load(Date date) {
   }
   else {
     trim();
-    fs::path file_path = MkDataFilePath(data_dir_, FileHeader::Type::SecMaster, date);
+    fs::path file_path = MkDataFilePath(data_dir_, RecordType::SecMaster, date);
     if (false == (fs::exists(file_path) && fs::is_regular_file(file_path))) {
       throw domain_error("Input file not found : " + file_path.string());
     }

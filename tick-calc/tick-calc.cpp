@@ -19,17 +19,23 @@ static bool ValidateCmdArgs(tick_calc::AppContext & ctx) {
   return true;
 }
 
-static void test(tick_calc::AppContext &ctx) {
-  tick_calc::SecMasterManager sec_mgr(ctx.data_dir);
-  const tick_calc::SecMaster & sec31 = sec_mgr.Load(MkTaqDate("20200331"));
-  const tick_calc::SecMaster& sec30 = sec_mgr.Load(MkTaqDate("20200330"));
-  const tick_calc::SecMaster& sec31x = sec_mgr.Load(MkTaqDate("20200331"));
-  assert(&sec31x== &sec31);
-  sec_mgr.Release(sec31x);
-  sec_mgr.Release(sec31);
-  sec_mgr.Release(sec30);
-  const tick_calc::SecMaster& sec29 = sec_mgr.Load(MkTaqDate("20200329"));
-  assert(&sec29 != &sec30);
+static void test(tick_calc::AppContext & ctx) {
+  tick_calc::RecordsetManager<Nbbo> quote_mgr(ctx.data_dir);
+  const tick_calc::SymbolRecordset<Nbbo>& rec = quote_mgr.LoadSymbolRecordset(MkTaqDate("20200331"), "AAPL");
+  vector<Nbbo> vv(rec.records.begin(), rec.records.begin() + rec.records.size());
+  assert (vv.size() == rec.records.size());
+  quote_mgr.UnloadSymbolRecordset(MkTaqDate("20200331"), "AAPL");
+
+  //tick_calc::SecMasterManager sec_mgr(ctx.data_dir);
+  //const tick_calc::SecMaster & sec31 = sec_mgr.Load(MkTaqDate("20200331"));
+  //const tick_calc::SecMaster& sec30 = sec_mgr.Load(MkTaqDate("20200330"));
+  //const tick_calc::SecMaster& sec31x = sec_mgr.Load(MkTaqDate("20200331"));
+  //assert(&sec31x== &sec31);
+  //sec_mgr.Release(sec31x);
+  //sec_mgr.Release(sec31);
+  //sec_mgr.Release(sec30);
+  //const tick_calc::SecMaster& sec29 = sec_mgr.Load(MkTaqDate("20200329"));
+  //assert(&sec29 != &sec30);
 }
 
 int main(int argc, char **argv) {

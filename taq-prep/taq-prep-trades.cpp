@@ -11,7 +11,7 @@ using namespace Taq;
 namespace taq_prep {
 
 int ProcessTrades(AppContext &ctx, istream & is) {
-  ctx.output_file_hdr.type = FileHeader::Type::Trade;
+  ctx.output_file_hdr.type = RecordType::Trade;
   while(!is.eof()) {
     string line;
     getline(is, line);

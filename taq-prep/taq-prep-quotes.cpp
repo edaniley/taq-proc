@@ -193,6 +193,7 @@ int ProcessQuotes(AppContext & ctx, istream & is) {
   vector<SymbolMap> symbol_map;
   SymbolMap * current = nullptr;
   size_t rec_cnt = 0;
+  ctx.output.write((const char*)&ctx.output_file_hdr, sizeof(ctx.output_file_hdr));
   while (false == is.eof()) {
     string line;
     getline(is, line);
@@ -224,7 +225,7 @@ int ProcessQuotes(AppContext & ctx, istream & is) {
   }
   ctx.output_file_hdr.symb_cnt = symbol_map.size();
   ctx.output_file_hdr.rec_cnt = rec_cnt;
-  ctx.output_file_hdr.type = FileHeader::Type::Nbbo;
+  ctx.output_file_hdr.type = RecordType::Nbbo;
   return 0;
 }
 
