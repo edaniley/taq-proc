@@ -26,14 +26,14 @@ int ProcessSecMaster(AppContext & ctx, istream & is) {
     sec_list.push_back(Security());
     Security & sec =*sec_list.rbegin();
     try {
-      std::memset(&sec, 0, sizeof(sec));
+      memset(&sec, 0, sizeof(sec));
 
-      std::strncpy(sec.symb, row[MCOL_Symbol].c_str(), sizeof(sec.symb)-1);
-      std::strncpy(sec.CUSIP, row[MCOL_CUSIP].c_str(), sizeof(sec.CUSIP)-1);
-      std::strncpy(sec.type, row[MCOL_Security_Type].c_str(), sizeof(sec.type)-1);
-      std::strncpy(sec.sip_symb, row[MCOL_SIP_Symbol].c_str(), sizeof(sec.sip_symb)-1);
-      std::strncpy(sec.prev_symb, row[MCOL_Old_Symbol].c_str(), sizeof(sec.prev_symb)-1);
-      std::strncpy(sec.industry_code, row[MCOL_NYSE_Industry_Code].c_str(), sizeof(sec.industry_code) - 1);
+      strncpy_s(sec.symb, sizeof(sec.symb), row[MCOL_Symbol].c_str(), sizeof(sec.symb)-1);
+      strncpy_s(sec.CUSIP, sizeof(sec.CUSIP), row[MCOL_CUSIP].c_str(), sizeof(sec.CUSIP)-1);
+      strncpy_s(sec.type, sizeof(sec.type), row[MCOL_Security_Type].c_str(), sizeof(sec.type)-1);
+      strncpy_s(sec.sip_symb, sizeof(sec.sip_symb), row[MCOL_SIP_Symbol].c_str(), sizeof(sec.sip_symb)-1);
+      strncpy_s(sec.prev_symb, sizeof(sec.prev_symb), row[MCOL_Old_Symbol].c_str(), sizeof(sec.prev_symb)-1);
+      strncpy_s(sec.industry_code, sizeof(sec.industry_code), row[MCOL_NYSE_Industry_Code].c_str(), sizeof(sec.industry_code) - 1);
 
       sec.test_flag = row[MCOL_Test_Symbol_Flag][0];
       sec.exch = row[MCOL_Listed_Exchange][0];

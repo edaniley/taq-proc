@@ -20,13 +20,12 @@ void SecMasterManager::trim() {
     for (const auto& x : sec_master_) {
       tmp.push_back(make_pair(x.first, x.second.get()));
     }
-    //reverse(tmp.begin(), tmp.end());
     sort(tmp.begin(), tmp.end(), [](pair<Date, const SecMaster*>& l, pair<Date, const SecMaster*>& r) {
       return (l.second->use_cnt_ < r.second->use_cnt_)
         || (l.second->use_cnt_ == r.second->use_cnt_ && l.second->last_used_ < r.second->last_used_);
       });
-    int to_release = 1 + sec_master_.size() - max_size_;
-    for (int i = 0; i < to_release; i++) {
+    size_t to_release = 1 + sec_master_.size() - max_size_;
+    for (size_t i = 0; i < to_release; i++) {
       if (tmp[i].second->use_cnt_) {
         break;
       }

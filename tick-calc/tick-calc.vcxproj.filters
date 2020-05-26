@@ -32,5 +32,11 @@
     <ClInclude Include="tick-calc-secmaster.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\taq-proc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\taq-time.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

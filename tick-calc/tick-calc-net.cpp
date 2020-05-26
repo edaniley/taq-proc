@@ -2,7 +2,7 @@
 #include <winsock2.h>
 #include <stdio.h>
 #pragma comment(lib, "ws2_32.lib")
-#endif 
+#endif
 
 #include <exception>
 #include <iostream>
@@ -160,6 +160,6 @@ void NetPoll(AppContext&) {
   }
 }
 
-#endif 
+#endif
 
 }
