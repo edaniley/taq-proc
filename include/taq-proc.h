@@ -85,8 +85,7 @@ struct SymbolMap {
   size_t start;
   size_t end;
   SymbolMap(const std::string &symbol, size_t start, size_t end) : start(start), end(end) {
-    std::memset(symb, 0, sizeof(symb));
-    std::strncpy(symb, symbol.c_str(), sizeof(symb) - 1);
+    ::strncpy_s(symb, sizeof(symb), symbol.c_str(), sizeof(symb) - 1);
   }
 };
 

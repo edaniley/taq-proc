@@ -225,9 +225,11 @@ private:
 
 struct AppContext {
   std::string data_dir;
+  uint16_t port;
 };
 
-
+void NetInitialize(AppContext &);
+void NetPoll(AppContext &);
 }
 #endif
 

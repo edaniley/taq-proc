@@ -20,11 +20,20 @@ static bool ValidateCmdArgs(tick_calc::AppContext & ctx) {
 }
 
 static void test(tick_calc::AppContext & ctx) {
-  tick_calc::RecordsetManager<Nbbo> quote_mgr(ctx.data_dir);
-  const tick_calc::SymbolRecordset<Nbbo>& rec = quote_mgr.LoadSymbolRecordset(MkTaqDate("20200331"), "AAPL");
-  vector<Nbbo> vv(rec.records.begin(), rec.records.begin() + rec.records.size());
-  assert (vv.size() == rec.records.size());
-  quote_mgr.UnloadSymbolRecordset(MkTaqDate("20200331"), "AAPL");
+  try {
+    NetInitialize(ctx);
+    for (;;) {
+      NetPoll(ctx);
+    }
+  } catch (exception &ex) {
+    cerr << ex.what();
+  }
+
+  //tick_calc::RecordsetManager<Nbbo> quote_mgr(ctx.data_dir);
+  //const tick_calc::SymbolRecordset<Nbbo>& rec = quote_mgr.LoadSymbolRecordset(MkTaqDate("20200331"), "AAPL");
+  //vector<Nbbo> vv(rec.records.begin(), rec.records.begin() + rec.records.size());
+  //assert (vv.size() == rec.records.size());
+  //quote_mgr.UnloadSymbolRecordset(MkTaqDate("20200331"), "AAPL");
 
   //tick_calc::SecMasterManager sec_mgr(ctx.data_dir);
   //const tick_calc::SecMaster & sec31 = sec_mgr.Load(MkTaqDate("20200331"));
@@ -45,6 +54,7 @@ int main(int argc, char **argv) {
   desc.add_options()
     ("help,h", "produce help message")
     ("data-dir,d", po::value<string>(&ctx.data_dir)->default_value("."), "output directory")
+    ("-tcp,t", po::value<uint16_t>(&ctx.port)->default_value(21090), "TCP port")
     ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
