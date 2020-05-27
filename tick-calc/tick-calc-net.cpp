@@ -6,7 +6,6 @@
 
 #include <exception>
 #include <iostream>
-
 #include "tick-calc.h"
 
 using namespace std;
@@ -49,7 +48,7 @@ void NetInitialize(AppContext &ctx) {
   SOCKADDR_IN inet_addr;
   inet_addr.sin_family = AF_INET;
   inet_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  inet_addr.sin_port = htons(ctx.port);
+  inet_addr.sin_port = htons(ctx.in_port);
   if (::bind(listen_socket, (PSOCKADDR)&inet_addr, sizeof(inet_addr)) == SOCKET_ERROR){
     throw runtime_error(LastErrorToString());
   }
@@ -84,7 +83,7 @@ void FreeConnection(DWORD idx) {
   conn_count--;
 }
 
-void NetPoll(AppContext&) {
+void NetPoll(AppContext & ctx) {
   FD_SET write_set;
   FD_SET read_set;
   FD_ZERO(&read_set);
@@ -133,7 +132,7 @@ void NetPoll(AppContext&) {
         continue;
       } else {
         conn->bytes_recv = recv_bytes;
-        if (recv_bytes == 0) {
+         if (recv_bytes == 0) {
           FreeConnection(i);
           continue;
         }
@@ -143,6 +142,8 @@ void NetPoll(AppContext&) {
       total--;
       conn->wsa_buffer.buf = conn->buffer + conn->bytes_send;
       conn->wsa_buffer.len = conn->bytes_recv - conn->bytes_send;
+      string_view vv(conn->wsa_buffer.buf, conn->wsa_buffer.len);
+      HanldeCmd(ctx, vv);
       if (WSASend(conn->socket, &(conn->wsa_buffer), 1, &send_bytes, 0, NULL, NULL) == SOCKET_ERROR) {
         if (WSAGetLastError() != WSAEWOULDBLOCK) {
           cerr << "WSASend() failed : " << LastErrorToString();

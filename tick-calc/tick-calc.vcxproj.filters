@@ -24,6 +24,9 @@
     <ClCompile Include="tick-calc-net.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tick-calc-cmd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tick-calc.h">

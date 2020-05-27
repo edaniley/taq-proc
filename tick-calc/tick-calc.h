@@ -2,6 +2,7 @@
 #define TICK_CALC_INCLUDED
 
 #include <string>
+#include <string_view>
 #include <vector>
 #include <algorithm>
 #include <functional>
@@ -173,8 +174,8 @@ private:
         return (l.second->UseCount() < r.second->UseCount())
           || (l.second->UseCount() == r.second->UseCount() && l.second->LastUsed() < r.second->LastUsed());
         });
-      int to_release = 1 + daily_quotes_.size() - max_size_;
-      for (int i = 0; i < to_release; i++) {
+      size_t to_release = 1 + daily_quotes_.size() - max_size_;
+      for (size_t i = 0; i < to_release; i++) {
         if (tmp[i].second->UseCount()) {
           break;
         }
@@ -224,12 +225,18 @@ private:
 };
 
 struct AppContext {
-  std::string data_dir;
-  uint16_t port;
+  std::string in_data_dir;
+  std::string in_cpu_list;
+  uint16_t in_port;
+  vector<int> cpu_cores;
+  unique_ptr<RecordsetManager<Nbbo>> nbbo_data_manager;
+  unique_ptr<RecordsetManager<Trade>> trade_data_manager;
 };
 
 void NetInitialize(AppContext &);
 void NetPoll(AppContext &);
+void HanldeCmd(AppContext & , const string_view& cmd);
+
 }
 #endif
 

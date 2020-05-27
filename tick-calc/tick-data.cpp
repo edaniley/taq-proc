@@ -1,6 +1,4 @@
 
-#include <string>
-
 #include "tick-calc.h"
 #include "tick-calc-secmaster.h"
 

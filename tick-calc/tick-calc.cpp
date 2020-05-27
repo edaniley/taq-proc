@@ -1,8 +1,10 @@
 
 #include <iostream>
 #include <cassert>
+#include <thread>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 #include "tick-calc.h"
 
 using namespace std;
@@ -12,11 +14,48 @@ namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
 static bool ValidateCmdArgs(tick_calc::AppContext & ctx) {
-  if (false == (fs::exists(ctx.data_dir) && fs::is_directory(ctx.data_dir)) ) {
-    cerr << "Invalid --data-dir: " << ctx.data_dir << endl;
+  if (false == (fs::exists(ctx.in_data_dir) && fs::is_directory(ctx.in_data_dir)) ) {
+    cerr << "Invalid --data-dir: " << ctx.in_data_dir << endl;
     return false;
   }
   return true;
+}
+
+static vector<int> AvailableCpuCores(string &cpu_list) {
+  vector<int> cores;
+  vector<string> tokens;
+  boost::split(tokens, cpu_list, boost::is_any_of(","));
+  for (const string & token : tokens) {
+    if (!token.empty()) {
+      vector<string> range;
+      boost::split(range, token, boost::is_any_of("-"));
+      if (range.size() == 1) {
+        cores.push_back(stoi(token.c_str()));
+      }
+      else if (range.size() == 2) {
+        for (int core = stoi(range[0].c_str()); core <= stoi(range[1].c_str()); core++) {
+          cores.push_back(core);
+        }
+      }
+    }
+  }
+  int num_cores = thread::hardware_concurrency();
+  auto it = remove_if(cores.begin(), cores.end(), [num_cores] (int core) {return core >= num_cores;});
+  cores.resize(cores.size() - distance(it, cores.end()));
+  sort(cores.begin(), cores.end(), less<int>());
+  return vector<int>(cores.begin(), unique(cores.begin(), cores.end()));
+}
+
+bool SetThreadCpuAffinity(int core) {
+#ifdef _MSC_VER
+  bool success = SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)1 << core) != 0;
+#else
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(core, &cpuset);
+  bool success = sched_setaffinity(0, sizeof(cpuset), &cpuset) == 0;
+#endif
+  return success;
 }
 
 static void test(tick_calc::AppContext & ctx) {
@@ -53,8 +92,9 @@ int main(int argc, char **argv) {
   po::options_description desc("program options");
   desc.add_options()
     ("help,h", "produce help message")
-    ("data-dir,d", po::value<string>(&ctx.data_dir)->default_value("."), "output directory")
-    ("-tcp,t", po::value<uint16_t>(&ctx.port)->default_value(21090), "TCP port")
+    ("data-dir,d", po::value<string>(&ctx.in_data_dir)->default_value("."), "output directory")
+    ("-tcp,t", po::value<uint16_t>(&ctx.in_port)->default_value(21090), "TCP port")
+    ("-cpu,c", po::value<string>(&ctx.in_cpu_list), "CPU core list to pin threads")
     ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -65,8 +105,13 @@ int main(int argc, char **argv) {
   } if (false == ValidateCmdArgs(ctx)) {
     return 2;
   }
+  ctx.cpu_cores = AvailableCpuCores(ctx.in_cpu_list);
+  if (ctx.cpu_cores.size() > 1) {
+    SetThreadCpuAffinity(ctx.cpu_cores[0]);
+  }
+  ctx.nbbo_data_manager = make_unique<tick_calc::RecordsetManager<Nbbo>>(ctx.in_data_dir);
   test(ctx);
 
-  std::cout << " In " __FILE__ "\n";
+  cout << " In " __FILE__ "\n";
   return retval;
 }

@@ -129,7 +129,7 @@ boost::filesystem::path MkDataFilePath(const std::string& data_dir, RecordType t
     ss << yyyymmdd << ".sec-master" << ".dat";
   }
   else if (type == RecordType::Nbbo) {
-    ss << yyyymmdd << ".quotes." << symbol_group << ".dat";
+    ss << yyyymmdd << ".nbbo." << symbol_group << ".dat";
   }
   else if (type == RecordType::Trade) {
     ss << yyyymmdd << ".trades." << symbol_group << ".dat";
