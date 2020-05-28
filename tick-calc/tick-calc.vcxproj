@@ -150,16 +150,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="tick-calc-cmd.cpp" />
-    <ClCompile Include="tick-calc-net.cpp" />
     <ClCompile Include="tick-calc.cpp" />
+    <ClCompile Include="tick-cmd.cpp" />
     <ClCompile Include="tick-data.cpp" />
+    <ClCompile Include="tick-net.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\taq-proc.h" />
     <ClInclude Include="..\include\taq-time.h" />
-    <ClInclude Include="tick-calc-secmaster.h" />
+    <ClInclude Include="tick-conn.h" />
     <ClInclude Include="tick-calc.h" />
+    <ClInclude Include="tick-data.h" />
+    <ClInclude Include="tick-secmaster.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

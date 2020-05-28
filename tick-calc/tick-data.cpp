@@ -1,6 +1,6 @@
 
 #include "tick-calc.h"
-#include "tick-calc-secmaster.h"
+#include "tick-data.h"
 
 namespace mm = boost::interprocess;
 namespace fs = boost::filesystem;

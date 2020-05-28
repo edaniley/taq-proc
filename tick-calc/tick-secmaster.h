@@ -11,7 +11,6 @@
 #include <map>
 #include <mutex>
 #include <memory>
-#include <atomic>
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -33,7 +32,6 @@ class SecMasterManager;
 class SecMaster {
   friend class SecMasterManager;
   public:
-    SecMaster() = delete;
     SecMaster(const SecMaster&) = delete;
     SecMaster(Date date, size_t sec_no, mm::file_mapping & mmfile, mm::mapped_region & mmreg)
       : date_(date), mmfile_(move(mmfile)), mmreg_(move(mmreg)), use_cnt_(0) {

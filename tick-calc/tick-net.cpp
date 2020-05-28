@@ -7,6 +7,7 @@
 #include <exception>
 #include <iostream>
 #include "tick-calc.h"
+#include "tick-conn.h"
 
 using namespace std;
 using namespace Taq;
@@ -14,19 +15,15 @@ using namespace Taq;
 namespace tick_calc {
 
 #ifdef _MSC_VER
-#define DATA_BUFSIZE 8192
 
-struct Connection {
-  CHAR buffer[DATA_BUFSIZE];
+struct WinConnection {
   WSABUF wsa_buffer;
   SOCKET socket;
-  OVERLAPPED overlapped;
-  DWORD bytes_send;
-  DWORD bytes_recv;
+  Connection conn;
 };
 
 DWORD conn_count = 0;
-Connection* connections[FD_SETSIZE];
+WinConnection* connections[FD_SETSIZE];
 SOCKET listen_socket;
 
 string LastErrorToString() {
@@ -35,10 +32,7 @@ string LastErrorToString() {
   FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(),
     MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)wbuffer, sizeof(buffer)-1, NULL);
   size_t ret;
-  if (0 == wcstombs_s(&ret, buffer, wbuffer, sizeof(buffer) - 1)) {
-    return string(buffer);
-  }
-  return "";
+  return (0 == wcstombs_s(&ret, buffer, wbuffer, sizeof(buffer) - 1)) ? string(buffer) : string();
 }
 
 void NetInitialize(AppContext &ctx) {
@@ -60,37 +54,31 @@ void NetInitialize(AppContext &ctx) {
 }
 
 void CreateConnection(SOCKET s) {
-  Connection * si;
-  if ((si = (Connection*)GlobalAlloc(GPTR, sizeof(Connection))) == NULL)    {
-    throw runtime_error(LastErrorToString());
-  }
-
+  WinConnection* si = new WinConnection();
   si->socket = s;
-  si->bytes_send= 0;
-  si->bytes_recv = 0;
   connections[conn_count] = si;
   conn_count++;
 }
 
 void FreeConnection(DWORD idx) {
-  Connection* si = connections[idx];
+  WinConnection* si = connections[idx];
   DWORD i;
   ::closesocket(si->socket);
-  GlobalFree(si);
+  delete si;
   for (i = idx; i < conn_count; i++)   {
     connections[i] = connections[i + 1];
   }
   conn_count--;
 }
 
-void NetPoll(AppContext & ctx) {
+void NetPoll(AppContext &) {
   FD_SET write_set;
   FD_SET read_set;
   FD_ZERO(&read_set);
   FD_ZERO(&write_set);
   FD_SET(listen_socket, &read_set);
   for (DWORD i = 0; i < conn_count; i++) {
-    if (connections[i]->bytes_recv > connections[i]->bytes_send) {
+    if (connections[i]->conn.writable) {
       FD_SET(connections[i]->socket, &write_set);
     }
     FD_SET(connections[i]->socket, &read_set);
@@ -116,47 +104,45 @@ void NetPoll(AppContext & ctx) {
   }
 
   for (DWORD i = 0; total > 0 && i < conn_count; i++) {
-    DWORD send_bytes;
     DWORD recv_bytes;
-    Connection* conn = connections[i];
+    WinConnection* conn = connections[i];
     if (FD_ISSET(conn->socket, &read_set)) {
       total--;
-      conn->wsa_buffer.buf = conn->buffer;
-      conn->wsa_buffer.len = DATA_BUFSIZE;
-      DWORD Flags = 0;
-      if (WSARecv(conn->socket, &(conn->wsa_buffer), 1, &recv_bytes, &Flags, NULL, NULL) == SOCKET_ERROR) {
-        if (WSAGetLastError() != WSAEWOULDBLOCK) {
-          cerr << "WSARecv() failed : " << LastErrorToString();
-          FreeConnection(i);
+      if (conn->conn.input_buffer.AvailableSize() > 0) {
+        conn->wsa_buffer.buf = conn->conn.input_buffer.BeginWrite();
+        conn->wsa_buffer.len = (ULONG)conn->conn.input_buffer.AvailableSize();
+        DWORD Flags = 0;
+        if (WSARecv(conn->socket, &(conn->wsa_buffer), 1, &recv_bytes, &Flags, NULL, NULL) == SOCKET_ERROR) {
+          if (WSAGetLastError() != WSAEWOULDBLOCK) {
+            cerr << "WSARecv() failed : " << LastErrorToString();
+            FreeConnection(i);
+          }
+          continue;
         }
-        continue;
-      } else {
-        conn->bytes_recv = recv_bytes;
-         if (recv_bytes == 0) {
+        else if (recv_bytes == 0) {
           FreeConnection(i);
           continue;
+        }
+        conn->conn.input_buffer.CommitWrite(recv_bytes);
+        if (! HandleInput(conn->conn)) {
+          FreeConnection(i);
         }
       }
     }
     if (FD_ISSET(conn->socket, &write_set)) {
       total--;
-      conn->wsa_buffer.buf = conn->buffer + conn->bytes_send;
-      conn->wsa_buffer.len = conn->bytes_recv - conn->bytes_send;
-      string_view vv(conn->wsa_buffer.buf, conn->wsa_buffer.len);
-      HanldeCmd(ctx, vv);
-      if (WSASend(conn->socket, &(conn->wsa_buffer), 1, &send_bytes, 0, NULL, NULL) == SOCKET_ERROR) {
-        if (WSAGetLastError() != WSAEWOULDBLOCK) {
-          cerr << "WSASend() failed : " << LastErrorToString();
-          FreeConnection(i);
-        }
-        continue;
-      } else {
-        conn->bytes_send += send_bytes;
-        if (conn->bytes_send == conn->bytes_recv) {
-          conn->bytes_send = 0;
-          conn->bytes_recv = 0;
-        }
-      }
+      //DWORD send_bytes;
+      //conn->wsa_buffer.buf = 
+      //conn->wsa_buffer.len = 
+      //if (WSASend(conn->socket, &(conn->wsa_buffer), 1, &send_bytes, 0, NULL, NULL) == SOCKET_ERROR) {
+      //  if (WSAGetLastError() != WSAEWOULDBLOCK) {
+      //    cerr << "WSASend() failed : " << LastErrorToString();
+      //    FreeConnection(i);
+      //  }
+      //  continue;
+      //} else {
+      //   += send_bytes;
+      //}
     }
   }
 }

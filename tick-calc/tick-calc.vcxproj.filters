@@ -21,10 +21,10 @@
     <ClCompile Include="tick-data.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tick-calc-net.cpp">
+    <ClCompile Include="tick-net.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tick-calc-cmd.cpp">
+    <ClCompile Include="tick-cmd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -32,13 +32,19 @@
     <ClInclude Include="tick-calc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tick-calc-secmaster.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\taq-proc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\taq-time.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-conn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-secmaster.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
