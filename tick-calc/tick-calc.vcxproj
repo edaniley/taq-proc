@@ -161,6 +161,7 @@
     <ClInclude Include="tick-conn.h" />
     <ClInclude Include="tick-calc.h" />
     <ClInclude Include="tick-data.h" />
+    <ClInclude Include="tick-exec.h" />
     <ClInclude Include="tick-secmaster.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -17,7 +17,6 @@ using namespace Taq;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-
 static void test(tick_calc::AppContext& ctx) {
   //static int cnt;
   //Json::CharReaderBuilder builder;
@@ -62,7 +61,6 @@ static void test(tick_calc::AppContext& ctx) {
   //}
 
   try {
-    NetInitialize(ctx);
     for (;;) {
       NetPoll(ctx);
     }
@@ -160,6 +158,9 @@ int main(int argc, char **argv) {
     SetThreadCpuAffinity(ctx.cpu_cores[0]);
   }
   ctx.nbbo_data_manager = make_unique<tick_calc::RecordsetManager<Nbbo>>(ctx.in_data_dir);
+
+  tick_calc::InitializeFunctionDefinitions();
+  NetInitialize(ctx);
   test(ctx);
 
   cout << " In " __FILE__ "\n";

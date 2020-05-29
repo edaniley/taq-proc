@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\taq-proc">
+      <UniqueIdentifier>{eecd5c4b-428a-4c19-9249-d5fa8090b688}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tick-calc.cpp">
@@ -32,12 +35,6 @@
     <ClInclude Include="tick-calc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\taq-proc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\taq-time.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="tick-conn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -45,6 +42,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="tick-secmaster.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\taq-proc.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\taq-time.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-exec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

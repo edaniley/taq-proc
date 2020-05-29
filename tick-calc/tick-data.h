@@ -226,6 +226,13 @@ private:
   map<Date, unique_ptr<DayRecordset<T>>> daily_quotes_;
 };
 
+
+struct Record {
+  Record(int id) : id(id) {}
+  const int id;
+  vector<string> values;
+};
+
 }
 
 #endif

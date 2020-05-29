@@ -10,6 +10,7 @@
 #include <json/json.h>
 
 #include "taq-proc.h"
+#include "tick-exec.h"
 
 using namespace std;
 using namespace Taq;
@@ -26,7 +27,7 @@ public:
   }
   void Write(const char* data, size_t length) {
     if (AvailableSize() < length) {
-      throw overflow_error("tick_calc::LineBuffer overflow");
+      throw overflow_error("Input buffer overflow");
     }
     memcpy(write_ptr_, data, length);
     write_ptr_ += length;
@@ -59,19 +60,37 @@ private:
   char* write_ptr_;
 };
 
+struct Request {
+  Request() : input_cnt(0) {}
+  string id;
+  string separator;
+  string response_format;
+  vector<string> function_list;
+  vector<string> argument_list;
+  vector<string> result_list;
+  map<string, vector<int>> functions_argument_mapping;
+  bool input_sorted;
+  int input_cnt;
+};
+
 struct Connection {
-  Connection() : fd(-1), sep('|'), input_buffer(), request_buffer(), request_parsed(false), writable(false) {}
-  Connection(int fd) : fd(fd), sep('|'), input_buffer(), request_buffer(), request_parsed(false), writable(false){}
+#ifdef _MSC_VER
+  Connection() : fd(-1), request_buffer(), request_parsed(false), input_buffer(), input_record_cnt(0), writable(false) {}
+#endif
+  Connection(int fd) : fd(fd), request_buffer(), request_parsed(false), input_buffer(), input_record_cnt(0), writable(false) {}
   int fd;
-  char sep;
-  LineBuffer<1024*10> input_buffer;
-  stringstream request_buffer;
-  Json::Value request;
-  bool request_parsed;
+  Request       request;
+  stringstream  request_buffer;
+  Json::Value   request_json;
+  bool          request_parsed;
+  LineBuffer<1024 * 10> input_buffer;
+  int           input_record_cnt;
+  vector<unique_ptr<ExecutionPlan>> exec_plans;
   bool writable;
 };
 
-bool HandleInput(Connection& conn);
+void HandleInput(Connection& conn);
+
 }
 
 #endif

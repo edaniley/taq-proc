@@ -7,7 +7,6 @@
 
 #include "taq-proc.h"
 #include "tick-data.h"
-#include "tick-data.h"
 
 using namespace std;
 using namespace Taq;
@@ -23,6 +22,7 @@ struct AppContext {
   unique_ptr<RecordsetManager<Trade>> trade_data_manager;
 };
 
+void InitializeFunctionDefinitions();
 void NetInitialize(AppContext &);
 void NetPoll(AppContext &);
 
