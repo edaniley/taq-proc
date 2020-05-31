@@ -103,6 +103,10 @@ int main(int argc, char **argv) {
   po::notify(vm);
   if (vm.count("help")) {
     cout << desc << endl;
+    cout << "size of Nbbo:" << sizeof(Nbbo) << endl;
+    cout << "size of Trade:" << sizeof(Trade) << endl;
+    cout << "size of FileHeader:" << sizeof(FileHeader) << endl;
+    cout << "size of SymbolMap:" << sizeof(SymbolMap) << endl;
     return 1;
   } if (false == ValidateCmdArgs(ctx)) {
     return 2;

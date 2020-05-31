@@ -151,9 +151,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="tick-calc.cpp" />
-    <ClCompile Include="tick-cmd.cpp" />
     <ClCompile Include="tick-data.cpp" />
+    <ClCompile Include="tick-exec.cpp" />
+    <ClCompile Include="tick-func-quote.cpp" />
     <ClCompile Include="tick-net.cpp" />
+    <ClCompile Include="tick-test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\taq-proc.h" />
@@ -162,6 +164,7 @@
     <ClInclude Include="tick-calc.h" />
     <ClInclude Include="tick-data.h" />
     <ClInclude Include="tick-exec.h" />
+    <ClInclude Include="tick-func.h" />
     <ClInclude Include="tick-secmaster.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

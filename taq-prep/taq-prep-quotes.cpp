@@ -192,7 +192,7 @@ static bool ValidateInputRecord(const vector<string> & row) {
 int ProcessQuotes(AppContext & ctx, istream & is) {
   vector<SymbolMap> symbol_map;
   SymbolMap * current = nullptr;
-  size_t rec_cnt = 0;
+  int rec_cnt = 0;
   ctx.output.write((const char*)&ctx.output_file_hdr, sizeof(ctx.output_file_hdr));
   while (false == is.eof()) {
     string line;
@@ -223,7 +223,7 @@ int ProcessQuotes(AppContext & ctx, istream & is) {
   for (const auto & sm : symbol_map) {
     ctx.output.write((const char*)&sm, sizeof(sm));
   }
-  ctx.output_file_hdr.symb_cnt = symbol_map.size();
+  ctx.output_file_hdr.symb_cnt = (int)symbol_map.size();
   ctx.output_file_hdr.rec_cnt = rec_cnt;
   ctx.output_file_hdr.type = RecordType::Nbbo;
   return 0;

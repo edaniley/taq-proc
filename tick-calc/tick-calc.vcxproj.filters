@@ -27,7 +27,13 @@
     <ClCompile Include="tick-net.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tick-cmd.cpp">
+    <ClCompile Include="tick-exec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-func-quote.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -51,6 +57,9 @@
       <Filter>Header Files\taq-proc</Filter>
     </ClInclude>
     <ClInclude Include="tick-exec.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-func.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

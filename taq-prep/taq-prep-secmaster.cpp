@@ -74,8 +74,8 @@ int ProcessSecMaster(AppContext & ctx, istream & is) {
       cerr << "record-cnt:" << sec_list.size() << " err-text" << ex.what() << endl;
     }
   }
-  ctx.output_file_hdr.symb_cnt = sec_list.size();
-  ctx.output_file_hdr.rec_cnt = sec_list.size();
+  ctx.output_file_hdr.symb_cnt = (int)sec_list.size();
+  ctx.output_file_hdr.rec_cnt = (int)sec_list.size();
   ctx.output_file_hdr.type = RecordType::SecMaster;
   ctx.output.write((const char*)&ctx.output_file_hdr, sizeof(ctx.output_file_hdr));
   for (const Security& sec_out : sec_list) {

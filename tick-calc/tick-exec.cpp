@@ -4,20 +4,20 @@
 #endif
 #include <iostream>
 #include <exception>
-#include <list>
+#include <chrono>
+#include <cstdlib>
 #include <boost/algorithm/string.hpp>
 #include "tick-calc.h"
 #include "tick-conn.h"
 #include "tick-data.h"
 #include "tick-exec.h"
+#include "tick-func.h"
 
 using namespace std;
 using namespace Taq;
 
 namespace tick_calc {
 
-list<ExecutionUnit> todo_list;
-list<ExecutionUnit> done_list;
 
 static map<string, FunctionDefinition> function_definitions;
 
@@ -25,15 +25,30 @@ void InitializeFunctionDefinitions() {
   function_definitions.insert(make_pair("TestLoad", FunctionDefinition(
     vector<string> {"Function", "Symbol", "Date"}, vector<string> {"Result", "ErrMsg"})));
 
-  function_definitions.insert(make_pair("Quotes", FunctionDefinition(
+  function_definitions.insert(make_pair("QuoteDump", FunctionDefinition(
     vector<string> {"Symbol", "Date", "StartTime", "EndTime"},
     vector<string> {"BidPrice", "BidSize", "OfferPrice", "OfferSize"})));
 
   function_definitions.insert(make_pair("Quote", FunctionDefinition(
-    vector<string> {"Symbol", "Date", "Time"},
+    vector<string> {"Symbol", "Timestamp"},
     vector<string> {"BidPrice", "BidSize", "OfferPrice", "OfferSize"})));
 }
-static void LoadExecutionPlan(Connection& conn);
+
+static void LoadExecutionPlan(Connection& conn) {
+  const Request& request = conn.request;
+  for (const string& function_name : request.function_list) {
+    const auto it = request.functions_argument_mapping.find(function_name);
+    if (it == request.functions_argument_mapping.end()) {
+      throw invalid_argument("Not implemented function:" + function_name);
+    }
+    else if (function_name == "Quote") {
+      conn.exec_plans.push_back(make_unique<QuoteExecutionPlan>(it->second, request.separator, request.input_sorted));
+    }
+    else if (function_name == "TestLoad") {
+      conn.exec_plans.push_back(make_unique<TestLoad>(it->second, request.separator, request.input_sorted));
+    }
+  }
+}
 
 static void ValidateRequest(Connection& conn) {
   for (string &function_name : conn.request.function_list) {
@@ -78,24 +93,22 @@ static void ParseRequest(Connection& conn) {
     for (auto val : conn.request_json["argument_list"]) {
       conn.request.argument_list.push_back(val.asString());
     }
-    for (auto val : conn.request_json["result_list"]) {
-      conn.request.result_list.push_back(val.asString());
-    }
     ValidateRequest(conn);
     LoadExecutionPlan(conn);
     conn.request_parsed = true;
   }
 }
 
-
-void HandleInput(Connection & conn) {
+void ConnectionPushInput(Connection & conn) {
   string line = conn.input_buffer.ReadLine();
   while (line.size()) {
     if (!conn.request_parsed) {
+      // accumulate lines in a buffer and attempt to parse json
+      // after parsing succeeds the request is validated and execution plan is loaded
       conn.request_buffer << line;
       ParseRequest(conn);
-    } else {
-      Record record(++ conn.input_record_cnt);
+    } else { // all subsequent lines represent input records
+      InputRecord record(++ conn.input_record_cnt);
       boost::split(record.values, line, boost::is_any_of(conn.request.separator));
       for (auto & plan : conn.exec_plans) {
         plan->Input(record);
@@ -104,8 +117,6 @@ void HandleInput(Connection & conn) {
         for (auto& plan : conn.exec_plans) {
           plan->Execute();
         }
-        // ready for processing
-        cout << "Done" << endl;
       }
     }
     line = conn.input_buffer.ReadLine();
@@ -113,42 +124,122 @@ void HandleInput(Connection & conn) {
   conn.input_buffer.FinishReading();
 }
 
-
-void print_cmd(int id, const string& function, const string& symbol, Date date) {
-  cout << "id:" << id << " function:" << function << " symbol:" << symbol << " date:"
-    << boost::gregorian::to_iso_extended_string(date) << endl;
+void ConnectionPullOutput(Connection &conn) {
+  if (!conn.output_ready) {
+    bool output_ready = true;//conn.exec_plans.size() > 0;
+    int count = 0;
+    for (auto & exec_plan : conn.exec_plans) {
+      for (auto& exec_unit : exec_plan->todo_list) {
+        output_ready &= exec_unit->ready.load();
+        count++;
+      }
+    }
+    conn.output_ready = output_ready && count>0;
+  }
+  if (conn.output_ready) {
+    for (auto& exec_plan : conn.exec_plans) {
+      for (auto & exec_unit : exec_plan->todo_list)
+        for (auto & rec : exec_unit->output_records) {
+          cout << "from pull id:" << rec.id << " content:[" << rec.value << "]\n";
+      }
+    }
+    conn.exec_plans.clear();
+  }
 }
-class TestLoad : public ExecutionPlan {
-  // argument list: "Function", "Symbol", "Date"
-public:
-  TestLoad(const vector<int>& argument_mapping, bool sorted_input = true)
-    : ExecutionPlan(argument_mapping, sorted_input) {}
-  void Input(const Record& input_record) override {
-    const string& function = input_record.values[argument_mapping[0]];
-    const string& symbol = input_record.values[argument_mapping[1]];
-    const Date date = MkTaqDate(input_record.values[argument_mapping[2]]);
-    arguments.push_back(make_tuple(input_record.id, function, symbol, date));
-  };
-  void Execute() override {
-    for (const auto arg : arguments) {
-      apply(print_cmd, arg);
-    }
-  }
-private:
-  vector<tuple<int, string, string, Date>> arguments;
-};
 
-static void LoadExecutionPlan(Connection & conn) {
-  const Request& request = conn.request;
-  for (const string & function_name : request.function_list) {
-    const auto it = request.functions_argument_mapping.find(function_name);
-    if (it == request.functions_argument_mapping.end()) {
-      throw invalid_argument("Not implemented function:" + function_name);
-    }
-    else if (function_name == "TestLoad") {
-      conn.exec_plans.push_back(make_unique<TestLoad>(it->second, request.input_sorted));
-    }
+/* ===================================================== page ========================================================*/
+
+static ProducerConsumerQueue<ExecutionUnit> exec_queue;
+static vector<thread> thread_pool;
+
+string CurrentTimestamp() {
+  auto now = chrono::system_clock::now();
+  auto in_time_t = chrono::system_clock::to_time_t(now);
+  ostringstream ss;
+  tm out_tm;
+  localtime_s(&out_tm, &in_time_t);
+  ss << put_time(&out_tm, "%Y-%m-%d %X");
+  return ss.str();
+}
+
+
+vector<int> AvailableCpuCores(string& cpu_list) {
+  vector<int> cores;
+  vector<string> tokens;
+  boost::split(tokens, cpu_list, boost::is_any_of(","));
+  for (const string& token : tokens) {
+    if (!token.empty()) {
+      vector<string> range;
+      boost::split(range, token, boost::is_any_of("-"));
+      if (range.size() == 1) {
+        cores.push_back(stoi(token.c_str()));
+      }
+      else if (range.size() == 2) {
+        for (int core = stoi(range[0].c_str()); core <= stoi(range[1].c_str()); core++) {
+          cores.push_back(core);
+        }
+      }
+}
   }
+  int num_cores = thread::hardware_concurrency();
+  auto it = remove_if(cores.begin(), cores.end(), [num_cores](int core) {return core >= num_cores; });
+  cores.resize(cores.size() - distance(it, cores.end()));
+  sort(cores.begin(), cores.end(), less<int>());
+  return vector<int>(cores.begin(), unique(cores.begin(), cores.end()));
+}
+
+bool SetThreadCpuAffinity(int cpu_core) {
+#ifdef _MSC_VER
+  bool success = SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)1 << cpu_core) != 0;
+#else
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(core, &cpuset);
+  bool success = sched_setaffinity(0, sizeof(cpuset), &cpuset) == 0;
+#endif
+  if (success) {
+    cout << "Pinned current thread:" << this_thread::get_id() << " cpu-core:" << cpu_core << endl;
+  }
+  return success;
+}
+
+void ExecutionThread(int cpu_core) {
+  cout << CurrentTimestamp() << " thread:" << this_thread::get_id() << " started" << endl;
+  if (cpu_core != 1) {
+    SetThreadCpuAffinity(cpu_core);
+  }
+  while (true) {
+    shared_ptr<ExecutionUnit> job = exec_queue.Dequeue();
+    if (!job.get()) {
+      break;
+    }
+    job->Execute();
+    job->ready.store(true);
+  }
+}
+
+void CreateThreads(const vector<int> & cpu_cores) {
+  if (cpu_cores.size() > 1) {
+    for (int i = 1; i < cpu_cores.size(); i ++) {
+      thread_pool.push_back(thread(ExecutionThread, cpu_cores[i]));
+    }
+  } else {
+    thread_pool.push_back(thread(ExecutionThread, -1));
+  }
+}
+
+void DestroyThreads() {
+  for (int i = 0; i < thread_pool.size(); i++) {
+    shared_ptr<ExecutionUnit> exit_job;
+    exec_queue.Enqueue(exit_job);
+  }
+  for (int i = 0; i < thread_pool.size(); i++) {
+    thread_pool[i].join();
+  }
+}
+
+void AddExecutionUnit(shared_ptr<ExecutionUnit> & job) {
+  exec_queue.Enqueue(job);
 }
 
 }

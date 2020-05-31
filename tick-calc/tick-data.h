@@ -227,11 +227,29 @@ private:
 };
 
 
-struct Record {
-  Record(int id) : id(id) {}
+struct InputRecord {
+  InputRecord(int id) : id(id) {}
   const int id;
   vector<string> values;
 };
+
+typedef vector<InputRecord> InputRecordSet;
+
+struct InputRecordRange {
+  InputRecordRange(const InputRecordSet& records, size_t first, size_t end)
+    : records(records), first(first), end(end) {}
+  const InputRecordSet& records;
+  size_t first;
+  size_t end;
+};
+
+struct OutputRecord {
+  OutputRecord(int id) : id(id) {}
+  OutputRecord(int id, const string &value) : id(id), value(value){}
+  const int id;
+  string value;
+};
+typedef vector<OutputRecord> OutputRecordset;
 
 }
 

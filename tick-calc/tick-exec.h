@@ -3,12 +3,15 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <atomic>
 #include <functional>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include "taq-proc.h"
 #include "tick-data.h"
-#include "tick-conn.h"
 
 using namespace std;
 using namespace Taq;
@@ -22,31 +25,71 @@ struct FunctionDefinition {
   const vector<string> result_field_names;
 };
 
+template <typename T>
+class ProducerConsumerQueue {
+public:
+  void Enqueue(shared_ptr<T> obj) {
+    unique_lock<mutex> lock(mtx_);
+    que_.push_back(obj);
+    cv_.notify_one();
+  }
+  shared_ptr<T> Dequeue() {
+    unique_lock<mutex> lock(mtx_);
+    while (que_.size() == 0) {
+      cv_.wait(lock);
+    }
+    shared_ptr<T> obj = que_.front();
+    que_.pop_front();
+    return obj;
+  }
+  size_t Purge() {
+    unique_lock<mutex> lock(mtx_);
+    const size_t purged = Size();
+    que_.clear();
+    return purged;
+  }
+  size_t Size() const { return que_.size(); }
+  bool Empty() const { return Size() == 0; }
+private:
+  mutex mtx_;
+  condition_variable cv_;
+  list<shared_ptr<T>> que_;
+};
+
+class ExecutionUnit {
+public:
+  ExecutionUnit() : output_record_done(0) {ready.store(false);
+  cout << "+ ExecutionUnit" << endl;}
+  virtual ~ExecutionUnit() { cout << "- ExecutionUnit" << endl; };
+  virtual void Execute() = 0;
+  atomic<bool> ready;
+  size_t output_record_done;
+  OutputRecordset output_records;
+};
 
 class ExecutionPlan {
 public:
-  ExecutionPlan(const vector<int>& argument_mapping, bool sorted_input = true) :
-    argument_mapping(argument_mapping), sorted_input(sorted_input) {}
-  virtual ~ExecutionPlan() {};
-  virtual void Input(const Record&) = 0;
+  ExecutionPlan(const vector<int>& argument_mapping, const string &field_separator, bool sorted_input = true) :
+    argument_mapping(argument_mapping), field_separator(field_separator), sorted_input(sorted_input) { cout << "+ ExecutionPlan" << endl; }
+  virtual ~ExecutionPlan() {cout << "- ExecutionPlan" << endl;};
+  virtual void Input(InputRecord&) = 0;
   virtual void Execute() = 0;
-protected:
-  bool sorted_input;
-  vector<int> argument_mapping;
+//protected:
+  const string field_separator;
+  const bool sorted_input;
+  const vector<int> argument_mapping;
+  vector<shared_ptr<ExecutionUnit>> todo_list;
+  vector<shared_ptr<ExecutionUnit>> done_list;
 };
 
-
-struct ExecutionUnit {
-  ExecutionUnit() {
-    ready.store(false);
-  }
-  typedef vector<string> ValueSet;
-  function<void(const Record &)> init;
-  function<void(const Record &)> exec;
-  vector<Record> input_recordset;
-  vector<Record> result_recordset;
-  atomic<bool> ready;
-};
+// public routines
+void InitializeFunctionDefinitions();
+vector<int> AvailableCpuCores(string& cpu_list);
+bool SetThreadCpuAffinity(int cpu_core);
+void ExecutionThread(int core);
+void CreateThreads(const vector<int> &cpu_cores);
+void DestroyThreads();
+void AddExecutionUnit(shared_ptr<ExecutionUnit> &);
 
 }
 

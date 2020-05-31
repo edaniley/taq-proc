@@ -67,17 +67,15 @@ struct Request {
   string response_format;
   vector<string> function_list;
   vector<string> argument_list;
-  vector<string> result_list;
   map<string, vector<int>> functions_argument_mapping;
   bool input_sorted;
   int input_cnt;
 };
 
 struct Connection {
-#ifdef _MSC_VER
-  Connection() : fd(-1), request_buffer(), request_parsed(false), input_buffer(), input_record_cnt(0), writable(false) {}
-#endif
-  Connection(int fd) : fd(fd), request_buffer(), request_parsed(false), input_buffer(), input_record_cnt(0), writable(false) {}
+  Connection() : fd(-1), request_buffer(), request_parsed(false), input_buffer(), input_record_cnt(0),
+    output_data(output_buffer), output_size(0), output_ready(false), exit_ready(false) {}
+  Connection(int fd) : Connection() {this->fd = fd;}
   int fd;
   Request       request;
   stringstream  request_buffer;
@@ -86,10 +84,15 @@ struct Connection {
   LineBuffer<1024 * 10> input_buffer;
   int           input_record_cnt;
   vector<unique_ptr<ExecutionPlan>> exec_plans;
-  bool writable;
+  char          output_buffer[1024*10];
+  const char *  output_data;
+  int           output_size;
+  bool          output_ready;
+  bool          exit_ready;
 };
 
-void HandleInput(Connection& conn);
+void ConnectionPushInput(Connection& conn);
+void ConnectionPullOutput(Connection& conn);
 
 }
 

@@ -77,7 +77,8 @@ void NetPoll(AppContext &) {
   FD_ZERO(&write_set);
   FD_SET(listen_socket, &read_set);
   for (DWORD i = 0; i < conn_count; i++) {
-    if (connections[i]->conn.writable) {
+    ConnectionPullOutput(connections[i]->conn);
+    if (connections[i]->conn.output_ready && connections[i]->conn.output_size > 0) {
       FD_SET(connections[i]->socket, &write_set);
     }
     FD_SET(connections[i]->socket, &read_set);
@@ -126,7 +127,7 @@ void NetPoll(AppContext &) {
         }
         input_buffer.CommitWrite(byte_cnt);
         try {
-          HandleInput(conn->conn);
+          ConnectionPushInput(conn->conn);
         } catch (exception & ex) {
           // to-do compose json response
           //ostringstream ss;
@@ -157,6 +158,7 @@ void NetPoll(AppContext &) {
     }
   }
 }
+
 
 #endif
 

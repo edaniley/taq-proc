@@ -48,6 +48,8 @@ namespace taq_prep
     MCOL_Tick_Pilot_Indicator,
     MCOL_Effective_Date,
     MCOL_TradedOnLTSE,
+    MCOL_TradedOnMEMX,
+    MCOL_TradedOnMIAX,
     MCOL_Max
   };
 

@@ -16,6 +16,7 @@ enum Exchange {
   Exch_B = 'B' - 'A',// NASDAQ OMX BX,Inc. (NASDAQ OMX BX)
   Exch_C = 'C' - 'A',// NYSE National,Inc. (NYSE National)
   Exch_D = 'D' - 'A',// FINRA Alternative Display Facility (ADF)
+  Exch_H = 'H' - 'A',// MIAX Pearl, LLC (MIAX)
   Exch_I = 'I' - 'A',// International Securities Exchange, LLC (ISE)
   Exch_J = 'J' - 'A',// Cboe EDGA Exchange (Cboe EDGA)
   Exch_K = 'K' - 'A',// Cboe EDGX Exchange (Cboe EDGX)
@@ -26,6 +27,7 @@ enum Exchange {
   Exch_S = 'S' - 'A',// Consolidated Tape System (CTS)
   Exch_T = 'T' - 'A',// NASDAQ Stock Market,LLC (in Tape A,B securities)(NASDAQ)
   Exch_Q = 'Q' - 'A',// NASDAQ Stock Exchange,LLC (in Tape C securities)
+  Exch_U = 'U' - 'A',// Members Exchange (MEMX)
   Exch_V = 'V' - 'A',// The Investors’ Exchange,LLC (IEX)
   Exch_W = 'W' - 'A',// Chicago Broad Options Exchange,Inc. (CBSX)
   Exch_X = 'X' - 'A',// NASDAQ OMX PSX,Inc. (NASDAQ OMX PSX)
@@ -82,21 +84,21 @@ struct Trade {
 
 struct SymbolMap {
   Symbol symb;
-  size_t start;
-  size_t end;
-  SymbolMap(const std::string &symbol, size_t start, size_t end) : start(start), end(end) {
+  int start;
+  int end;
+  SymbolMap(const std::string &symbol, int start, int end) : start(start), end(end) {
     ::strncpy_s(symb, sizeof(symb), symbol.c_str(), sizeof(symb) - 1);
   }
 };
 
 struct FileHeader {
-  const size_t size;
+  const int size;
   RecordType type;
   const int version;
   const Date date;
-  size_t symb_cnt;
-  size_t rec_cnt;
-  FileHeader(int version) : size(sizeof(FileHeader)), type(RecordType::NA), version(version), symb_cnt(0), rec_cnt(0) { }
+  int symb_cnt;
+  int rec_cnt;
+  FileHeader(int version) : size((int)sizeof(FileHeader)), type(RecordType::NA), version(version), symb_cnt(0), rec_cnt(0) { }
 };
 
 
