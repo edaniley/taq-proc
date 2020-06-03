@@ -176,7 +176,7 @@ static bool UpdateNbbo(const string & timestamp, const string & symbol, const st
 }
 /* ===================================================== page ========================================================*/
 static bool ValidateInputRecord(const vector<string> & row) {
-  if (row[QCOL_Time] == "Time")
+  if (row[0] == "Time" || row[0] == "END" || row[0].size() == 0)
     return false;
   if (row.size() != QCOL_Max) {
     ostringstream ss;
@@ -199,8 +199,6 @@ int ProcessQuotes(AppContext & ctx, istream & is) {
     getline(is, line);
     vector<string> row;
     boost::split(row, line, boost::is_any_of("|"));
-    if (row[0] == "END")
-      break;
     if (ValidateInputRecord(row)) {
       Bbo bbo(row);
       ValidateQuote(row, bbo);
