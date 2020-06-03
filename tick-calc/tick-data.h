@@ -246,10 +246,33 @@ struct InputRecordRange {
 struct OutputRecord {
   OutputRecord(int id) : id(id) {}
   OutputRecord(int id, const string &value) : id(id), value(value){}
-  const int id;
+  int id;
   string value;
 };
 typedef vector<OutputRecord> OutputRecordset;
+
+template <int SIZE>
+class OutputBuffer {
+public:
+  OutputBuffer() { Reset(); }
+  char* Data() const { return read_ptr_; }
+  int DataSize() const { return (int)(write_ptr_ - read_ptr_); }
+  int AvailableSize() const { return SIZE - DataSize(); }
+  int Write(const char* data, int datalen) {
+    int write_size = std::min(AvailableSize(), datalen);
+    memcpy(write_ptr_, data, write_size);
+    write_ptr_ += write_size;
+    return write_size;
+  }
+  char* WritePtr() { return write_ptr_; }
+  void CommitWrite(int write_size) { write_ptr_ += write_size; }
+  void CommitRead(int read_size) { read_ptr_ += read_size; }
+  void Reset() { read_ptr_ = write_ptr_ = data_; }
+private:
+  char data_[SIZE];
+  char* read_ptr_;
+  char* write_ptr_;
+};
 
 }
 

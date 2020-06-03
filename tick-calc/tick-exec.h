@@ -58,28 +58,31 @@ private:
 
 class ExecutionUnit {
 public:
-  ExecutionUnit() : output_record_done(0) {ready.store(false);
-  cout << "+ ExecutionUnit" << endl;}
+  ExecutionUnit() { done.store(false); cout << "+ ExecutionUnit" << endl;}
   virtual ~ExecutionUnit() { cout << "- ExecutionUnit" << endl; };
   virtual void Execute() = 0;
-  atomic<bool> ready;
-  size_t output_record_done;
+  atomic<bool> done;
   OutputRecordset output_records;
 };
 
 class ExecutionPlan {
 public:
+  enum class State {Busy, OuputReady, Done};
   ExecutionPlan(const vector<int>& argument_mapping, const string &field_separator, bool sorted_input = true) :
-    argument_mapping(argument_mapping), field_separator(field_separator), sorted_input(sorted_input) { cout << "+ ExecutionPlan" << endl; }
+    argument_mapping(argument_mapping), field_separator(field_separator),
+    sorted_input(sorted_input), output_records_done(0) { cout << "+ ExecutionPlan" << endl; }
   virtual ~ExecutionPlan() {cout << "- ExecutionPlan" << endl;};
   virtual void Input(InputRecord&) = 0;
   virtual void Execute() = 0;
-//protected:
+  virtual State CheckState() = 0;
+  virtual int PullOutput(char * buffer, int available_size) = 0;
   const string field_separator;
   const bool sorted_input;
   const vector<int> argument_mapping;
   vector<shared_ptr<ExecutionUnit>> todo_list;
   vector<shared_ptr<ExecutionUnit>> done_list;
+  OutputRecordset output_records;
+  size_t output_records_done;
 };
 
 // public routines

@@ -27,13 +27,14 @@ class QuoteExecutionPlan : public ExecutionPlan {
     const string symbol;
     const Date date;
     const vector<InputRecord> input_records;
-    //vector <OutputRecord> output_records;
   };
 public:
   QuoteExecutionPlan(const vector<int>& argument_mapping, const string& field_separator, bool sorted_input = true)
     : ExecutionPlan(argument_mapping, field_separator, sorted_input) {}
   void Input(InputRecord& input_record) override;
   void Execute() override;
+  State CheckState() override ;
+  int PullOutput(char* buffer, int available_size) override;
 private:
   typedef pair<string, Date> SymbolDateKey;
   typedef vector<QuoteExecutionUnit::InputRecord> InputRecordRange;
@@ -47,6 +48,8 @@ public:
     : ExecutionPlan(argument_mapping, field_separator, sorted_input) {}
   void Input(InputRecord& input_record) override;
   void Execute() override;
+  State CheckState() override {return ExecutionPlan::State::Done; }
+  int PullOutput(char*, int) override {return 0;}
 private:
   InputRecordSet intput_records;
 };

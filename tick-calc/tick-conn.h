@@ -73,8 +73,7 @@ struct Request {
 };
 
 struct Connection {
-  Connection() : fd(-1), request_buffer(), request_parsed(false), input_buffer(), input_record_cnt(0),
-    output_data(output_buffer), output_size(0), output_ready(false), exit_ready(false) {}
+  Connection() : fd(-1), request_buffer(), request_parsed(false), input_record_cnt(0), exit_ready(false) {}
   Connection(int fd) : Connection() {this->fd = fd;}
   int fd;
   Request       request;
@@ -84,10 +83,7 @@ struct Connection {
   LineBuffer<1024 * 10> input_buffer;
   int           input_record_cnt;
   vector<unique_ptr<ExecutionPlan>> exec_plans;
-  char          output_buffer[1024*10];
-  const char *  output_data;
-  int           output_size;
-  bool          output_ready;
+  OutputBuffer< 1024 * 10>  output_buffer;
   bool          exit_ready;
 };
 

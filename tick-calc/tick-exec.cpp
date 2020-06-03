@@ -81,7 +81,7 @@ static void ParseRequest(Connection& conn) {
   const unique_ptr<Json::CharReader> reader(builder.newCharReader());
   const string json_text =  conn.request_buffer.str();
   if (reader->parse(json_text.c_str(), json_text.c_str() + json_text.size(), &conn.request_json, &err)) {
-    cout << conn.request_json;
+    cout << conn.request_json << endl;
     conn.request.id = conn.request_json["request_id"].asString();
     conn.request.separator = conn.request_json["separator"].asString();
     conn.request.response_format = conn.request_json["response_format"].asString();
@@ -125,26 +125,22 @@ void ConnectionPushInput(Connection & conn) {
 }
 
 void ConnectionPullOutput(Connection &conn) {
-  if (!conn.output_ready) {
-    bool output_ready = true;//conn.exec_plans.size() > 0;
-    int count = 0;
-    for (auto & exec_plan : conn.exec_plans) {
-      for (auto& exec_unit : exec_plan->todo_list) {
-        output_ready &= exec_unit->ready.load();
-        count++;
+  size_t count_done = 0;
+  for (auto & exec_plan : conn.exec_plans) {
+    const ExecutionPlan::State state = exec_plan->CheckState();
+    if (state == ExecutionPlan::State::Done) {
+      count_done ++;
+      continue;
+    }
+    if (state == ExecutionPlan::State::OuputReady) {
+      if (const int available_size = conn.output_buffer.AvailableSize() ) {
+        const int size_read = exec_plan->PullOutput(conn.output_buffer.WritePtr(), available_size);
+        conn.output_buffer.CommitWrite(size_read);
       }
     }
-    conn.output_ready = output_ready && count>0;
+    break;
   }
-  if (conn.output_ready) {
-    for (auto& exec_plan : conn.exec_plans) {
-      for (auto & exec_unit : exec_plan->todo_list)
-        for (auto & rec : exec_unit->output_records) {
-          cout << "from pull id:" << rec.id << " content:[" << rec.value << "]\n";
-      }
-    }
-    conn.exec_plans.clear();
-  }
+  conn.exit_ready = count_done > 0 && count_done == conn.exec_plans.size();
 }
 
 /* ===================================================== page ========================================================*/
@@ -214,7 +210,7 @@ void ExecutionThread(int cpu_core) {
       break;
     }
     job->Execute();
-    job->ready.store(true);
+    job->done.store(true);
   }
 }
 
