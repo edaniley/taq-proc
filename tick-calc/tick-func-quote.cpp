@@ -12,14 +12,26 @@ using namespace Taq;
 namespace tick_calc {
 
 void QuoteExecutionPlan::QuoteExecutionUnit::Execute() {
-  ostringstream ss;
-  ss << "thread-id:" << this_thread::get_id() << " type_name:"  << typeid(*this).name()
-       << " symbol: " << symbol << " date:" << boost::gregorian::to_iso_extended_string(date)
-       << " size:" << input_records.size() << endl;
-  //cout << " from worker  " << ss.str() << endl;
-  output_records.push_back(OutputRecord(1, ss.str()));
-  //for (auto rec : input_records) {
-  //}
+  auto & quote_mgr = QuoteRecordsetManager();
+  const tick_calc::SymbolRecordset<Nbbo>& symbol_recordset = quote_mgr.LoadSymbolRecordset(date, symbol);
+  auto & quotes = symbol_recordset.records;
+  auto it = quotes.begin();
+  for (auto rec : input_records) {
+    it = quotes.lower_bound(it, quotes.end(), rec.time);
+    ostringstream ss;
+    if (it != quotes.end()) {
+      if (rec.time < it->time && it != quotes.begin()) {
+        --it;
+      }
+      ss << "id:" << rec.id << " " << " time:" << rec.time << " quote-time:" << it->time
+        << " bidp:" << it->bidp << " bids:" << it->bids
+        << " askp:" << it->askp << " asks:" << it->asks << endl;
+    } else {
+      ss << "id:" << rec.id << " time" << boost::posix_time::to_iso_string(rec.time) << " quote not found" << endl;
+    }
+    output_records.push_back(OutputRecord(rec.id, ss.str()));
+  }
+  quote_mgr.UnloadSymbolRecordset(date, symbol);
 }
 
 void QuoteExecutionPlan::Input(InputRecord& input_record) {

@@ -19,6 +19,9 @@ namespace tick_calc {
 struct WinConnection {
   SOCKET socket;
   Connection conn;
+  ~WinConnection() {
+    cout << "- WinConnection" << endl;
+  }
 };
 
 DWORD conn_count = 0;
@@ -34,14 +37,14 @@ string LastErrorToString() {
   return (0 == wcstombs_s(&ret, buffer, wbuffer, sizeof(buffer) - 1)) ? string(buffer) : string();
 }
 
-void NetInitialize(AppContext &ctx) {
+void NetInitialize(AppAruments & args) {
   WSADATA wsaData;
   WSAStartup(0x0202, &wsaData);
   listen_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
   SOCKADDR_IN inet_addr;
   inet_addr.sin_family = AF_INET;
   inet_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  inet_addr.sin_port = htons(ctx.in_port);
+  inet_addr.sin_port = htons(args.in_port);
   if (::bind(listen_socket, (PSOCKADDR)&inet_addr, sizeof(inet_addr)) == SOCKET_ERROR){
     throw runtime_error(LastErrorToString());
   }
@@ -70,7 +73,7 @@ void FreeConnection(DWORD idx) {
   conn_count--;
 }
 
-void NetPoll(AppContext &) {
+void NetPoll(AppAruments&) {
   FD_SET write_set;
   FD_SET read_set;
   FD_ZERO(&read_set);
@@ -161,7 +164,11 @@ void NetPoll(AppContext &) {
         }
         continue;
       } else {
-        conn.output_buffer.CommitRead(send_bytes);
+        if (send_bytes == (DWORD)conn.output_buffer.DataSize()) {
+          conn.output_buffer.Reset();
+        } else {
+          conn.output_buffer.CommitRead(send_bytes);
+        }
       }
     }
   }

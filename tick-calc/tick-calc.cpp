@@ -20,9 +20,9 @@ using namespace Taq;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-static bool ValidateCmdArgs(tick_calc::AppContext & ctx) {
-  if (false == (fs::exists(ctx.in_data_dir) && fs::is_directory(ctx.in_data_dir)) ) {
-    cerr << "Invalid --data-dir: " << ctx.in_data_dir << endl;
+static bool ValidateCmdArgs(tick_calc::AppAruments& args) {
+  if (false == (fs::exists(args.in_data_dir) && fs::is_directory(args.in_data_dir)) ) {
+    cerr << "Invalid --data-dir: " << args.in_data_dir << endl;
     return false;
   }
   return true;
@@ -35,13 +35,13 @@ void ExitSignalHandler(int) {
 
 int main(int argc, char **argv) {
   int retval = 0;
-  tick_calc::AppContext ctx;
+  tick_calc::AppAruments args;
   po::options_description desc("program options");
   desc.add_options()
     ("help,h", "produce help message")
-    ("data-dir,d", po::value<string>(&ctx.in_data_dir)->default_value("."), "output directory")
-    ("-tcp,t", po::value<uint16_t>(&ctx.in_port)->default_value(21090), "TCP port")
-    ("-cpu,c", po::value<string>(&ctx.in_cpu_list), "CPU core list to pin threads")
+    ("data-dir,d", po::value<string>(&args.in_data_dir)->default_value("."), "output directory")
+    ("-tcp,t", po::value<uint16_t>(&args.in_port)->default_value(21090), "TCP port")
+    ("-cpu,c", po::value<string>(&args.in_cpu_list), "CPU core list to pin threads")
     ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -49,28 +49,29 @@ int main(int argc, char **argv) {
   if (vm.count("help")) {
     cout << desc << endl;
     return 1;
-  } if (false == ValidateCmdArgs(ctx)) {
+  } if (false == ValidateCmdArgs(args)) {
     return 2;
   }
-  vector<int> cpu_cores = tick_calc::AvailableCpuCores(ctx.in_cpu_list);
+  vector<int> cpu_cores = tick_calc::AvailableCpuCores(args.in_cpu_list);
   if (cpu_cores.size() > 1) {
     tick_calc::SetThreadCpuAffinity(cpu_cores[0]);
   }
-  ctx.nbbo_data_manager = make_unique<tick_calc::RecordsetManager<Nbbo>>(ctx.in_data_dir);
 
+  tick_calc::InitializeData(args.in_data_dir);
   tick_calc::InitializeFunctionDefinitions();
-  NetInitialize(ctx);
+  NetInitialize(args);
   tick_calc::CreateThreads(cpu_cores);
   signal(SIGTERM, ExitSignalHandler);
   try {
     while (!exit_signal.load()) {
-        NetPoll(ctx);
+        NetPoll(args);
     }
   }
   catch (exception& ex) {
     cerr << ex.what();
   }
   tick_calc::DestroyThreads();
+  tick_calc::CleanupData();
   cout << " In " __FILE__ "\n";
   return retval;
 }

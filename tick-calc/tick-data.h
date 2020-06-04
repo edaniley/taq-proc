@@ -50,7 +50,7 @@ public:
   const T* lower_bound(const T* left, const T* right, Time time) const {
     ptrdiff_t lo = 0, hi = right - left;
     while (lo < hi) {
-      int mid = lo + (hi - lo) / 2;
+      auto mid = (lo + (hi - lo) / 2);
       if (time <= left[mid].time) {
         hi = mid;
       } else {
@@ -157,38 +157,39 @@ public:
 
   void UnloadSymbolRecordset(Date date, const string symbol) {
     lock_guard<mutex> lock(mtx_);
-    auto found = daily_quotes_.find(date);
-    if (found != daily_quotes_.end()) {
+    auto found = daily_records_.find(make_pair(date, symbol[0]));
+    if (found != daily_records_.end()) {
       found->second->Release(symbol);
       found->second->UseCount()--;
     }
   }
 private:
   void trim() {
-    if (daily_quotes_.size() >= max_size_) {
+    if (daily_records_.size() >= max_size_) {
       // attempt to trim stale struct(s)
-      vector<pair<Date, const DayRecordset<T>*>> tmp;
-      for (const auto& x : daily_quotes_) {
+      vector<pair<Key, const DayRecordset<T>*>> tmp;
+      for (const auto& x : daily_records_) {
         tmp.push_back(make_pair(x.first, x.second.get()));
       }
-      sort(tmp.begin(), tmp.end(), [](pair<Date, const DayRecordset<T>*>& l, pair<Date, const DayRecordset<T>*>& r) {
+      sort(tmp.begin(), tmp.end(), [](pair<Key, const DayRecordset<T>*>& l, pair<Key, const DayRecordset<T>*>& r) {
         return (l.second->UseCount() < r.second->UseCount())
           || (l.second->UseCount() == r.second->UseCount() && l.second->LastUsed() < r.second->LastUsed());
         });
-      size_t to_release = 1 + daily_quotes_.size() - max_size_;
+      size_t to_release = 1 + daily_records_.size() - max_size_;
       for (size_t i = 0; i < to_release; i++) {
         if (tmp[i].second->UseCount()) {
           break;
         }
-        daily_quotes_.erase(tmp[i].first);
+        daily_records_.erase(tmp[i].first);
       }
     }
   }
 
   DayRecordset<T>& load(Date date, char symbol_group) {
     DayRecordset<T>* retval = nullptr;
-    auto found = daily_quotes_.find(date);
-    if (found != daily_quotes_.end()) {
+    auto key = make_pair(date, symbol_group);
+    auto found = daily_records_.find(key);
+    if (found != daily_records_.end()) {
       retval = found->second.get();
     }
     else {
@@ -210,7 +211,7 @@ private:
       size_t off = sizeof(FileHeader) + file_header.rec_cnt * sizeof(T);
       size_t siz = file_size - off;
       mm::mapped_region mmreg_map(mmfile, mm::read_only, off, siz);
-      auto inserted = daily_quotes_.insert(make_pair(date, make_unique<DayRecordset<T>>(date, mmfile, mmreg_header, mmreg_map)));
+      auto inserted = daily_records_.insert(make_pair(key, make_unique<DayRecordset<T>>(date, mmfile, mmreg_header, mmreg_map)));
       retval = inserted.first->second.get();
     }
     if (!retval) {
@@ -223,7 +224,8 @@ private:
   const string data_dir_;
   const size_t max_size_;
   mutex mtx_;
-  map<Date, unique_ptr<DayRecordset<T>>> daily_quotes_;
+  typedef pair<Date, char> Key;
+  map<Key, unique_ptr<DayRecordset<T>>> daily_records_;
 };
 
 
@@ -273,6 +275,10 @@ private:
   char* read_ptr_;
   char* write_ptr_;
 };
+
+void InitializeData(const string& data_dir);
+void CleanupData();
+tick_calc::RecordsetManager<Nbbo> & QuoteRecordsetManager();
 
 }
 

@@ -13,16 +13,14 @@ using namespace Taq;
 
 namespace tick_calc {
 
-struct AppContext {
+struct AppAruments {
   string in_data_dir;
   string in_cpu_list;
   uint16_t in_port;
-  unique_ptr<RecordsetManager<Nbbo>> nbbo_data_manager;
-  unique_ptr<RecordsetManager<Trade>> trade_data_manager;
 };
 
-void NetInitialize(AppContext &);
-void NetPoll(AppContext &);
+void NetInitialize(AppAruments&);
+void NetPoll(AppAruments&);
 
 }
 #endif

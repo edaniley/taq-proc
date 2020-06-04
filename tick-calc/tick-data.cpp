@@ -9,7 +9,19 @@ using namespace std;
 using namespace Taq;
 
 namespace  tick_calc {
+unique_ptr<RecordsetManager<Nbbo>> nbbo_data_manager;
+unique_ptr<RecordsetManager<Trade>> trade_data_manager;
 
+void InitializeData(const string & data_dir) {
+  nbbo_data_manager = make_unique<RecordsetManager<Nbbo>>(data_dir);
+}
+void CleanupData() {
+  nbbo_data_manager.release();
+}
+
+tick_calc::RecordsetManager<Nbbo>& QuoteRecordsetManager() {
+  return *nbbo_data_manager;
+}
 
 void SecMasterManager::trim() {
   if (sec_master_.size() >= max_size_) {
