@@ -12,6 +12,9 @@ using namespace Taq;
 namespace tick_calc {
 
 void QuoteExecutionPlan::QuoteExecutionUnit::Execute() {
+  auto started = pt::microsec_clock::local_time();
+  cout << started << " thread-id:" << this_thread::get_id() << " started symbol:" << symbol
+    << " record-cnt:" << input_records.size() << endl;
   auto & quote_mgr = QuoteRecordsetManager();
   const tick_calc::SymbolRecordset<Nbbo>& symbol_recordset = quote_mgr.LoadSymbolRecordset(date, symbol);
   auto & quotes = symbol_recordset.records;
@@ -23,19 +26,21 @@ void QuoteExecutionPlan::QuoteExecutionUnit::Execute() {
       if (rec.time < it->time && it != quotes.begin()) {
         --it;
       }
-      ss << "id:" << rec.id << " " << " time:" << rec.time << " quote-time:" << it->time
-        << " bidp:" << it->bidp << " bids:" << it->bids
-        << " askp:" << it->askp << " asks:" << it->asks << endl;
+      ss << "id|" << rec.id << "|symbol|" << symbol << "|time|" << rec.time << "|quote-time|" << it->time
+        << "|bidp|" << it->bidp << "|bids|" << it->bids
+        << "|askp|" << it->askp << "|asks|" << it->asks << endl;
     } else {
-      ss << "id:" << rec.id << " time" << boost::posix_time::to_iso_string(rec.time) << " quote not found" << endl;
+      ss << "id:" << rec.id << " time:" << rec.time << " quote not found" << endl;
     }
-    output_records.push_back(OutputRecord(rec.id, ss.str()));
+    output_records.emplace_back(rec.id, ss.str());
   }
   quote_mgr.UnloadSymbolRecordset(date, symbol);
+  auto finished = pt::microsec_clock::local_time();
+  cout << started << " thread-id:" << this_thread::get_id() << " finished symbol:" << symbol
+    << " run-time:" << (finished- started) << endl;
 }
 
 void QuoteExecutionPlan::Input(InputRecord& input_record) {
-  //vector<string> {"Symbol", "Timestamp"},
   const string & symbol = input_record.values[argument_mapping[0]];
   const string & timestamp = input_record.values[argument_mapping[1]];
   vector<string> values;
@@ -43,8 +48,8 @@ void QuoteExecutionPlan::Input(InputRecord& input_record) {
   if (values.size() ==2) {
     const Date date = MkDate(values[0]);
     const Time time = MkTime(values[1]);
-    InputRecordRange & input_range = input_record_ranges[make_pair(symbol, date)];
-    input_range.push_back(QuoteExecutionUnit::InputRecord(input_record.id, time));
+    InputRecordRange& input_range = input_record_ranges[make_pair(symbol, date)];
+    input_range.emplace_back(input_record.id, time);
   }
 };
 

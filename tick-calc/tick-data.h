@@ -59,6 +59,14 @@ public:
     }
     return left + lo;
   }
+  const T* find_prior(const T* left, const T* right, Time time) const {
+    auto retval = lower_bound(left, right, time);
+    if (retval->time > time && retval > begin()) {
+      -- retval;
+    }
+    return retval;
+  }
+
 private:
   const T* base_;
   size_t record_count_;
@@ -220,7 +228,6 @@ private:
     return *retval;
   }
 
-  RecordsetManager() = delete;
   const string data_dir_;
   const size_t max_size_;
   mutex mtx_;

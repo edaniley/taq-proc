@@ -22,16 +22,12 @@ namespace tick_calc {
 static map<string, FunctionDefinition> function_definitions;
 
 void InitializeFunctionDefinitions() {
-  function_definitions.insert(make_pair("TestLoad", FunctionDefinition(
-    vector<string> {"Function", "Symbol", "Date"}, vector<string> {"Result", "ErrMsg"})));
-
-  function_definitions.insert(make_pair("QuoteDump", FunctionDefinition(
-    vector<string> {"Symbol", "Date", "StartTime", "EndTime"},
-    vector<string> {"BidPrice", "BidSize", "OfferPrice", "OfferSize"})));
-
   function_definitions.insert(make_pair("Quote", FunctionDefinition(
-    vector<string> {"Symbol", "Timestamp"},
-    vector<string> {"BidPrice", "BidSize", "OfferPrice", "OfferSize"})));
+    vector<string> {"Symbol", "Timestamp"})));
+
+  function_definitions.insert(make_pair("ROD", FunctionDefinition(
+    vector<string> {"Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPrice", "PegType", "MPA"})));
+
 }
 
 static void LoadExecutionPlan(Connection& conn) {
@@ -44,8 +40,8 @@ static void LoadExecutionPlan(Connection& conn) {
     else if (function_name == "Quote") {
       conn.exec_plans.push_back(make_unique<QuoteExecutionPlan>(it->second, request.separator, request.input_sorted));
     }
-    else if (function_name == "TestLoad") {
-      conn.exec_plans.push_back(make_unique<TestLoad>(it->second, request.separator, request.input_sorted));
+    else if (function_name == "ROD") {
+      conn.exec_plans.push_back(make_unique<RodExecutionPlan>(it->second, request.separator, request.input_sorted));
     }
   }
 }

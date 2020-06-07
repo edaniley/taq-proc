@@ -32,7 +32,6 @@ class SecMasterManager;
 class SecMaster {
   friend class SecMasterManager;
   public:
-    SecMaster(const SecMaster&) = delete;
     SecMaster(Date date, size_t sec_no, mm::file_mapping & mmfile, mm::mapped_region & mmreg)
       : date_(date), mmfile_(move(mmfile)), mmreg_(move(mmreg)), use_cnt_(0) {
       Security* start = (Security*)((char*)mmreg_.get_address() + sizeof(FileHeader));
@@ -67,7 +66,6 @@ class SecMasterManager {
     const SecMaster & Load(Date);
     void Release(const SecMaster &);
   private:
-    SecMasterManager() = delete;
     void trim();
     const string data_dir_;
     const size_t max_size_;

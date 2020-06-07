@@ -30,10 +30,10 @@
     <ClCompile Include="tick-exec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tick-test.cpp">
+    <ClCompile Include="tick-func-quote.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tick-func-quote.cpp">
+    <ClCompile Include="tick-func-rod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

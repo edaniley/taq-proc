@@ -12,6 +12,8 @@ using namespace Taq;
 
 namespace tick_calc {
 
+using SymbolDateKey = pair<string, Date>;
+
 class QuoteExecutionPlan : public ExecutionPlan {
   class QuoteExecutionUnit : public ExecutionUnit {
   public:
@@ -36,24 +38,53 @@ public:
   State CheckState() override ;
   int PullOutput(char* buffer, int available_size) override;
 private:
-  typedef pair<string, Date> SymbolDateKey;
-  typedef vector<QuoteExecutionUnit::InputRecord> InputRecordRange;
+  using InputRecordRange = vector<QuoteExecutionUnit::InputRecord>;
   map<SymbolDateKey, InputRecordRange> input_record_ranges;
 };
 
-
-class TestLoad : public ExecutionPlan {
+class RodExecutionPlan : public ExecutionPlan {
 public:
-  TestLoad(const vector<int>& argument_mapping, const string& field_separator, bool sorted_input = true)
+  enum class RestType { MinusThree, MinusTwo, MinusOne, Zero, PlusOne, PlusTwo, PlusThree, None, Max = None };
+  enum class PegType{ Primary, Midpoint, Market, None, Max = None };
+private:
+  class RodExecutionUnit : public ExecutionUnit {
+  public:
+    struct InputRecord {
+      InputRecord(int id, Time start_time, Time end_time, char side, int ord_qty,
+                  double limit_price, RodExecutionPlan::PegType peg_type, RodExecutionPlan::RestType mpa)
+        : id(id), start_time(start_time), end_time(end_time), side(side), ord_qty(ord_qty),
+          limit_price(limit_price), peg_type(peg_type), mpa(mpa) {}
+        const int id;
+        const Time start_time;
+        const Time end_time;
+        const char side;
+        const int ord_qty;
+        const double limit_price;
+        const RodExecutionPlan::PegType peg_type;
+        const RodExecutionPlan::RestType mpa;
+        vector<pair<Time, int>> executions;
+    };
+    RodExecutionUnit(const string& symbol, Date date, vector<InputRecord> input_records)
+      : symbol(symbol), date(date), input_records(move(input_records)) {
+      cout << "+ RodExecutionUnit" << endl;
+    }
+    ~RodExecutionUnit() { cout << "- RodExecutionUnit" << endl; }
+    void Execute() override;
+    const string symbol;
+    const Date date;
+    const vector<InputRecord> input_records;
+  };
+public:
+  RodExecutionPlan(const vector<int>& argument_mapping, const string& field_separator, bool sorted_input = true)
     : ExecutionPlan(argument_mapping, field_separator, sorted_input) {}
   void Input(InputRecord& input_record) override;
   void Execute() override;
-  State CheckState() override {return ExecutionPlan::State::Done; }
-  int PullOutput(char*, int) override {return 0;}
+  State CheckState() override;
+  int PullOutput(char* buffer, int available_size) override;
 private:
-  InputRecordSet intput_records;
+  using InputRecordRange = vector<RodExecutionUnit::InputRecord>;
+  map<SymbolDateKey, InputRecordRange> input_record_ranges;
 };
-
 
 }
 #endif

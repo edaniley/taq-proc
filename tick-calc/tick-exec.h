@@ -19,10 +19,8 @@ using namespace Taq;
 namespace tick_calc {
 
 struct FunctionDefinition {
-  FunctionDefinition(const vector<string> & argument_names, const vector<string> & result_field_names)
-    : argument_names(argument_names), result_field_names(result_field_names) {}
+  FunctionDefinition(const vector<string> & argument_names) : argument_names(argument_names) {}
   const vector<string> argument_names;
-  const vector<string> result_field_names;
 };
 
 template <typename T>

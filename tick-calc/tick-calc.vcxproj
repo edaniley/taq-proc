@@ -154,8 +154,8 @@
     <ClCompile Include="tick-data.cpp" />
     <ClCompile Include="tick-exec.cpp" />
     <ClCompile Include="tick-func-quote.cpp" />
+    <ClCompile Include="tick-func-rod.cpp" />
     <ClCompile Include="tick-net.cpp" />
-    <ClCompile Include="tick-test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\taq-proc.h" />
