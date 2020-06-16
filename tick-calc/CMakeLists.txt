@@ -1,10 +1,13 @@
 
-add_executable(
-    tick-calc
+add_executable( tick-calc
     tick-calc.cpp
     tick-data.cpp
     tick-exec.cpp
     tick-net.cpp
     tick-func-quote.cpp
     tick-func-rod.cpp
+)
+
+TARGET_LINK_LIBRARIES( tick-calc
+    pthread
 )
