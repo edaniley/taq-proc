@@ -8,7 +8,7 @@
 #include <numeric>
 #include <limits>
 #include <sstream>
-#include <boost/algorithm/string.hpp>
+#include "boost-algorithm-string.h"
 
 #include "taq-prep.h"
 #include "taq-time.h"
@@ -66,7 +66,6 @@ static NbboTable nbbo;
 static void ValidateQuote(const vector<string> & row, Bbo & bbo) {
     const char src = row[QCOL_Source_Of_Quote][0];
     const char cond = row[QCOL_Quote_Condition][0];
-    const char nbbo_ind = row[QCOL_National_BBO_Ind][0];
     if (src == 'C') {
       static string invalid_cta_condition_codes("CLNU4");
       const bool valid = invalid_cta_condition_codes.find(cond) == string::npos;

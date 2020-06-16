@@ -2,7 +2,7 @@
 #include "algorithm"
 #include "iterator"
 
-#include <boost/algorithm/string.hpp>
+#include "boost-algorithm-string.h"
 #include "taq-proc.h"
 #include "tick-func.h"
 
@@ -51,7 +51,7 @@ void QuoteExecutionPlan::Input(InputRecord& input_record) {
     InputRecordRange& input_range = input_record_ranges[make_pair(symbol, date)];
     input_range.emplace_back(input_record.id, time);
   }
-};
+}
 
 void QuoteExecutionPlan::Execute() {
   typedef tuple<string, Date, InputRecordRange*> InputRecordSlice;
@@ -108,7 +108,7 @@ int QuoteExecutionPlan::PullOutput(char* buffer, int available_size) {
   int bytes_written = 0;
   if (buffer && available_size && output_records_done < output_records.size()) {
     const OutputRecord & rec = output_records[output_records_done];
-    if (available_size >= rec.value.size()) {
+    if (available_size >= (int)rec.value.size()) {
       memcpy(buffer, rec.value.c_str(), rec.value.size());
       output_records_done ++;
       bytes_written = (int)rec.value.size();

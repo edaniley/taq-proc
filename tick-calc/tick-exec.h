@@ -74,9 +74,9 @@ public:
   virtual void Execute() = 0;
   virtual State CheckState() = 0;
   virtual int PullOutput(char * buffer, int available_size) = 0;
+  const vector<int> argument_mapping;
   const string field_separator;
   const bool sorted_input;
-  const vector<int> argument_mapping;
   vector<shared_ptr<ExecutionUnit>> todo_list;
   vector<shared_ptr<ExecutionUnit>> done_list;
   OutputRecordset output_records;

@@ -245,7 +245,7 @@ void RodExecutionPlan::Input(InputRecord& input_record) {
     }
     //cout << ss.str() << endl;
   }
-};
+}
 
 void RodExecutionPlan::Execute() {
   typedef tuple<string, Date, InputRecordRange*> InputRecordSlice;
@@ -303,7 +303,7 @@ int RodExecutionPlan::PullOutput(char* buffer, int available_size) {
   int bytes_written = 0;
   if (buffer && available_size && output_records_done < output_records.size()) {
     const OutputRecord& rec = output_records[output_records_done];
-    if (available_size >= rec.value.size()) {
+    if (available_size >= (int)rec.value.size()) {
       memcpy(buffer, rec.value.c_str(), rec.value.size());
       output_records_done++;
       bytes_written = (int)rec.value.size();

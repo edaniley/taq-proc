@@ -6,7 +6,7 @@
 #include <exception>
 #include <chrono>
 #include <cstdlib>
-#include <boost/algorithm/string.hpp>
+#include "boost-algorithm-string.h"
 #include "tick-calc.h"
 #include "tick-conn.h"
 #include "tick-data.h"
@@ -149,7 +149,11 @@ string CurrentTimestamp() {
   auto in_time_t = chrono::system_clock::to_time_t(now);
   ostringstream ss;
   tm out_tm;
+  #ifdef _MSC_VER
   localtime_s(&out_tm, &in_time_t);
+  #else
+  out_tm = *localtime(&in_time_t);
+  #endif
   ss << put_time(&out_tm, "%Y-%m-%d %X");
   return ss.str();
 }
@@ -186,7 +190,7 @@ bool SetThreadCpuAffinity(int cpu_core) {
 #else
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
-  CPU_SET(core, &cpuset);
+  CPU_SET(cpu_core, &cpuset);
   bool success = sched_setaffinity(0, sizeof(cpuset), &cpuset) == 0;
 #endif
   if (success) {
@@ -212,7 +216,7 @@ void ExecutionThread(int cpu_core) {
 
 void CreateThreads(const vector<int> & cpu_cores) {
   if (cpu_cores.size() > 1) {
-    for (int i = 1; i < cpu_cores.size(); i ++) {
+    for (size_t i = 1; i < cpu_cores.size(); i ++) {
       thread_pool.push_back(thread(ExecutionThread, cpu_cores[i]));
     }
   } else {
@@ -221,11 +225,11 @@ void CreateThreads(const vector<int> & cpu_cores) {
 }
 
 void DestroyThreads() {
-  for (int i = 0; i < thread_pool.size(); i++) {
+  for (size_t i = 0; i < thread_pool.size(); i++) {
     shared_ptr<ExecutionUnit> exit_job;
     exec_queue.Enqueue(exit_job);
   }
-  for (int i = 0; i < thread_pool.size(); i++) {
+  for (size_t i = 0; i < thread_pool.size(); i++) {
     thread_pool[i].join();
   }
 }

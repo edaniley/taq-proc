@@ -28,7 +28,7 @@ enum Exchange {
   Exch_T = 'T' - 'A',// NASDAQ Stock Market,LLC (in Tape A,B securities)(NASDAQ)
   Exch_Q = 'Q' - 'A',// NASDAQ Stock Exchange,LLC (in Tape C securities)
   Exch_U = 'U' - 'A',// Members Exchange (MEMX)
-  Exch_V = 'V' - 'A',// The Investors’ Exchange,LLC (IEX)
+  Exch_V = 'V' - 'A',// The Investorsï¿½ Exchange,LLC (IEX)
   Exch_W = 'W' - 'A',// Chicago Broad Options Exchange,Inc. (CBSX)
   Exch_X = 'X' - 'A',// NASDAQ OMX PSX,Inc. (NASDAQ OMX PSX)
   Exch_Y = 'Y' - 'A',// Cboe BYX Exchange,Inc (Cboe BYX)
@@ -87,7 +87,11 @@ struct SymbolMap {
   int start;
   int end;
   SymbolMap(const std::string &symbol, int start, int end) : start(start), end(end) {
+  #ifdef _MSC_VER
     ::strncpy_s(symb, sizeof(symb), symbol.c_str(), sizeof(symb) - 1);
+  #else
+    ::strncpy(symb, symbol.c_str(), sizeof(symb) - 1);
+  #endif
   }
 };
 
@@ -140,7 +144,7 @@ boost::filesystem::path MkDataFilePath(const std::string& data_dir, RecordType t
   if (false == boost::filesystem::exists(file_path) && boost::filesystem::is_regular_file(file_path)) {
     throw std::domain_error("Input file not found : " + file_path.string());
   }
-  return std::move(file_path);
+  return file_path;
 }
 
 }

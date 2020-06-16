@@ -1,7 +1,7 @@
 
 
 #include <algorithm>
-#include <boost/algorithm/string.hpp>
+#include "boost-algorithm-string.h"
 
 #include "taq-prep.h"
 
