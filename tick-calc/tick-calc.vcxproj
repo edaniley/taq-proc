@@ -155,9 +155,10 @@
     <ClCompile Include="tick-exec.cpp" />
     <ClCompile Include="tick-func-quote.cpp" />
     <ClCompile Include="tick-func-rod.cpp" />
-    <ClCompile Include="tick-net.cpp" />
+    <ClCompile Include="tick-winsock.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\boost-algorithm-string.h" />
     <ClInclude Include="..\include\taq-proc.h" />
     <ClInclude Include="..\include\taq-time.h" />
     <ClInclude Include="tick-conn.h" />

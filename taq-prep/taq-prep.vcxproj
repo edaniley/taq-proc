@@ -152,6 +152,7 @@
     <ClCompile Include="taq-prep.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\boost-algorithm-string.h" />
     <ClInclude Include="..\include\taq-proc.h" />
     <ClInclude Include="..\include\taq-time.h" />
     <ClInclude Include="taq-prep.h" />
