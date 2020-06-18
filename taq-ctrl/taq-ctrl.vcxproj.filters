@@ -13,10 +13,24 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\taq-proc">
+      <UniqueIdentifier>{f925a9c3-ad5f-4bc0-bb40-431125e7f80e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="taq-ctrl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\boost-algorithm-string.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\taq-proc.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\taq-time.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
