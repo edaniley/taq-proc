@@ -106,12 +106,18 @@ ExecutionPlan::State QuoteExecutionPlan::CheckState() {
 
 int QuoteExecutionPlan::PullOutput(char* buffer, int available_size) {
   int bytes_written = 0;
-  if (buffer && available_size && output_records_done < output_records.size()) {
-    const OutputRecord & rec = output_records[output_records_done];
-    if (available_size >= (int)rec.value.size()) {
+  if (buffer) {
+    while (output_records_done < output_records.size()) {
+      const OutputRecord & rec = output_records[output_records_done];
+      const int rec_size = (int)rec.value.size();
+      if (available_size < rec_size) {
+        break;
+      }
       memcpy(buffer, rec.value.c_str(), rec.value.size());
       output_records_done ++;
-      bytes_written = (int)rec.value.size();
+      buffer += rec_size;
+      bytes_written += rec_size;
+      available_size -= rec_size;
     }
   }
   return bytes_written;

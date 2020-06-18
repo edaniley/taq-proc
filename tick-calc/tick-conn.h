@@ -73,7 +73,8 @@ struct Request {
 };
 
 struct Connection {
-  Connection() : fd(-1), request_buffer(), request_parsed(false), input_record_cnt(0), exit_ready(false) {}
+  Connection() : fd(-1), request_buffer(), request_parsed(false), input_record_cnt(0),
+                 output_ready(false), exit_ready(false) {}
   Connection(int fd) : Connection() {this->fd = fd;}
   int fd;
   Request       request;
@@ -84,6 +85,7 @@ struct Connection {
   int           input_record_cnt;
   vector<unique_ptr<ExecutionPlan>> exec_plans;
   OutputBuffer< 1024 * 10>  output_buffer;
+  bool          output_ready;
   bool          exit_ready;
 };
 

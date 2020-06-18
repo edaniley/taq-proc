@@ -21,6 +21,7 @@ struct AppAruments {
 
 void NetInitialize(AppAruments&);
 void NetPoll(AppAruments&);
+void NetFinalize(AppAruments&);
 
 }
 #endif

@@ -57,12 +57,13 @@ int main(int argc, char **argv) {
     tick_calc::SetThreadCpuAffinity(cpu_cores[0]);
   }
 
-  tick_calc::InitializeData(args.in_data_dir);
-  tick_calc::InitializeFunctionDefinitions();
-  NetInitialize(args);
-  tick_calc::CreateThreads(cpu_cores);
-  signal(SIGTERM, ExitSignalHandler);
   try {
+    tick_calc::InitializeData(args.in_data_dir);
+    tick_calc::InitializeFunctionDefinitions();
+    NetInitialize(args);
+    tick_calc::CreateThreads(cpu_cores);
+    signal(SIGTERM, ExitSignalHandler);
+
     while (!exit_signal.load()) {
         NetPoll(args);
     }
@@ -72,6 +73,6 @@ int main(int argc, char **argv) {
   }
   tick_calc::DestroyThreads();
   tick_calc::CleanupData();
-  cout << " In " __FILE__ "\n";
+  NetFinalize(args);
   return retval;
 }
