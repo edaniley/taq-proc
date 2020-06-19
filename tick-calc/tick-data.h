@@ -286,6 +286,7 @@ private:
 void InitializeData(const string& data_dir);
 void CleanupData();
 tick_calc::RecordsetManager<Nbbo> & QuoteRecordsetManager();
+tick_calc::RecordsetManager<NbboPrice>& NbboPoRecordsetManager();
 
 }
 

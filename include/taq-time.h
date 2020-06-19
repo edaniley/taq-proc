@@ -22,7 +22,7 @@ inline Date MkTaqDate(const std::string & yyyymmdd) {
   return  boost::gregorian::from_undelimited_string(yyyymmdd);
 }
 
-inline Time MkTime(const std::string& time) {\
+inline Time MkTime(const std::string& time) {
   return  boost::posix_time::duration_from_string(time);
 }
 

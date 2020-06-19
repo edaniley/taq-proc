@@ -32,5 +32,8 @@
     <ClInclude Include="..\include\taq-time.h">
       <Filter>Header Files\taq-proc</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\double.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

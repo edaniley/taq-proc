@@ -21,7 +21,7 @@ static void OpenOutputStream(taq_prep::AppContext& ctx) {
 }
 /* ===================================================== page ========================================================*/
 static void CloseOutputStream(taq_prep::AppContext& ctx) {
-  const bool rewrite_header = ctx.input_type == "quote" || ctx.input_type == "trade";
+  const bool rewrite_header = ctx.input_type != "master";
   if (rewrite_header) {
     ctx.output.seekp(ios_base::beg);
     ctx.output.write((const char*)&ctx.output_file_hdr, sizeof(ctx.output_file_hdr));
@@ -33,7 +33,7 @@ static int ProcessInputStream(taq_prep::AppContext& ctx, istream& is) {
   if (ctx.input_type == "master") {
     return taq_prep::ProcessSecMaster(ctx, is);
   }
-  else if (ctx.input_type == "quote") {
+  else if (ctx.input_type == "quote" || ctx.input_type == "quote-po") {
     return taq_prep::ProcessQuotes(ctx, is);
   }
   else if (ctx.input_type == "trade") {
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     ("date,d", po::value<string>(&ctx.date)->default_value(""), "trade date")
     ("symbol-group,s", po::value<string>(&ctx.symb)->default_value(""), "symbol group")
     ("in-files,i", po::value<vector<string>>(&ctx.input_files)->multitoken(), "space-separated list of input files")
-    ("in-type,t", po::value<string>(&ctx.input_type)->default_value("quote"), "input file type (master, quote, trade)")
+    ("in-type,t", po::value<string>(&ctx.input_type)->default_value("quote-po"), "input file type (master, quote, quote-po, trade)")
     ("out-dir,o", po::value<string>(&ctx.output_dir)->default_value("."), "output directory")
   ;
   po::variables_map vm;

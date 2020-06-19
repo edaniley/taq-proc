@@ -19,9 +19,6 @@ namespace tick_calc {
 struct WinConnection {
   SOCKET socket;
   Connection conn;
-  ~WinConnection() {
-    cout << "- WinConnection" << endl;
-  }
 };
 
 DWORD conn_count = 0;
@@ -174,6 +171,9 @@ void NetPoll(AppAruments&) {
   }
 }
 
+void NetFinalize(AppAruments& ) {
+
+}
 
 #endif
 

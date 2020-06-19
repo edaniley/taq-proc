@@ -21,7 +21,7 @@ namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 namespace mm = boost::interprocess;
 
-string file_path;
+string file_path, query_symbol;
 bool pretty, sorted, no_header;
 
 struct separate_thousands : numpunct<char> {
@@ -42,8 +42,48 @@ void HandleSecMasterFile(const FileHeader& , const mm::mapped_region & ) {//mm_r
 
 }
 
+void ShowRecords(const Nbbo* rec, const Nbbo* end) {
+  cout << setprecision(4);
+  do {
+    cout << "time:" << rec->time
+      << " bid:[ " << rec->bidp << " " << rec->bids
+      << " ] offer: [" << rec->askp << " " << rec->asks
+      << " ]" << endl;
+  } while (++rec < end);
+}
+
+void ShowRecords(const NbboPrice *rec, const NbboPrice * end) {
+  cout << setprecision(4);
+  do {
+    cout << "time:" << rec->time << " bid:" << rec->bidp << " offer:" << rec->askp << endl;
+  } while (++rec < end);
+}
+
+void ShowSymbolRecords(const FileHeader& fh, const mm::mapped_region& mm_region, const SymbolMap* symbol_map) {
+  const SymbolMap *symb = nullptr;
+  for (int i = 0; i < fh.symb_cnt; i ++) {
+    if (query_symbol == string(symbol_map[i].symb)) {
+      symb = symbol_map + i;
+      break;
+    }
+  }
+  if (symb) {
+    const int rec_cnt = symb->end - symb->start + 1;
+    if (fh.type == RecordType::Nbbo) {
+      const Nbbo* begin = (const Nbbo*)((char*)(mm_region.get_address()) + sizeof(fh) + (symb->start - 1) * sizeof(Nbbo));
+      const Nbbo* end = begin + rec_cnt;
+      ShowRecords(begin, end);
+    } else if (fh.type == RecordType::NbboPrice) {
+      const NbboPrice* begin = (const NbboPrice*)((char*)(mm_region.get_address()) + sizeof(fh) + (symb->start - 1) * sizeof(NbboPrice));
+      const NbboPrice* end = begin + rec_cnt;
+      ShowRecords(begin, end);
+    }
+  }
+}
+
 void HandleNbboFile(const FileHeader& fh, const mm::mapped_region & mm_region) {
-  if ((sizeof(fh) + fh.symb_cnt * sizeof(SymbolMap) + fh.rec_cnt  * sizeof(Nbbo))  != mm_region.get_size()) {
+  const size_t rec_size = fh.type == RecordType::Nbbo ? sizeof(Nbbo) : sizeof(NbboPrice);
+  if ((sizeof(fh) + fh.symb_cnt * sizeof(SymbolMap) + fh.rec_cnt  * rec_size)  != mm_region.get_size()) {
     throw domain_error("Input file corruption : " + file_path);
   }
   if (false == no_header) {
@@ -51,12 +91,12 @@ void HandleNbboFile(const FileHeader& fh, const mm::mapped_region & mm_region) {
     auto saved_locale = cout.imbue(locale(cout.getloc(), thousands.release()));
     cout << "date file     " << file_path << endl;
     cout << "file size     " << mm_region.get_size() << endl;
-    cout << "record type   " << "Nbbo" << endl;
+    cout << "record type   " << (fh.type == RecordType::Nbbo ? "Nbbo (with size)" : "Nbbo (price only)") << endl;
     cout << "symbol count  " << fh.symb_cnt << endl;
     cout << "symbols" << endl;
     cout.imbue(saved_locale);
   }
-  const SymbolMap* symbol_map =  (const SymbolMap * )((char *)(mm_region.get_address()) + sizeof(fh) + fh.rec_cnt * sizeof(Nbbo));
+  const SymbolMap* symbol_map =  (const SymbolMap * )((char *)(mm_region.get_address()) + sizeof(fh) + fh.rec_cnt * rec_size);
   vector<pair<string, int>> symbols;
   for (int i = 0; i < fh.symb_cnt; i++) {
     const SymbolMap& map = symbol_map[i];
@@ -73,7 +113,11 @@ void HandleNbboFile(const FileHeader& fh, const mm::mapped_region & mm_region) {
       cout << symbol.first<< ","  << symbol.second << endl;
     }
   }
+  if (! query_symbol.empty()) {
+    ShowSymbolRecords(fh, mm_region, symbol_map);
+  }
 }
+
 
 int main(int argc, char** argv) {
   int retval = 0;
@@ -84,6 +128,7 @@ int main(int argc, char** argv) {
     ("pretty", po::bool_switch(&pretty)->default_value(false), "use pretty formatting")
     ("sort", po::bool_switch(&sorted)->default_value(false), "sort symbols by record count in descending order")
     ("no-header", po::bool_switch(&no_header)->default_value(false), "print output without summary header")
+    ("symbol,s", po::value<string>(&query_symbol), "display records for specified symbol")
     ;
   po::variables_map vm;
   try {
@@ -112,7 +157,7 @@ int main(int argc, char** argv) {
     if (fh.type == RecordType::SecMaster) {
       HandleSecMasterFile(fh, mmreg);
     }
-    else if (fh.type == RecordType::Nbbo) {
+    else if (fh.type == RecordType::Nbbo || fh.type == RecordType::NbboPrice) {
       HandleNbboFile(fh, mmreg);
     }
   }

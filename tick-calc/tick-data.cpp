@@ -10,10 +10,12 @@ using namespace Taq;
 
 namespace  tick_calc {
 unique_ptr<RecordsetManager<Nbbo>> nbbo_data_manager;
+unique_ptr<RecordsetManager<NbboPrice>> nbbo_po_data_manager;
 unique_ptr<RecordsetManager<Trade>> trade_data_manager;
 
 void InitializeData(const string & data_dir) {
   nbbo_data_manager = make_unique<RecordsetManager<Nbbo>>(data_dir);
+  nbbo_po_data_manager = make_unique<RecordsetManager<NbboPrice>>(data_dir);
 }
 void CleanupData() {
   nbbo_data_manager.release();
@@ -21,6 +23,10 @@ void CleanupData() {
 
 tick_calc::RecordsetManager<Nbbo>& QuoteRecordsetManager() {
   return *nbbo_data_manager;
+}
+
+tick_calc::RecordsetManager<NbboPrice>& NbboPoRecordsetManager() {
+  return *nbbo_po_data_manager;
 }
 
 void SecMasterManager::trim() {

@@ -5,10 +5,11 @@
 #include "taq-proc.h"
 #include "tick-data.h"
 #include "tick-exec.h"
-
+#include "double.h"
 
 using namespace std;
 using namespace Taq;
+using namespace taq_proc;
 
 namespace tick_calc {
 
@@ -23,8 +24,8 @@ class QuoteExecutionPlan : public ExecutionPlan {
       const int id;
     };
     QuoteExecutionUnit(const string& symbol, Date date, vector<InputRecord> input_records)
-      : symbol(symbol), date(date), input_records(move(input_records)) {cout << "+ QuoteExecutionUnit" << endl;}
-    ~QuoteExecutionUnit() {cout << "- QuoteExecutionUnit" << endl;}
+      : symbol(symbol), date(date), input_records(move(input_records)) {}
+    ~QuoteExecutionUnit() {}
     void Execute() override;
     const string symbol;
     const Date date;
@@ -45,30 +46,27 @@ private:
 class RodExecutionPlan : public ExecutionPlan {
 public:
   enum class RestType { MinusThree, MinusTwo, MinusOne, Zero, PlusOne, PlusTwo, PlusThree, None, Max = None };
-  enum class PegType{ Primary, Midpoint, Market, None, Max = None };
 private:
   class RodExecutionUnit : public ExecutionUnit {
   public:
     struct InputRecord {
-      InputRecord(int id, Time start_time, Time end_time, char side, int ord_qty,
-                  double limit_price, RodExecutionPlan::PegType peg_type, RodExecutionPlan::RestType mpa)
-        : id(id), start_time(start_time), end_time(end_time), side(side), ord_qty(ord_qty),
-          limit_price(limit_price), peg_type(peg_type), mpa(mpa) {}
+      InputRecord(int id, const string &order_id, Time start_time, Time end_time, char side, int ord_qty,
+                  double limit_price, RodExecutionPlan::RestType mpa)
+        : id(id), order_id(order_id), start_time(start_time), end_time(end_time),
+          side(side), ord_qty(ord_qty), limit_price(limit_price), mpa(mpa) {}
         const int id;
+        const string order_id;
         const Time start_time;
         const Time end_time;
         const char side;
         const int ord_qty;
-        const double limit_price;
-        const RodExecutionPlan::PegType peg_type;
+        const Double limit_price;
         const RodExecutionPlan::RestType mpa;
         vector<pair<Time, int>> executions;
     };
     RodExecutionUnit(const string& symbol, Date date, vector<InputRecord> input_records)
-      : symbol(symbol), date(date), input_records(move(input_records)) {
-      cout << "+ RodExecutionUnit" << endl;
-    }
-    ~RodExecutionUnit() { cout << "- RodExecutionUnit" << endl; }
+      : symbol(symbol), date(date), input_records(move(input_records)) {}
+    ~RodExecutionUnit() {}
     void Execute() override;
     const string symbol;
     const Date date;
