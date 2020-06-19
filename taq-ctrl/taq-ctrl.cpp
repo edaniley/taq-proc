@@ -43,7 +43,8 @@ void HandleSecMasterFile(const FileHeader& , const mm::mapped_region & ) {//mm_r
 }
 
 void HandleNbboFile(const FileHeader& fh, const mm::mapped_region & mm_region) {
-  if ((sizeof(fh) + fh.symb_cnt * sizeof(SymbolMap) + fh.rec_cnt  * sizeof(Nbbo))  != mm_region.get_size()) {
+  const size_t rec_size = fh.type == RecordType::Nbbo ? sizeof(Nbbo) : sizeof(NbboPrice);
+  if ((sizeof(fh) + fh.symb_cnt * sizeof(SymbolMap) + fh.rec_cnt  * rec_size)  != mm_region.get_size()) {
     throw domain_error("Input file corruption : " + file_path);
   }
   if (false == no_header) {
@@ -51,12 +52,12 @@ void HandleNbboFile(const FileHeader& fh, const mm::mapped_region & mm_region) {
     auto saved_locale = cout.imbue(locale(cout.getloc(), thousands.release()));
     cout << "date file     " << file_path << endl;
     cout << "file size     " << mm_region.get_size() << endl;
-    cout << "record type   " << "Nbbo" << endl;
+    cout << "record type   " << (fh.type == RecordType::Nbbo ? "Nbbo (with size)" : "Nbbo (price only)") << endl;
     cout << "symbol count  " << fh.symb_cnt << endl;
     cout << "symbols" << endl;
     cout.imbue(saved_locale);
   }
-  const SymbolMap* symbol_map =  (const SymbolMap * )((char *)(mm_region.get_address()) + sizeof(fh) + fh.rec_cnt * sizeof(Nbbo));
+  const SymbolMap* symbol_map =  (const SymbolMap * )((char *)(mm_region.get_address()) + sizeof(fh) + fh.rec_cnt * rec_size);
   vector<pair<string, int>> symbols;
   for (int i = 0; i < fh.symb_cnt; i++) {
     const SymbolMap& map = symbol_map[i];
@@ -74,6 +75,7 @@ void HandleNbboFile(const FileHeader& fh, const mm::mapped_region & mm_region) {
     }
   }
 }
+
 
 int main(int argc, char** argv) {
   int retval = 0;
@@ -112,7 +114,7 @@ int main(int argc, char** argv) {
     if (fh.type == RecordType::SecMaster) {
       HandleSecMasterFile(fh, mmreg);
     }
-    else if (fh.type == RecordType::Nbbo) {
+    else if (fh.type == RecordType::Nbbo || fh.type == RecordType::NbboPrice) {
       HandleNbboFile(fh, mmreg);
     }
   }

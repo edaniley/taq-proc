@@ -26,7 +26,7 @@ void InitializeFunctionDefinitions() {
     vector<string> {"Symbol", "Timestamp"})));
 
   function_definitions.insert(make_pair("ROD", FunctionDefinition(
-    vector<string> {"Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPrice", "PegType", "MPA"})));
+    vector<string> {"Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPrice", "MPA"})));
 
 }
 

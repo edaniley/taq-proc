@@ -174,6 +174,9 @@ void NetPoll(AppAruments&) {
   }
 }
 
+void NetFinalize(AppAruments& ) {
+
+}
 
 #endif
 

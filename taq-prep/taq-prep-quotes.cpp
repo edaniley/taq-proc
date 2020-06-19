@@ -61,6 +61,7 @@ struct NbboTableEntry {
 typedef map<string, NbboTableEntry> NbboTable;
 
 static NbboTable nbbo;
+static RecordType record_type = RecordType::NbboPrice;
 
 /* ===================================================== page ========================================================*/
 static void ValidateQuote(const vector<string> & row, Bbo & bbo) {
@@ -154,7 +155,9 @@ static bool UpdateNbboSide(NbboTableEntry & entry, NbboSide::Side side, int exch
   } else if (best_quote.size < 0) {
     throw(logic_error("Negative best quote size"));
   }
-  return best_quote.size != previous_best_size ||best_quote.price != previous_best_price;
+  return record_type == RecordType::NbboPrice
+        ? best_quote.price != previous_best_price
+        : best_quote.size != previous_best_size || best_quote.price != previous_best_price;
 }
 /* ===================================================== page ========================================================*/
 static bool UpdateNbbo(const string & timestamp, const string & symbol, const string & exchange, const Bbo & bbo, ofstream & os) {
@@ -162,16 +165,16 @@ static bool UpdateNbbo(const string & timestamp, const string & symbol, const st
   NbboTableEntry & entry = nbbo[symbol];
   bool update_nbbo = UpdateNbboSide(entry, NbboSide::BID, exch_idx, bbo.bid);
   update_nbbo |= UpdateNbboSide(entry, NbboSide::OFFER, exch_idx, bbo.offer);
-  if (update_nbbo) {
+  if (update_nbbo && record_type == RecordType::NbboPrice) {
+    Taq::NbboPrice record(MkTaqTime(timestamp), entry.current_nbbo.bid.price, entry.current_nbbo.offer.price);
+    os.write((const char*)&record, sizeof(record));
+  } else if (update_nbbo && record_type == RecordType::Nbbo) {
     Taq::Nbbo record(MkTaqTime(timestamp),
       entry.current_nbbo.bid.price, entry.current_nbbo.offer.price,
       entry.current_nbbo.bid.size, entry.current_nbbo.offer.size);
     os.write((const char*)&record, sizeof(record));
-    //entry.out_nbbo.emplace_back(Taq::Nbbo(MkTaqTime(timestamp),
-    //                                      entry.current_nbbo.bid.price, entry.current_nbbo.offer.price,
-    //                                      entry.current_nbbo.bid.size, entry.current_nbbo.offer.size));
   }
-   return update_nbbo;
+  return update_nbbo;
 }
 /* ===================================================== page ========================================================*/
 static bool ValidateInputRecord(const vector<string> & row) {
@@ -189,6 +192,7 @@ static bool ValidateInputRecord(const vector<string> & row) {
 }
 /* ===================================================== page ========================================================*/
 int ProcessQuotes(AppContext & ctx, istream & is) {
+  record_type = RecordTypeFromString(ctx.input_type);
   vector<SymbolMap> symbol_map;
   SymbolMap * current = nullptr;
   int rec_cnt = 0;
@@ -210,7 +214,6 @@ int ProcessQuotes(AppContext & ctx, istream & is) {
           symbol_map.push_back(SymbolMap(row[QCOL_Symbol], rec_cnt, 0));
           current = &*symbol_map.rbegin();
         }
-        //if (rec_cnt == 1000000) break;
       }
     }
   }
@@ -222,7 +225,7 @@ int ProcessQuotes(AppContext & ctx, istream & is) {
   }
   ctx.output_file_hdr.symb_cnt = (int)symbol_map.size();
   ctx.output_file_hdr.rec_cnt = rec_cnt;
-  ctx.output_file_hdr.type = RecordType::Nbbo;
+  ctx.output_file_hdr.type = record_type;
   return 0;
 }
 

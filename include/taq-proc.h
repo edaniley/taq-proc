@@ -40,7 +40,7 @@ typedef char Symbol[18];
 typedef std::bitset<Exch_Max> ExchangeMask;
 
 enum class RecordType {
-  NA, SecMaster, Nbbo, Trade
+  NA, SecMaster, Nbbo, Trade, NbboPrice
 };
 
 struct Security {
@@ -69,6 +69,13 @@ struct Nbbo {
   const int asks;
   Nbbo(const Time& time, double bidp, double askp, int bids, int asks)
     : time(time), bidp(bidp), askp(askp), bids(bids), asks(asks) {}
+};
+
+struct NbboPrice {
+  const Time time;
+  const double bidp;
+  const double askp;
+  NbboPrice(const Time& time, double bidp, double askp) : time(time), bidp(bidp), askp(askp) {}
 };
 
 struct Trade {
@@ -111,14 +118,16 @@ inline RecordType RecordTypeFromString(const std::string type_name) {
     return RecordType::SecMaster;
   } else if (type_name == typeid(Nbbo).name()) {
     return RecordType::Nbbo;
-  } else if (type_name == typeid(Trade).name()) {
-    return RecordType::Trade;
+  } else if (type_name == typeid(NbboPrice).name()) {
+    return RecordType::NbboPrice;
   } else if (type_name == typeid(Trade).name()) {
     return RecordType::Trade;
   } else if (type_name == "master") {
     return RecordType::SecMaster;
   } else if (type_name == "quote") {
     return RecordType::Nbbo;
+  } else if (type_name == "quote-po") {
+    return RecordType::NbboPrice;
   } else if (type_name == "trade") {
     return RecordType::Trade;
   } else {
@@ -136,6 +145,9 @@ boost::filesystem::path MkDataFilePath(const std::string& data_dir, RecordType t
   }
   else if (type == RecordType::Nbbo) {
     ss << yyyymmdd << ".nbbo." << symbol_group << ".dat";
+  }
+  else if (type == RecordType::NbboPrice) {
+    ss << yyyymmdd << ".nbbo-po." << symbol_group << ".dat";
   }
   else if (type == RecordType::Trade) {
     ss << yyyymmdd << ".trades." << symbol_group << ".dat";
