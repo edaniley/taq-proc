@@ -131,7 +131,9 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
       vector<RodSlice> slices;
       if (rec.executions.empty()) {
         // no executions
-        slices.emplace_back(rec.start_time, rec.end_time, rec.ord_qty);
+        if (rec.start_time < rec.end_time) {
+          slices.emplace_back(rec.start_time, rec.end_time, rec.ord_qty);
+        }
       } else {
         // split order duration into execution count + 1 slices (start and end times, and leaves qty)
         int leaves_qty = rec.ord_qty;
@@ -164,9 +166,11 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
       //cout << endl;
 
       // calculate rod here 
-      auto quote_end = quotes.upper_bound(quote_start, quotes.end(), slices.rbegin()->end_time);
       vector<double> rod_values((size_t)RestType::Max, .0);
-      CalculateROD(rod_values, quote_start, quote_end, slices, rec.side, rec.limit_price, rec.mpa);
+      if (!slices.empty()) {
+        auto quote_end = quotes.upper_bound(quote_start, quotes.end(), slices.rbegin()->end_time);
+        CalculateROD(rod_values, quote_start, quote_end, slices, rec.side, rec.limit_price, rec.mpa);
+      }
       ss << "rec-id:" << rec.id << " usr-id:" << rec.order_id;
       for (size_t i = 0; i < rod_values.size(); i ++) {
         ss << '|' << rod_values[i];
@@ -244,13 +248,21 @@ void RodExecutionPlan::Input(InputRecord& input_record) {
     }
     //cout << ss.str() << endl;
   }
+  record_cnt ++;
+  if (record_cnt % 1000 == 0) {
+    if (++progress_cnt == 100) {
+      cout << "." << record_cnt << endl;
+      progress_cnt = 0;
+    } else cout << ".";
+  }
 }
 
 void RodExecutionPlan::Execute() {
   auto started = pt::microsec_clock::local_time();
   {
     unique_lock<mutex> lock(cout_mtx);
-    cout << started << " thread-id:" << this_thread::get_id() << " Starting execution; input error_cnt:" << error_cnt << endl;
+    cout << endl << started << " thread-id:" << this_thread::get_id()
+         << " Starting execution; input error_cnt:" << error_cnt << endl;
   }
 
   typedef tuple<string, Date, InputRecordRange*> InputRecordSlice;
@@ -259,7 +271,7 @@ void RodExecutionPlan::Execute() {
     slices.push_back(make_tuple(range.first.first, range.first.second, &range.second));
   }
   sort(slices.begin(), slices.end(), [](const InputRecordSlice& left, const InputRecordSlice& right) {
-    return (get<2>(left)->size() < get<2>(right)->size());
+    return (get<2>(left)->size() > get<2>(right)->size());
     });
   for (auto& slice : slices) {
     shared_ptr<ExecutionUnit> job = make_shared<RodExecutionUnit>(get<0>(slice), get<1>(slice), move(*get<2>(slice)));

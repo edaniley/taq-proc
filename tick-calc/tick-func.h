@@ -74,7 +74,7 @@ private:
   };
 public:
   RodExecutionPlan(const vector<int>& argument_mapping, const string& field_separator, bool sorted_input = true)
-    : ExecutionPlan(argument_mapping, field_separator, sorted_input) {}
+    : ExecutionPlan(argument_mapping, field_separator, sorted_input), progress_cnt(0) {}
   void Input(InputRecord& input_record) override;
   void Execute() override;
   State CheckState() override;
@@ -82,6 +82,7 @@ public:
 private:
   using InputRecordRange = vector<RodExecutionUnit::InputRecord>;
   map<SymbolDateKey, InputRecordRange> input_record_ranges;
+  int progress_cnt;
 };
 
 }

@@ -81,7 +81,7 @@ struct Connection {
   stringstream  request_buffer;
   Json::Value   request_json;
   bool          request_parsed;
-  LineBuffer<1024 * 10> input_buffer;
+  LineBuffer<1024 * 50> input_buffer;
   int           input_record_cnt;
   vector<unique_ptr<ExecutionPlan>> exec_plans;
   OutputBuffer< 1024 * 10>  output_buffer;
