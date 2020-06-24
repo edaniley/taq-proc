@@ -3,11 +3,10 @@
 
 
 #include <bitset>
-#include <string>
-#include <exception>
 #include <boost/filesystem.hpp>
 
 #include "taq-time.h"
+#include "taq-exception.h"
 
 namespace Taq{
 

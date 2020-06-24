@@ -60,18 +60,6 @@ private:
   char* write_ptr_;
 };
 
-struct Request {
-  Request() : input_cnt(0) {}
-  string id;
-  string separator;
-  string response_format;
-  vector<string> function_list;
-  vector<string> argument_list;
-  map<string, vector<int>> functions_argument_mapping;
-  bool input_sorted;
-  int input_cnt;
-};
-
 struct Connection {
   Connection() : fd(-1), request_buffer(), request_parsed(false), input_record_cnt(0),
                  output_ready(false), exit_ready(false) {}

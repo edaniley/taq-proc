@@ -22,26 +22,30 @@ namespace tick_calc {
 static map<string, FunctionDefinition> function_definitions;
 
 void InitializeFunctionDefinitions() {
-  function_definitions.insert(make_pair("Quote", FunctionDefinition(
-    vector<string> {"Symbol", "Timestamp"})));
+  function_definitions.insert(make_pair("Quote", FunctionDefinition("Quote",
+    vector<string> {"Symbol", "Timestamp"},
+    vector<string> {"ID", "Timestamp", "BestBidPx", "BestBidQty", "BestOfferPx", "BestOfferQty"}
+  )));
 
-  function_definitions.insert(make_pair("ROD", FunctionDefinition(
-    vector<string> {"ID", "Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPrice", "MPA"})));
-
+  function_definitions.insert(make_pair("ROD", FunctionDefinition("ROD",
+    vector<string> {"Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPrice", "MPA"},
+    vector<string> {"ID", "MinusThree", "MinusTwo", "MinusOne", "Zero", "PlusOne", "PlusTwo", "PlusThree"}
+  )));
 }
 
 static void LoadExecutionPlan(Connection& conn) {
   const Request& request = conn.request;
   for (const string& function_name : request.function_list) {
+    const auto &function = function_definitions.find(function_name)->second;
     const auto it = request.functions_argument_mapping.find(function_name);
     if (it == request.functions_argument_mapping.end()) {
       throw invalid_argument("Not implemented function:" + function_name);
     }
     else if (function_name == "Quote") {
-      conn.exec_plans.push_back(make_unique<QuoteExecutionPlan>(it->second, request.separator, request.input_sorted));
+      conn.exec_plans.push_back(make_unique<QuoteExecutionPlan>(function, request, it->second));
     }
     else if (function_name == "ROD") {
-      conn.exec_plans.push_back(make_unique<RodExecutionPlan>(it->second, request.separator, request.input_sorted));
+      conn.exec_plans.push_back(make_unique<RodExecutionPlan>(function, request, it->second));
     }
   }
 }
@@ -111,7 +115,7 @@ void ConnectionPushInput(Connection & conn) {
       }
       if (conn.input_record_cnt == conn.request.input_cnt) {
         for (auto& plan : conn.exec_plans) {
-          plan->Execute();
+          plan->StartExecution();
         }
       }
     }
@@ -236,6 +240,119 @@ void DestroyThreads() {
 
 void AddExecutionUnit(shared_ptr<ExecutionUnit> & job) {
   exec_queue.Enqueue(job);
+}
+
+/* ===================================================== page ========================================================*/
+
+ExecutionPlan::State ExecutionPlan::CheckState() {
+  // move every completed unit from todo_list to done_list
+  for (auto it = todo_list.begin(); it != todo_list.end(); ) {
+    if ((*it)->done.load()) {
+      done_list.push_back(*it);
+      it = todo_list.erase(it);
+    }
+    else {
+      ++it;
+    }
+  }
+  if (todo_list.empty() && output_records.empty()) {
+    execution_ended = boost::posix_time::microsec_clock::local_time();
+    // once : consolidate all output records into output_records, then sort by id
+    size_t total_record_count = 0;
+    for (const auto& exec_unit : done_list) {
+      total_record_count += exec_unit->output_records.size();
+      for (const auto& err : exec_unit->errors) {
+        Error(err.first, err.second);
+      }
+    }
+
+    output_records.reserve(total_record_count);
+    for (auto& exec_unit : done_list) {
+      output_records.insert(output_records.end(),
+        make_move_iterator(exec_unit->output_records.begin()),
+        make_move_iterator(exec_unit->output_records.end()));
+      exec_unit->output_records.clear();
+    }
+    sort(output_records.begin(), output_records.end(), [](const auto& left, const auto& right) {
+      return left.id < right.id;
+      });
+  }
+  const auto unit_cnt = todo_list.size() + done_list.size();
+  const bool busy = todo_list.size() > 0 || unit_cnt == 0;
+  const bool ready = !busy && output_records.size() > 0 && output_records_done < output_records.size();
+  ExecutionPlan::State state = busy ? ExecutionPlan::State::Busy
+    : ready ? ExecutionPlan::State::OuputReady : ExecutionPlan::State::Done;
+  return state;
+}
+
+int ExecutionPlan::PullOutput(char* buffer, int available_size) {
+  int bytes_written = 0;
+  if (buffer) {
+    if (false == replay_header_sent) {
+      const string replay_header = MakeReplyHeader();
+      memcpy(buffer, replay_header.c_str(), replay_header.size());
+      const int rec_size = (int)replay_header.size();
+      replay_header_sent = true;
+      buffer += rec_size;
+      bytes_written += rec_size;
+      available_size -= rec_size;
+    }
+    while (output_records_done < output_records.size()) {
+      const OutputRecord& rec = output_records[output_records_done];
+      const int rec_size = (int)rec.value.size();
+      if (available_size < rec_size) {
+        break;
+      }
+      memcpy(buffer, rec.value.c_str(), rec.value.size());
+      output_records_done++;
+      buffer += rec_size;
+      bytes_written += rec_size;
+      available_size -= rec_size;
+    }
+  }
+  return bytes_written;
+}
+
+void ExecutionPlan::Error(ErrorType error_type, int count) {
+  auto ret = errors.insert(make_pair(error_type, 0));
+  if (ret.second) {
+    ret.first->second = count;
+  } else {
+    ret.first->second += count;
+  }
+}
+
+string ExecutionPlan::MakeReplyHeader() const {
+  Json::Value runtime_summary;
+  runtime_summary["parsing_input"] = boost::posix_time::to_simple_string(execution_started - created);
+  runtime_summary["execution"] = boost::posix_time::to_simple_string(execution_ended - execution_started);
+  runtime_summary["sorting_output"] = boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::local_time() - execution_ended);
+
+  Json::Value output_fields;
+  for (const auto & field : function.output_fields) {
+    output_fields.append(field);
+  }
+  Json::Value error_summary;
+  for (const auto& error_cnt : errors) {
+    Json::Value error;
+    error["type"] = ErrorToString(error_cnt.first);
+    error["count"] = error_cnt.second;
+    error_summary.append(error);
+  }
+  Json::Value root;
+  root["request_id"] = request.id;
+  root["output_fields"] = output_fields;
+  root["output_records"] = record_cnt;
+  root["error_summary"] = error_summary;
+  root["runtime_summary"] = runtime_summary;
+
+  Json::StreamWriterBuilder builder;
+  std::string output = Json::writeString(builder, root);
+  cout << output << endl;
+  //output.erase(remove_if(output.begin(), output.end(), [](char c) {return c == '\n';}), output.end());
+  output.append("\n");
+  //cout << output;
+  return output;
 }
 
 }

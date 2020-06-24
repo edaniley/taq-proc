@@ -63,10 +63,15 @@ int main(int argc, char **argv) {
     NetInitialize(args);
     tick_calc::CreateThreads(cpu_cores);
     signal(SIGTERM, ExitSignalHandler);
-
+    #ifdef _MSC_VER
+    signal(SIGBREAK, ExitSignalHandler);
+    #else
+    signal(SIGQUIT, ExitSignalHandler);
+    #endif
     while (!exit_signal.load()) {
         NetPoll(args);
     }
+    cout << "Exit requested" << endl;
   }
   catch (exception& ex) {
     cerr << ex.what();
@@ -74,5 +79,7 @@ int main(int argc, char **argv) {
   tick_calc::DestroyThreads();
   tick_calc::CleanupData();
   NetFinalize(args);
+  cout << "Done" << endl;
+  cout.flush();
   return retval;
 }

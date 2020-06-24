@@ -32,12 +32,10 @@ class QuoteExecutionPlan : public ExecutionPlan {
     const vector<InputRecord> input_records;
   };
 public:
-  QuoteExecutionPlan(const vector<int>& argument_mapping, const string& field_separator, bool sorted_input = true)
-    : ExecutionPlan(argument_mapping, field_separator, sorted_input) {}
+  QuoteExecutionPlan(const FunctionDefinition& function, const Request& request, const vector<int>& argument_mapping)
+    : ExecutionPlan(function, request, argument_mapping) {}
   void Input(InputRecord& input_record) override;
   void Execute() override;
-  State CheckState() override ;
-  int PullOutput(char* buffer, int available_size) override;
 private:
   using InputRecordRange = vector<QuoteExecutionUnit::InputRecord>;
   map<SymbolDateKey, InputRecordRange> input_record_ranges;
@@ -73,12 +71,10 @@ private:
     const vector<InputRecord> input_records;
   };
 public:
-  RodExecutionPlan(const vector<int>& argument_mapping, const string& field_separator, bool sorted_input = true)
-    : ExecutionPlan(argument_mapping, field_separator, sorted_input), progress_cnt(0) {}
+  RodExecutionPlan(const FunctionDefinition& function, const Request& request, const vector<int>& argument_mapping)
+    : ExecutionPlan(function, request, argument_mapping) {}
   void Input(InputRecord& input_record) override;
   void Execute() override;
-  State CheckState() override;
-  int PullOutput(char* buffer, int available_size) override;
 private:
   using InputRecordRange = vector<RodExecutionUnit::InputRecord>;
   map<SymbolDateKey, InputRecordRange> input_record_ranges;

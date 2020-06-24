@@ -33,6 +33,23 @@ static RestType DecodeRestType(const string& str) {
   return RestType::None;
 }
 
+static char DecodeSide(const string& str) {
+  if (str.size() == 1) {
+    if (str[0] == 'B' || str[0] == 'b')
+      return 'B';
+    else if (str[0] == 'S' || str[0] == 's')
+      return 'S';
+  }
+  string side(str);
+  boost::to_upper(side);
+  if (side == "BUY")
+    return 'B';
+  else if (side == "SS" || side == "SSE" || side == "SELL")
+    return 'S';
+  throw Exception(ErrorType::InvalidSide);
+  return '\0';
+}
+
 static RestType InvertRestType(const RestType mpa) {
   return (RestType)(-1 * ((int)mpa - (int)RestType::Zero) + (int)RestType::Zero);
 }
@@ -117,6 +134,7 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
   } catch (const exception & ex) {
     unique_lock<mutex> lock(cout_mtx);
     cout << started << " thread-id:" << this_thread::get_id() << " error:" << ex.what() << endl;
+    Error(ErrorType::DataNotFound, (int)input_records.size());
     return;
   }
   auto & quotes = symbol_recordset->records;
@@ -126,7 +144,7 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
     try {
       quote_start = quotes.find_prior(quote_start, quotes.end(), rec.start_time);
       if (quote_start == quotes.end()) {
-        throw domain_error("Marke data not found");
+        throw Exception(ErrorType::DataNotFound, "Market data not found");
       }
       vector<RodSlice> slices;
       if (rec.executions.empty()) {
@@ -144,7 +162,7 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
           const int exec_qty = exec.second;
           end_time = exec_time;
           if (end_time < start_time) {
-            throw invalid_argument("Out of sequence timestamp");
+            throw Exception(ErrorType::InvalidTimestamp, "Out of sequence timestamp");
           }
           else if (end_time > start_time) {
             slices.emplace_back(start_time, end_time, leaves_qty);
@@ -153,7 +171,7 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
           leaves_qty -= exec_qty;
         }
         if (leaves_qty < 0) {
-          throw invalid_argument("Sum of execution quantity exceeds order quantity");
+          throw Exception(ErrorType::InvalidQuantity, "Sum of execution quantity exceeds order quantity");
         } else if (leaves_qty > 0 and start_time < rec.end_time) {
           // create final slice with time remaining and non-zero LeavesQty
           slices.emplace_back(start_time, rec.end_time, leaves_qty);
@@ -171,11 +189,13 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
         auto quote_end = quotes.upper_bound(quote_start, quotes.end(), slices.rbegin()->end_time);
         CalculateROD(rod_values, quote_start, quote_end, slices, rec.side, rec.limit_price, rec.mpa);
       }
-      ss << "rec-id:" << rec.id << " usr-id:" << rec.order_id;
+      ss << rec.id;
       for (size_t i = 0; i < rod_values.size(); i ++) {
         ss << '|' << rod_values[i];
       }
       ss << endl;
+    } catch (Exception & Ex) {
+      Error(Ex.errtype());
     } catch (exception & ex) {
       ss << ex.what() << endl;
     }
@@ -204,49 +224,43 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
 }
 
 void RodExecutionPlan::Input(InputRecord& input_record) {
-  //"ID", "Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPrice", "MPA"
-  bool invalid = input_record.values[1].empty()  // symbol
-              || input_record.values[2].empty()  // date
-              || input_record.values[3].empty()  // start time
-              || input_record.values[4].empty()  // end time
-              || input_record.values[5].empty()  // side
-              || input_record.values[6].empty(); // order qty
-  if (invalid) {
-    error_cnt ++;
-    return;
-  }
-  const string& id= input_record.values[0];
-  const string& symbol = input_record.values[1];
-  const Date date = MkDate(input_record.values[2]);
-  const Time start_time = MkTime(input_record.values[3]);
-  const Time end_time = MkTime(input_record.values[4]);
-  const char side = (char)toupper(input_record.values[5][0]);
-  const int ord_qty = stoi(input_record.values[6]);
-  const Double limit_price(input_record.values[7]);
-  const RestType mpa = DecodeRestType(input_record.values[8]);
-  InputRecordRange& input_range = input_record_ranges[make_pair(symbol, date)];
-  input_range.emplace_back(input_record.id, id, start_time, end_time, side, ord_qty, limit_price, mpa);
-  //cout << "symbol:" << symbol << " date:" << date << " start_time:" << start_time << " end_time:" << end_time
-  //  << " side:" << side << " ord_qty:" << ord_qty << " limit_price:" << limit_price
-  //  << " mpa:" << ToString(mpa) << endl;
-  static const size_t base_size = 9;
-  if (input_record.values.size() > base_size) {
-    if (input_record.values.size() % 2 == 0) {
-      throw invalid_argument("Incomplete executions data");
-    }
-    auto & executions = input_range.rbegin()->executions;
-    //ostringstream ss;
-    for (size_t j = base_size; j < input_record.values.size(); j += 2) {
-      if (input_record.values[j].empty() || input_record.values[j + 1].empty()) {
-        error_cnt ++;
-        return;
+  enum args {ID, SYMBOL, DATE, START_TIME, END_TIME, SIDE, ORD_QTY, LMT_PX, MPA, EXEC_BASE};
+  try {
+    if (input_record.values[SYMBOL].empty())
+      throw Exception(ErrorType::MissingSymbol);
+    //if (input_record.values[ORD_QTY].empty())
+    //  throw Exception(ErrorType::InvalidQuantity);
+
+    const string& id= input_record.values[ID];
+    const string& symbol = input_record.values[SYMBOL];
+    const Date date = MkDate(input_record.values[DATE]);
+    const Time start_time = MkTime(input_record.values[START_TIME]);
+    const Time end_time = MkTime(input_record.values[END_TIME]);
+    const char side = DecodeSide(input_record.values[SIDE]);
+    const int ord_qty = stoi(input_record.values[ORD_QTY]);
+    const Double limit_price(input_record.values[LMT_PX]);
+    const RestType mpa = DecodeRestType(input_record.values[MPA]);
+    InputRecordRange& input_range = input_record_ranges[make_pair(symbol, date)];
+    input_range.emplace_back(input_record.id, id, start_time, end_time, side, ord_qty, limit_price, mpa);
+    if (input_record.values.size() > EXEC_BASE) {
+      if (input_record.values.size() % 2 == 0) {
+        throw Exception(ErrorType::InvalidArgument);
       }
-      const Time exec_time = MkTime(input_record.values[j]);
-      const int exec_qty = stoi(input_record.values[j+1]);
-      executions.emplace_back(exec_time, exec_qty);
-      //ss << " exec_time:" << exec_time << " exec_qty:" << exec_qty;
+      auto & executions = input_range.rbegin()->executions;
+      for (size_t j = EXEC_BASE; j < input_record.values.size(); j += 2) {
+        if (input_record.values[j + 1].empty())
+          throw Exception(ErrorType::InvalidQuantity);
+        const Time exec_time = MkTime(input_record.values[j]);
+        const int exec_qty = stoi(input_record.values[j+1]);
+        executions.emplace_back(exec_time, exec_qty);
+      }
     }
-    //cout << ss.str() << endl;
+  }
+  catch (const Exception & Ex) {
+    Error(Ex.errtype());
+  }
+  catch (...) {
+    Error(ErrorType::InvalidArgument);
   }
   record_cnt ++;
   if (record_cnt % 1000 == 0) {
@@ -262,7 +276,7 @@ void RodExecutionPlan::Execute() {
   {
     unique_lock<mutex> lock(cout_mtx);
     cout << endl << started << " thread-id:" << this_thread::get_id()
-         << " Starting execution; input error_cnt:" << error_cnt << endl;
+         << " Starting execution; input error_cnt:" << endl;
   }
 
   typedef tuple<string, Date, InputRecordRange*> InputRecordSlice;
@@ -278,55 +292,6 @@ void RodExecutionPlan::Execute() {
     todo_list.push_back(job);
     AddExecutionUnit(job);
   }
-}
-
-ExecutionPlan::State RodExecutionPlan::CheckState() {
-  // move every completed unit from todo_list to done_list
-  for (auto it = todo_list.begin(); it != todo_list.end(); ) {
-    if ((*it)->done.load()) {
-      done_list.push_back(*it);
-      it = todo_list.erase(it);
-    }
-    else {
-      ++it;
-    }
-  }
-  if (todo_list.empty() && output_records.empty()) {
-    // once : consolidate all output records into output_records, then sort by id
-    size_t total_record_count = 0;
-    for_each(done_list.begin(), done_list.end(), [&total_record_count](const auto& exec_unit) {
-      total_record_count += exec_unit->output_records.size();
-      });
-    output_records.reserve(total_record_count);
-    for (auto& exec_unit : done_list) {
-      output_records.insert(output_records.end(),
-        make_move_iterator(exec_unit->output_records.begin()),
-        make_move_iterator(exec_unit->output_records.end()));
-      exec_unit->output_records.clear();
-    }
-    sort(output_records.begin(), output_records.end(), [](const auto& left, const auto& right) {
-      return left.id < right.id;
-      });
-  }
-  const auto unit_cnt = todo_list.size() + done_list.size();
-  const bool busy = todo_list.size() > 0 || unit_cnt == 0;
-  const bool ready = !busy && output_records.size() > 0 && output_records_done < output_records.size();
-  ExecutionPlan::State state = busy ? ExecutionPlan::State::Busy
-    : ready ? ExecutionPlan::State::OuputReady : ExecutionPlan::State::Done;
-  return state;
-}
-
-int RodExecutionPlan::PullOutput(char* buffer, int available_size) {
-  int bytes_written = 0;
-  if (buffer && available_size && output_records_done < output_records.size()) {
-    const OutputRecord& rec = output_records[output_records_done];
-    if (available_size >= (int)rec.value.size()) {
-      memcpy(buffer, rec.value.c_str(), rec.value.size());
-      output_records_done++;
-      bytes_written = (int)rec.value.size();
-    }
-  }
-  return bytes_written;
 }
 
 }

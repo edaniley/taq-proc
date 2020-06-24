@@ -65,5 +65,11 @@
     <ClInclude Include="..\include\boost-algorithm-string.h">
       <Filter>Header Files\taq-proc</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\taq-exception.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-request.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
