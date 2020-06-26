@@ -80,7 +80,8 @@ class ExecutionPlan {
 public:
   enum class State {Busy, OuputReady, Done};
   ExecutionPlan(const FunctionDefinition & function, const Request & request, const vector<int>& argument_mapping)
-      : function(function), request(request), argument_mapping(argument_mapping) {
+      : function(function), request(request), argument_mapping(argument_mapping),
+        output_records_done(0), record_cnt(0), replay_header_sent(false) {
         created = boost::posix_time::microsec_clock::local_time();
       }
   virtual ~ExecutionPlan() {};

@@ -14,7 +14,7 @@ using namespace Taq;
 namespace tick_calc {
 
 using RestType = RodExecutionPlan::RestType;
-static mutex cout_mtx;
+//static mutex cout_mtx;
 struct RodSlice{
   RodSlice(Time start_time, Time end_time, int leaves_qty)
     : start_time(start_time), end_time(end_time), leaves_qty(leaves_qty) { }
@@ -121,19 +121,19 @@ static void CalculateROD(vector<double> &result, const NbboPrice*quote_start, co
 }
 
 void RodExecutionPlan::RodExecutionUnit::Execute() {
-  auto started = pt::microsec_clock::local_time();
-  {
-    unique_lock<mutex> lock(cout_mtx);
-    cout << started << " thread-id:" << this_thread::get_id() << " started symbol:" << symbol
-         << " record-cnt:" << input_records.size() << endl;
-  }
+  // auto started = pt::microsec_clock::local_time();
+  // {
+  //   unique_lock<mutex> lock(cout_mtx);
+  //   cout << started << " thread-id:" << this_thread::get_id() << " started symbol:" << symbol
+  //        << " record-cnt:" << input_records.size() << endl;
+  // }
   auto& quote_mgr = NbboPoRecordsetManager();
   const SymbolRecordset<NbboPrice> * symbol_recordset = nullptr;
   try {
     symbol_recordset = &quote_mgr.LoadSymbolRecordset(date, symbol);
   } catch (const exception & ex) {
-    unique_lock<mutex> lock(cout_mtx);
-    cout << started << " thread-id:" << this_thread::get_id() << " error:" << ex.what() << endl;
+    // unique_lock<mutex> lock(cout_mtx);
+    // cout << started << " thread-id:" << this_thread::get_id() << " error:" << ex.what() << endl;
     Error(ErrorType::DataNotFound, (int)input_records.size());
     return;
   }
@@ -215,12 +215,12 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
   }
 
   quote_mgr.UnloadSymbolRecordset(date, symbol);
-  auto finished = pt::microsec_clock::local_time();
-  {
-    unique_lock<mutex> lock(cout_mtx);
-    cout << started << " thread-id:" << this_thread::get_id() << " finished symbol:" << symbol
-      << " run-time:" << (finished - started) << endl;
-  }
+  // auto finished = pt::microsec_clock::local_time();
+  // {
+  //   unique_lock<mutex> lock(cout_mtx);
+  //   cout << started << " thread-id:" << this_thread::get_id() << " finished symbol:" << symbol
+  //     << " run-time:" << (finished - started) << endl;
+  // }
 }
 
 void RodExecutionPlan::Input(InputRecord& input_record) {
@@ -272,12 +272,12 @@ void RodExecutionPlan::Input(InputRecord& input_record) {
 }
 
 void RodExecutionPlan::Execute() {
-  auto started = pt::microsec_clock::local_time();
-  {
-    unique_lock<mutex> lock(cout_mtx);
-    cout << endl << started << " thread-id:" << this_thread::get_id()
-         << " Starting execution; input error_cnt:" << endl;
-  }
+  // auto started = pt::microsec_clock::local_time();
+  // {
+  //   unique_lock<mutex> lock(cout_mtx);
+  //   cout << endl << started << " thread-id:" << this_thread::get_id()
+  //        << " Starting execution; input error_cnt:" << endl;
+  // }
 
   typedef tuple<string, Date, InputRecordRange*> InputRecordSlice;
   vector<InputRecordSlice> slices;

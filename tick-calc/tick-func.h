@@ -72,7 +72,7 @@ private:
   };
 public:
   RodExecutionPlan(const FunctionDefinition& function, const Request& request, const vector<int>& argument_mapping)
-    : ExecutionPlan(function, request, argument_mapping) {}
+    : ExecutionPlan(function, request, argument_mapping), progress_cnt(0) {}
   void Input(InputRecord& input_record) override;
   void Execute() override;
 private:

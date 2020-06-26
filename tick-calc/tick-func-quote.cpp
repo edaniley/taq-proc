@@ -12,9 +12,9 @@ using namespace Taq;
 namespace tick_calc {
 
 void QuoteExecutionPlan::QuoteExecutionUnit::Execute() {
-  auto started = pt::microsec_clock::local_time();
-  cout << started << " thread-id:" << this_thread::get_id() << " started symbol:" << symbol
-    << " record-cnt:" << input_records.size() << endl;
+  // auto started = pt::microsec_clock::local_time();
+  // cout << started << " thread-id:" << this_thread::get_id() << " started symbol:" << symbol
+  //   << " record-cnt:" << input_records.size() << endl;
   auto & quote_mgr = QuoteRecordsetManager();
   const tick_calc::SymbolRecordset<Nbbo>& symbol_recordset = quote_mgr.LoadSymbolRecordset(date, symbol);
   auto & quotes = symbol_recordset.records;
@@ -37,9 +37,9 @@ void QuoteExecutionPlan::QuoteExecutionUnit::Execute() {
     }
   }
   quote_mgr.UnloadSymbolRecordset(date, symbol);
-  auto finished = pt::microsec_clock::local_time();
-  cout << started << " thread-id:" << this_thread::get_id() << " finished symbol:" << symbol
-    << " run-time:" << (finished- started) << endl;
+  // auto finished = pt::microsec_clock::local_time();
+  // cout << started << " thread-id:" << this_thread::get_id() << " finished symbol:" << symbol
+  //   << " run-time:" << (finished- started) << endl;
 }
 
 void QuoteExecutionPlan::Input(InputRecord& input_record) {

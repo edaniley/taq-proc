@@ -113,11 +113,13 @@ void ConnectionWrite(Connection &conn) {
 }
 
 void NetPoll(AppAruments&) {
+  vector<int> to_free;
   for (int fd : conn_fds) {
     if (client_connections[fd]) {
       Connection &conn = *client_connections[fd].get();
       if (conn.exit_ready) {
-        ConnectionFree(conn);
+        to_free.push_back(fd);
+          continue;
       }
       if (conn.output_buffer.DataSize() == 0) {
         ConnectionPullOutput(conn);
@@ -131,6 +133,9 @@ void NetPoll(AppAruments&) {
         conn.output_ready = true;
       }
     }
+  }
+  for (int fd : to_free) {
+    ConnectionFree(*client_connections[fd].get());
   }
 
   const int event_count = epoll_wait(epoll_fd, events, MAX_EVENTS, 10);
@@ -181,6 +186,7 @@ void NetInitialize(AppAruments & args) {
   }
 
   epoll_event evt;
+  memset(&evt, 0, sizeof(evt));
   evt.events = EPOLLIN;
   evt.data.fd = listen_fd;
   if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fd, &evt)) {
