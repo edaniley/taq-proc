@@ -281,21 +281,23 @@ ExecutionPlan::State ExecutionPlan::CheckState() {
   const bool busy = todo_list.size() > 0 || unit_cnt == 0;
   const bool ready = !busy && output_records.size() > 0 && output_records_done < output_records.size();
   ExecutionPlan::State state = busy ? ExecutionPlan::State::Busy
-    : ready ? ExecutionPlan::State::OuputReady : ExecutionPlan::State::Done;
+                            : ready ? ExecutionPlan::State::OuputReady : ExecutionPlan::State::Done;
   return state;
 }
 
 int ExecutionPlan::PullOutput(char* buffer, int available_size) {
   int bytes_written = 0;
+  auto WriteOutput = [&](const char* str, int size) {
+    memcpy(buffer, str, size);
+    buffer += size;
+    bytes_written += size;
+    available_size -= size;
+  };
   if (buffer) {
-    if (false == replay_header_sent) {
+    if (false == output_header_done) {
       const string replay_header = MakeReplyHeader();
-      memcpy(buffer, replay_header.c_str(), replay_header.size());
-      const int rec_size = (int)replay_header.size();
-      replay_header_sent = true;
-      buffer += rec_size;
-      bytes_written += rec_size;
-      available_size -= rec_size;
+      WriteOutput(replay_header.c_str(), (int)replay_header.size());
+      output_header_done = true;
     }
     while (output_records_done < output_records.size()) {
       const OutputRecord& rec = output_records[output_records_done];
@@ -303,11 +305,8 @@ int ExecutionPlan::PullOutput(char* buffer, int available_size) {
       if (available_size < rec_size) {
         break;
       }
-      memcpy(buffer, rec.value.c_str(), rec.value.size());
+      WriteOutput(rec.value.c_str(), rec_size);
       output_records_done++;
-      buffer += rec_size;
-      bytes_written += rec_size;
-      available_size -= rec_size;
     }
   }
   return bytes_written;
@@ -342,7 +341,7 @@ string ExecutionPlan::MakeReplyHeader() const {
   Json::Value root;
   root["request_id"] = request.id;
   root["output_fields"] = output_fields;
-  root["output_records"] = record_cnt;
+  root["output_records"] = output_records.size();
   root["error_summary"] = error_summary;
   root["runtime_summary"] = runtime_summary;
 

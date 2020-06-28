@@ -81,7 +81,7 @@ public:
   enum class State {Busy, OuputReady, Done};
   ExecutionPlan(const FunctionDefinition & function, const Request & request, const vector<int>& argument_mapping)
       : function(function), request(request), argument_mapping(argument_mapping),
-        output_records_done(0), record_cnt(0), replay_header_sent(false) {
+        output_records_done(0), output_header_done(false), record_cnt(0) {
         created = boost::posix_time::microsec_clock::local_time();
       }
   virtual ~ExecutionPlan() {};
@@ -103,8 +103,8 @@ protected:
   vector<shared_ptr<ExecutionUnit>> done_list;
   OutputRecordset output_records;
   size_t output_records_done;
-  size_t record_cnt;
-  bool replay_header_sent;
+  bool output_header_done;
+  size_t record_cnt;// remove
   map<ErrorType, int> errors;
   boost::posix_time::ptime created;
   boost::posix_time::ptime execution_started;

@@ -228,8 +228,6 @@ void RodExecutionPlan::Input(InputRecord& input_record) {
   try {
     if (input_record.values[SYMBOL].empty())
       throw Exception(ErrorType::MissingSymbol);
-    //if (input_record.values[ORD_QTY].empty())
-    //  throw Exception(ErrorType::InvalidQuantity);
 
     const string& id= input_record.values[ID];
     const string& symbol = input_record.values[SYMBOL];
@@ -272,13 +270,6 @@ void RodExecutionPlan::Input(InputRecord& input_record) {
 }
 
 void RodExecutionPlan::Execute() {
-  // auto started = pt::microsec_clock::local_time();
-  // {
-  //   unique_lock<mutex> lock(cout_mtx);
-  //   cout << endl << started << " thread-id:" << this_thread::get_id()
-  //        << " Starting execution; input error_cnt:" << endl;
-  // }
-
   typedef tuple<string, Date, InputRecordRange*> InputRecordSlice;
   vector<InputRecordSlice> slices;
   for (auto& range : input_record_ranges) {
