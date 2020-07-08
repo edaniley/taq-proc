@@ -14,7 +14,7 @@ using namespace Taq;
 namespace tick_calc {
 
 using RestType = RodExecutionPlan::RestType;
-//static mutex cout_mtx;
+
 struct RodSlice{
   RodSlice(Time start_time, Time end_time, int leaves_qty)
     : start_time(start_time), end_time(end_time), leaves_qty(leaves_qty) { }
@@ -23,8 +23,11 @@ struct RodSlice{
   const int leaves_qty;
 };
 
+static bool LooksLikeNumber(const string& str) {
+  return false == str.empty() && str.compare("nan");
+}
 static RestType DecodeRestType(const string& str) {
-  if (false == str.empty()) {
+  if (LooksLikeNumber(str)) {
     const int val = stoi(str);
     if (val >= -(int)RestType::Zero && val <= (int)RestType::Zero) {
       return (RestType)(val + (int)RestType::Zero);
@@ -89,23 +92,26 @@ static RestType RestingType(const NbboPrice &nbbo, char side, const Double &limi
   return retval;
 }
 
+// bool verbose = false;
 static void CalculateROD(vector<double> &result, const NbboPrice*quote_start, const NbboPrice* quote_end,
                         const vector<RodSlice> slices, char side, const Double &limit_price, const RestType &mpa) {
     auto slice = slices.begin();
     const NbboPrice* current_quote = quote_start;
-    //cout << "CalculateROD slices:" << slices.size() << " quote_start:" << quote_start->time << " quote_end:" << quote_end->time  << endl;
     while (slice != slices.end()) {
       const Time start_time = max(slice->start_time, current_quote->time); // latest of slice start time or curent nbbo time
       const NbboPrice* next_quote = (current_quote + 1) < quote_end ? current_quote + 1 : nullptr;
       const Time end_time = next_quote            // check if subsequent quote is present
         ? min(slice->end_time, next_quote->time)  // earlierst of end of slice or nbbo change i.e. next nbbo time
         : slice->end_time;
-      //ostringstream ss; ss << setprecision(4);
-      //ss << "slice start:" << start_time << " end:" << end_time
-      //  << "\ncurr [ " << current_quote->time << " " << current_quote->bidp << " : " << current_quote->askp << " ]";
-      //if (next_quote)
-      //  ss  << "\nnext [ " << next_quote->time << " " << next_quote->bidp << " : " << next_quote->askp << " ]";
-      //cout << ss.str() << endl;
+
+      //if (verbose) {
+      //  ostringstream ss; ss << setprecision(4);
+      //  ss << "slice start:" << start_time << " end:" << end_time
+      //    << "\ncurr [ " << current_quote->time << " " << current_quote->bidp << " : " << current_quote->askp << " ]";
+      //  if (next_quote)
+      //    ss  << "\nnext [ " << next_quote->time << " " << next_quote->bidp << " : " << next_quote->askp << " ]";
+      //  cout << ss.str() << endl;
+      //}
 
       const RestType rest_type = RestingType(*current_quote, side, limit_price, mpa);
       if (rest_type != RestType::None) {
@@ -121,110 +127,107 @@ static void CalculateROD(vector<double> &result, const NbboPrice*quote_start, co
 }
 
 void RodExecutionPlan::RodExecutionUnit::Execute() {
-  // auto started = pt::microsec_clock::local_time();
-  // {
-  //   unique_lock<mutex> lock(cout_mtx);
-  //   cout << started << " thread-id:" << this_thread::get_id() << " started symbol:" << symbol
-  //        << " record-cnt:" << input_records.size() << endl;
-  // }
   auto& quote_mgr = NbboPoRecordsetManager();
   const SymbolRecordset<NbboPrice> * symbol_recordset = nullptr;
   try {
     symbol_recordset = &quote_mgr.LoadSymbolRecordset(date, symbol);
-  } catch (const exception & ex) {
-    // unique_lock<mutex> lock(cout_mtx);
-    // cout << started << " thread-id:" << this_thread::get_id() << " error:" << ex.what() << endl;
+  } catch (...) {
     Error(ErrorType::DataNotFound, (int)input_records.size());
     return;
   }
+  const Time taq_time_adjustment = adjust_time ? UtcToTaq(date) : ZeroTime();
   auto & quotes = symbol_recordset->records;
   auto quote_start = quotes.begin();
-  for (auto rec : input_records) {
-    ostringstream ss;
+  vector<const InputRecord *> sorted_input(input_records.size());
+  size_t j = 0;
+  for (auto it = input_records.begin(); it != input_records.end(); ++ it) {
+    sorted_input[j++] = &it->second;
+  }
+  sort(sorted_input.begin(), sorted_input.end(), [](const InputRecord *lh, const InputRecord *rh) {
+    return lh->start_time < rh->start_time;
+  });
+  for (const auto prec : sorted_input) {
+    const InputRecord &rec = *prec;
+    //verbose = rec.order_id == "BERN.SAC63957C";
+    //if (verbose) {
+    //  cout << endl << rec.order_id << "," << symbol << "," << rec.start_time << "," << rec.end_time << ","
+    //       << rec.side << "," << rec.ord_qty << "," << rec.limit_price << "," << ((int)rec.mpa -3) << endl;
+    //  vector<pair<Time, int>> fills(rec.executions.size());
+    //  for (auto exec : rec.executions) {
+    //    cout << "exec_time:" << exec.first << " exec_qty:" << exec.second << endl;
+    //  }
+    //}
+
     try {
-      quote_start = quotes.find_prior(quote_start, quotes.end(), rec.start_time);
+      ostringstream ss;
+      const Time start_time_adjusted = rec.start_time + taq_time_adjustment;
+      const Time end_time_adjusted = rec.end_time + taq_time_adjustment;
+      quote_start = quotes.find_prior(quote_start, quotes.end(), start_time_adjusted);
       if (quote_start == quotes.end()) {
         throw Exception(ErrorType::DataNotFound, "Market data not found");
       }
       vector<RodSlice> slices;
       if (rec.executions.empty()) {
         // no executions
-        if (rec.start_time < rec.end_time) {
-          slices.emplace_back(rec.start_time, rec.end_time, rec.ord_qty);
+        if (start_time_adjusted < end_time_adjusted) {
+          slices.emplace_back(start_time_adjusted, end_time_adjusted, rec.ord_qty);
         }
       } else {
+        // sort by exec time
+        vector<pair<Time, int>> sorted_executions(rec.executions.size());
+        copy(rec.executions.begin(), rec.executions.end(), sorted_executions.begin());
+        sort(sorted_executions.begin(), sorted_executions.end(), [](const Execution& lh, const Execution& rh) {
+          return lh.first < rh.first;
+        });
         // split order duration into execution count + 1 slices (start and end times, and leaves qty)
         int leaves_qty = rec.ord_qty;
-        Time start_time = rec.start_time;
-        Time end_time;
-        for (auto exec : rec.executions) {
-          const Time exec_time = exec.first;
+        Time slice_start_time = start_time_adjusted;
+        Time slice_end_time;
+        for (auto exec : sorted_executions) {
+          const Time exec_time_adjusted = exec.first + taq_time_adjustment;
           const int exec_qty = exec.second;
-          end_time = exec_time;
-          if (end_time < start_time) {
+          slice_end_time = exec_time_adjusted;
+          if (slice_end_time < slice_start_time) {
             throw Exception(ErrorType::InvalidTimestamp, "Out of sequence timestamp");
           }
-          else if (end_time > start_time) {
-            slices.emplace_back(start_time, end_time, leaves_qty);
-            start_time = end_time;
+          else if (slice_end_time > slice_start_time) {
+            slices.emplace_back(slice_start_time, slice_end_time, leaves_qty);
+            slice_start_time = slice_end_time;
           }
           leaves_qty -= exec_qty;
         }
         if (leaves_qty < 0) {
           throw Exception(ErrorType::InvalidQuantity, "Sum of execution quantity exceeds order quantity");
-        } else if (leaves_qty > 0 and start_time < rec.end_time) {
+        } else if (leaves_qty > 0 and slice_start_time < end_time_adjusted) {
           // create final slice with time remaining and non-zero LeavesQty
-          slices.emplace_back(start_time, rec.end_time, leaves_qty);
+          slices.emplace_back(slice_start_time, end_time_adjusted, leaves_qty);
         }
       }
-      //cout << "-order start_time:" << rec.start_time << " end_time:" << rec.end_time << " res_qty:" << rec.ord_qty << endl;
-      //for (auto & r : slices) {
-      //  cout << "+range start_time:" << r.start_time << " end_time:" << r.end_time << " res_qty:" << r.leaves_qty << endl;
-      //}
-      //cout << endl;
 
-      // calculate rod here 
+      // calculate rod here
       vector<double> rod_values((size_t)RestType::Max, .0);
       if (!slices.empty()) {
         auto quote_end = quotes.upper_bound(quote_start, quotes.end(), slices.rbegin()->end_time);
         CalculateROD(rod_values, quote_start, quote_end, slices, rec.side, rec.limit_price, rec.mpa);
       }
-      ss << rec.id;
+      ss << rec.order_id;
       for (size_t i = 0; i < rod_values.size(); i ++) {
         ss << '|' << rod_values[i];
       }
       ss << endl;
+      output_records.emplace_back(rec.id, ss.str());
     } catch (Exception & Ex) {
       Error(Ex.errtype());
     } catch (exception & ex) {
-      ss << ex.what() << endl;
+      cerr << ex.what() << endl; // log file
     }
-    //if (it != quotes.end()) {
-    //  if (rec.time < it->time && it != quotes.begin()) {
-    //    --it;
-    //  }
-    //  ss << "id:" << rec.id << " symbol:" << symbol << " time:" << rec.time << " quote-time:" << it->time
-    //    << " bidp:" << it->bidp << " bids:" << it->bids
-    //    << " askp:" << it->askp << " asks:" << it->asks << endl;
-    //}
-    //else {
-    //  ss << "id:" << rec.id << " time" << rec.time << " quote not found" << endl;
-    //}
-    //cout << "id:" << rec.id << " values:" << ss.str();
-    output_records.emplace_back(rec.id, ss.str());
   }
 
   quote_mgr.UnloadSymbolRecordset(date, symbol);
-  // auto finished = pt::microsec_clock::local_time();
-  // {
-  //   unique_lock<mutex> lock(cout_mtx);
-  //   cout << started << " thread-id:" << this_thread::get_id() << " finished symbol:" << symbol
-  //     << " run-time:" << (finished - started) << endl;
-  // }
 }
 
 void RodExecutionPlan::Input(InputRecord& input_record) {
-  enum args {ID, SYMBOL, DATE, START_TIME, END_TIME, SIDE, ORD_QTY, LMT_PX, MPA, EXEC_BASE};
+  enum args {ID, SYMBOL, DATE, START_TIME, END_TIME, SIDE, ORD_QTY, LMT_PX, MPA, EXEC_TIME, EXEC_QTY};
   try {
     if (input_record.values[SYMBOL].empty())
       throw Exception(ErrorType::MissingSymbol);
@@ -232,26 +235,26 @@ void RodExecutionPlan::Input(InputRecord& input_record) {
     const string& id= input_record.values[ID];
     const string& symbol = input_record.values[SYMBOL];
     const Date date = MkDate(input_record.values[DATE]);
-    const Time start_time = MkTime(input_record.values[START_TIME]);
-    const Time end_time = MkTime(input_record.values[END_TIME]);
-    const char side = DecodeSide(input_record.values[SIDE]);
-    const int ord_qty = stoi(input_record.values[ORD_QTY]);
-    const Double limit_price(input_record.values[LMT_PX]);
-    const RestType mpa = DecodeRestType(input_record.values[MPA]);
     InputRecordRange& input_range = input_record_ranges[make_pair(symbol, date)];
-    input_range.emplace_back(input_record.id, id, start_time, end_time, side, ord_qty, limit_price, mpa);
-    if (input_record.values.size() > EXEC_BASE) {
-      if (input_record.values.size() % 2 == 0) {
-        throw Exception(ErrorType::InvalidArgument);
-      }
-      auto & executions = input_range.rbegin()->executions;
-      for (size_t j = EXEC_BASE; j < input_record.values.size(); j += 2) {
-        if (input_record.values[j + 1].empty())
-          throw Exception(ErrorType::InvalidQuantity);
-        const Time exec_time = MkTime(input_record.values[j]);
-        const int exec_qty = stoi(input_record.values[j+1]);
-        executions.emplace_back(exec_time, exec_qty);
-      }
+    RodExecutionUnit::InputRecord* rec = nullptr;
+    auto it = input_range.find(id);
+    if (it == input_range.end()) {
+      const Time start_time = MkTime(input_record.values[START_TIME]);
+      const Time end_time = MkTime(input_record.values[END_TIME]);
+      const char side = DecodeSide(input_record.values[SIDE]);
+      const int ord_qty = stoi(input_record.values[ORD_QTY]);
+      const Double limit_price(input_record.values[LMT_PX]);
+      const RestType mpa = DecodeRestType(input_record.values[MPA]);
+      auto pit = input_range.try_emplace(id, input_record.id, id, start_time, end_time, side, ord_qty, limit_price, mpa);
+      rec = &(pit.first->second);
+    } else {
+      rec = &(it->second);
+    }
+    const string & qty = input_record.values[EXEC_QTY];
+    if (LooksLikeNumber(qty)) {
+      const Time exec_time = MkTime(input_record.values[EXEC_TIME]);
+      const int exec_qty = stoi(qty);
+      rec->executions.emplace_back(exec_time, exec_qty);
     }
   }
   catch (const Exception & Ex) {
@@ -279,7 +282,9 @@ void RodExecutionPlan::Execute() {
     return (get<2>(left)->size() > get<2>(right)->size());
     });
   for (auto& slice : slices) {
-    shared_ptr<ExecutionUnit> job = make_shared<RodExecutionUnit>(get<0>(slice), get<1>(slice), move(*get<2>(slice)));
+    shared_ptr<ExecutionUnit> job = make_shared<RodExecutionUnit>(
+      get<0>(slice), get<1>(slice), request.tz_name == "UTC", move(*get<2>(slice))
+    );
     todo_list.push_back(job);
     AddExecutionUnit(job);
   }

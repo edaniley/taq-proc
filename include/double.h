@@ -14,7 +14,11 @@ public:
   Double() : value_(std::numeric_limits<double>::quiet_NaN()) { }
   Double(double value) : value_(value)  { }
   Double(const std::string& str) {
-    value_ = str.empty() ? std::numeric_limits<double>::quiet_NaN() : std::stod(str);
+    try {
+      value_ = str.empty() ? std::numeric_limits<double>::quiet_NaN() : std::stod(str);
+    }  catch (...) {
+      value_ = std::numeric_limits<double>::quiet_NaN();
+    }
   }
   Double (const char* s) {
     value_ = !s || *s == '\0' ? std::numeric_limits<double>::quiet_NaN() : std::stod(s);
@@ -42,7 +46,7 @@ public:
     return 0 == value_;
   }
   bool Empty() const {
-    return value_ == std::numeric_limits<double>::quiet_NaN();
+    return std::isnan(value_);
   }
   bool NotEqual(const Double& to, double eps = DEFAULT_PRECISION()) const {
     double delta = value_ - to.value_;

@@ -16,6 +16,7 @@ struct Request {
   Request() : input_cnt(0) {}
   string id;
   string separator;
+  string tz_name;
   string response_format;
   vector<string> function_list;
   vector<string> argument_list;

@@ -4,13 +4,21 @@
 #include <string>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include "boost/date_time/local_time_adjustor.hpp"
+#include "boost/date_time/c_local_time_adjustor.hpp"
 
 #include "taq-exception.h"
 
 namespace Taq {
 
-typedef boost::posix_time::time_duration Time;
-typedef boost::gregorian::date Date;
+using Timestamp = boost::posix_time::ptime;
+using Time      = boost::posix_time::time_duration;
+using Date      = boost::gregorian::date;
+using LocalTzAdjustor = boost::date_time::c_local_adjustor<Timestamp>;
+
+inline Time ZeroTime() {
+  return Time(boost::posix_time::seconds(0));
+}
 
 inline Time MkTaqTime(const std::string & timestamp) {
   try {
@@ -26,8 +34,7 @@ inline Time MkTaqTime(const std::string & timestamp) {
 inline Date MkTaqDate(const std::string & yyyymmdd) {
   try {
     return  boost::gregorian::from_undelimited_string(yyyymmdd);
-  }
-  catch (...) {
+  } catch (...) {
     throw Exception(ErrorType::InvalidDate);
   }
 }
@@ -35,19 +42,24 @@ inline Date MkTaqDate(const std::string & yyyymmdd) {
 inline Time MkTime(const std::string& time) {
   try {
     return  boost::posix_time::duration_from_string(time);
-  }
-  catch (...) {
+  } catch (...) {
     throw Exception(ErrorType::InvalidTimestamp);
   }
 }
 
 inline Date MkDate(const std::string& yyyymmdd) {
   try {
-    return  boost::gregorian::from_string(yyyymmdd);
-  }
-  catch (...) {
+    return boost::gregorian::from_string(yyyymmdd);
+  } catch (...) {
     throw Exception(ErrorType::InvalidDate);
   }
+}
+
+inline Time UtcToTaq(Date date) { // add to UTC time to produce local time (NYSE TAQ)
+  Timestamp ts(date, MkTime("12:00:00"));
+  const Timestamp utc_ts(date, MkTime("12:00:00"));
+  const Timestamp est_ts = LocalTzAdjustor::utc_to_local(utc_ts);
+  return est_ts - utc_ts;
 }
 
 }

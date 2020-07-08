@@ -1,7 +1,8 @@
 #ifdef _MSC_VER
 #include <winsock2.h>
-#include <stdio.h>
+#include <errors.h>
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "Quartz.lib")
 #endif
 
 #include <exception>
@@ -26,12 +27,8 @@ WinConnection* connections[FD_SETSIZE];
 SOCKET listen_socket;
 
 string LastErrorToString() {
-  char buffer[512];
-  WCHAR wbuffer[sizeof(buffer)];
-  FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(),
-    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)wbuffer, sizeof(buffer)-1, NULL);
-  size_t ret;
-  return (0 == wcstombs_s(&ret, buffer, wbuffer, sizeof(buffer) - 1)) ? string(buffer) : string();
+  char buff[256];
+  return AMGetErrorTextA(GetLastError(), buff, sizeof(buff)) > 0 ? buff : "";
 }
 
 void NetInitialize(AppAruments & args) {

@@ -44,6 +44,7 @@ private:
 class RodExecutionPlan : public ExecutionPlan {
 public:
   enum class RestType { MinusThree, MinusTwo, MinusOne, Zero, PlusOne, PlusTwo, PlusThree, None, Max = None };
+  using Execution = pair<Time, int>;
 private:
   class RodExecutionUnit : public ExecutionUnit {
   public:
@@ -60,15 +61,16 @@ private:
         const int ord_qty;
         const Double limit_price;
         const RodExecutionPlan::RestType mpa;
-        vector<pair<Time, int>> executions;
+        vector<Execution> executions;
     };
-    RodExecutionUnit(const string& symbol, Date date, vector<InputRecord> input_records)
-      : symbol(symbol), date(date), input_records(move(input_records)) {}
+    RodExecutionUnit(const string& symbol, Date date, bool adjust_time, map<string, InputRecord> input_records)
+      : symbol(symbol), date(date), adjust_time(adjust_time), input_records(move(input_records)) {}
     ~RodExecutionUnit() {}
     void Execute() override;
     const string symbol;
     const Date date;
-    const vector<InputRecord> input_records;
+    const bool adjust_time;
+    const map<string, InputRecord> input_records;
   };
 public:
   RodExecutionPlan(const FunctionDefinition& function, const Request& request, const vector<int>& argument_mapping)
@@ -76,12 +78,10 @@ public:
   void Input(InputRecord& input_record) override;
   void Execute() override;
 private:
-  using InputRecordRange = vector<RodExecutionUnit::InputRecord>;
+  using InputRecordRange = map<string, RodExecutionUnit::InputRecord>;
   map<SymbolDateKey, InputRecordRange> input_record_ranges;
   int progress_cnt;
 };
 
 }
 #endif
-
-

@@ -28,7 +28,7 @@ void InitializeFunctionDefinitions() {
   )));
 
   function_definitions.insert(make_pair("ROD", FunctionDefinition("ROD",
-    vector<string> {"Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPrice", "MPA"},
+    vector<string> {"ID", "Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPx", "MPA", "ExecTime", "ExecQty"},
     vector<string> {"ID", "MinusThree", "MinusTwo", "MinusOne", "Zero", "PlusOne", "PlusTwo", "PlusThree"}
   )));
 }
@@ -84,9 +84,17 @@ static void ParseRequest(Connection& conn) {
     cout << conn.request_json << endl;
     conn.request.id = conn.request_json["request_id"].asString();
     conn.request.separator = conn.request_json["separator"].asString();
-    conn.request.response_format = conn.request_json["response_format"].asString();
+    conn.request.response_format = conn.request_json["output_format"].asString();
     conn.request.input_cnt = conn.request_json["input_cnt"].asInt();
     conn.request.input_sorted = conn.request_json["input_sorted"].asBool();
+    const string time_zone = conn.request_json.isMember("time_zone")
+      ? conn.request_json["time_zone"].asString() : string("UTC");
+    if (time_zone == "UTC") {
+    } else if (time_zone == "America/New_York" || time_zone == "US/Eastern") {
+    } else {
+      throw invalid_argument("Unknown or unsupported time-zone:" + time_zone);
+    }
+    conn.request.tz_name = time_zone;
     for (auto val : conn.request_json["function_list"]) {
       conn.request.function_list.push_back(val.asString());
     }
@@ -348,9 +356,9 @@ string ExecutionPlan::MakeReplyHeader() const {
   Json::StreamWriterBuilder builder;
   std::string output = Json::writeString(builder, root);
   cout << output << endl;
-  //output.erase(remove_if(output.begin(), output.end(), [](char c) {return c == '\n';}), output.end());
+  output.erase(remove_if(output.begin(), output.end(), [](char c) {return c == '\n';}), output.end());
+  replace(output.begin(), output.end(), '\t', ' ');
   output.append("\n");
-  //cout << output;
   return output;
 }
 
