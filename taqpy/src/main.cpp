@@ -1,5 +1,3 @@
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -15,12 +13,20 @@
 #include <string.h>
 #ifdef __unix__
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+#ifdef __unix__
+#pragma GCC diagnostic pop
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 #include <boost/algorithm/string.hpp>
 #ifdef __unix__
 #pragma GCC diagnostic pop
 #endif
+
 #ifdef _MSC_VER
 #pragma comment(lib, "jsoncpp.lib")
 #endif
@@ -310,7 +316,7 @@ py::list Execute(py::args args, py::kwargs kwargs) {
     }
   }
   catch (const exception& ex) {
-    //cout << ex.what() << endl; // to remove 
+    //cout << ex.what() << endl; // to remove
     message.assign(ex.what());
   }
   py::list retval;
