@@ -11,7 +11,10 @@ taqpy_addr = "127.0.0.1:21090"
 
 function_def = {
   "Quote" : {
-      "input_fields" : ["Symbol", "Timestamp"],
+      "input_fields" : [
+        ("Symbol", "a18"),
+        ("Timestamp", "a36")
+      ],
       "output_fields" : [
         ("ID", "int"),
         ("Timestamp", "str"),
@@ -108,6 +111,7 @@ def ExecuteQuery(df, function_name):
 
   ret = taqpy.Execute(hdr_str, **kwargs)
   ret_json = json.loads(ret[0])
+  print(ret[0]) #######
   ret_data = None
   if len(ret) > 1:
     data = {}
@@ -147,3 +151,4 @@ if __name__ == "__main__":
 
   except Exception as ex:
     print(ex)
+    

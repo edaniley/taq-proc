@@ -285,9 +285,11 @@ ExecutionPlan::State ExecutionPlan::CheckState() {
       return left.id < right.id;
       });
   }
-  const auto unit_cnt = todo_list.size() + done_list.size();
-  const bool busy = todo_list.size() > 0 || unit_cnt == 0;
-  const bool ready = !busy && output_records.size() > 0 && output_records_done < output_records.size();
+  const bool preparing_execution = 0 == (todo_list.size() + done_list.size());
+  const bool busy = todo_list.size() > 0 || preparing_execution;
+  const bool execution_started = output_records.size() > 0 || errors.size() > 0;
+  const bool output_available  = output_records_done < output_records.size();
+  const bool ready = !busy && execution_started && output_available;
   ExecutionPlan::State state = busy ? ExecutionPlan::State::Busy
                             : ready ? ExecutionPlan::State::OuputReady : ExecutionPlan::State::Done;
   return state;

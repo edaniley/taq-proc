@@ -13,8 +13,16 @@ namespace tick_calc {
 
 void QuoteExecutionPlan::QuoteExecutionUnit::Execute() {
   auto & quote_mgr = QuoteRecordsetManager();
-  const tick_calc::SymbolRecordset<Nbbo>& symbol_recordset = quote_mgr.LoadSymbolRecordset(date, symbol);
-  auto & quotes = symbol_recordset.records;
+
+  const SymbolRecordset<Nbbo>* symbol_recordset = nullptr;
+  try {
+    symbol_recordset = &quote_mgr.LoadSymbolRecordset(date, symbol);
+  }
+  catch (...) {
+    Error(ErrorType::DataNotFound, (int)input_records.size());
+    return;
+  }
+  auto & quotes = symbol_recordset->records;
   auto it = quotes.begin();
   for (auto rec : input_records) {
     it = quotes.lower_bound(it, quotes.end(), rec.time);
@@ -36,7 +44,7 @@ void QuoteExecutionPlan::Input(InputRecord& input_record) {
   const string & symbol = input_record.values[argument_mapping[0]];
   const string & timestamp = input_record.values[argument_mapping[1]];
   vector<string> values;
-  boost::split(values, timestamp, boost::is_any_of("T"));
+  boost::split(values, timestamp, boost::is_any_of("T "));
   if (values.size() ==2) {
     const Date date = MkDate(values[0]);
     const Time time = MkTime(values[1]);

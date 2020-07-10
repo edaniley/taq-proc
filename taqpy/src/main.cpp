@@ -1,3 +1,12 @@
+#ifdef __unix__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+#ifdef __unix__
+#pragma GCC diagnostic pop
+#endif
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -12,13 +21,6 @@
 #include <boost/iostreams/stream.hpp>
 #include <string.h>
 #ifdef __unix__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#ifdef __unix__
-#pragma GCC diagnostic pop
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
@@ -36,10 +38,19 @@ using namespace boost::asio;
 namespace py = pybind11;
 
 using str6 = char[6];
-using str12 = char[12];
-using str18 = char[18];
-using str20 = char[20];
-using str64 = char[64];
+using str12 = char[12]; // Date 1970-01-01 1970-Jan-01
+using str18 = char[18]; // Symbol
+using str20 = char[20]; // Time 12:30:00.123456789
+using str36 = char[36]; // Timestamp 1970-01-01T12:30:00.123456789+00:00
+using str64 = char[64]; // Order ID
+
+static void StringCopy(char *desc, const char *src, size_t len) {
+#ifdef _MSC_VER
+  strncpy_s(desc, len, src, len - 1);
+#else
+strncpy(desc, src, len - 1);
+#endif
+}
 
 struct FieldsDef {
   FieldsDef(const string& name, const string& dtype, size_t size)
@@ -55,9 +66,8 @@ struct FunctionDef {
 };
 
 map<string, vector<FieldsDef>> tick_functions = {
-  {"Quote", { FieldsDef("Date", typeid(char).name(), 12),
-              FieldsDef("Symbol", typeid(char).name(), 18),
-              FieldsDef("Time", typeid(char).name(), 18)
+  {"Quote", { FieldsDef("Symbol", typeid(char).name(), 18),
+              FieldsDef("Timestamp", typeid(char).name(), 36)
             }
   },
   {"ROD" , {  FieldsDef("ID", typeid(char).name(), 64),
@@ -233,14 +243,9 @@ py::list ExecuteROD(const Json::Value& req_json, ip::tcp::iostream& tcptream, co
   string line;
   vector<string> values;
   while (getline(tcptream, line)) {
-    //cout << line_cnt << " " << line << endl;
     values.clear();
     boost::split(values, line, boost::is_any_of("|"));
-#ifdef _MSC_VER
-    strncpy_s(ord_id.mutable_at(line_cnt), sizeof(str64), values[0].c_str(), sizeof(str64) - 1);
-#else
-    strncpy(ord_id.mutable_at(line_cnt), values[0].c_str(), sizeof(str64) - 1);
-#endif
+    StringCopy(ord_id.mutable_at(line_cnt), values[0].c_str(), sizeof(str64));
     minus3.mutable_at(line_cnt) = stod(values[1]);
     minus2.mutable_at(line_cnt) = stod(values[2]);
     minus1.mutable_at(line_cnt) = stod(values[3]);
@@ -260,9 +265,7 @@ py::list ExecuteROD(const Json::Value& req_json, ip::tcp::iostream& tcptream, co
   retval.append(plus1);
   retval.append(plus2);
   retval.append(plus3);
-
   tcptream.close();
-  //cout << json_str << endl;
   return retval;
 
   // todo
@@ -290,6 +293,69 @@ py::list ExecuteROD(const Json::Value& req_json, ip::tcp::iostream& tcptream, co
   //}
 }
 
+py::list ExecuteQuote(const Json::Value& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs) {
+  const auto& field_definitions = tick_functions["Quote"];
+  const string separator = req_json.isMember("separator") ? req_json["separator"].asString() : string("|");
+  const ssize_t input_cnt = req_json["input_cnt"].asInt();
+  vector<function<void(ostream& os, size_t)>> func;
+  ostringstream ss;
+
+  py::array_t<str18> arr_symb = kwargs["Symbol"].cast<py::array_t<str18>>();
+  func.push_back([&](ostream& os, ssize_t i) {os << arr_symb.at(i) << separator; });
+
+  py::array_t<str36> arr_time = kwargs["Timestamp"].cast<py::array_t<str36>>();
+  func.push_back([&](ostream& os, ssize_t i) {os << arr_time.at(i) << endl; });
+
+  tcptream << JsonToString(req_json);
+  for (auto i = 0; i < input_cnt; i++) {
+    for_each(func.begin(), func.end(), [&](auto f) {f(ss, i); });
+    if (ss.str().size() > 64 * 1024) {
+      tcptream << ss.str();
+      ss.str("");
+      ss.clear();
+    }
+  }
+  tcptream << ss.str();
+
+  string json_str;
+  getline(tcptream, json_str);
+  Json::Value response = StringToJson(json_str);
+  const size_t record_cnt = response["output_records"].asUInt64();
+  py::array_t<int> id((record_cnt));
+  py::array_t<str20> time(record_cnt); // 09:35:28.123456789
+  memset(time.mutable_data(), 0, time.nbytes());
+  py::array_t<double> bidp((record_cnt));
+  py::array_t<int> bids((record_cnt));
+  py::array_t<double> askp((record_cnt));
+  py::array_t<int> asks((record_cnt));
+
+  int line_cnt = 0;
+  string line;
+  vector<string> values;
+  while (getline(tcptream, line)) {
+    //cout << line_cnt << " " << line << endl;
+    values.clear();
+    boost::split(values, line, boost::is_any_of("|"));
+    id.mutable_at(line_cnt) = stoi(values[0]);
+    StringCopy(time.mutable_at(line_cnt), values[1].c_str(), sizeof(str20));
+    bidp.mutable_at(line_cnt) = stod(values[2]);
+    bids.mutable_at(line_cnt) = stoi(values[3]);
+    askp.mutable_at(line_cnt) = stod(values[4]);
+    asks.mutable_at(line_cnt) = stoi(values[5]);
+    line_cnt++;
+  }
+  py::list retval;
+  retval.append(json_str);
+  retval.append(id);
+  retval.append(time);
+  retval.append(bidp);
+  retval.append(bids);
+  retval.append(askp);
+  retval.append(asks);
+  tcptream.close();
+  return retval;
+}
+
 py::list Execute(py::args args, py::kwargs kwargs) {
   string message("Success");
   string request_id = "N/A";
@@ -313,6 +379,10 @@ py::list Execute(py::args args, py::kwargs kwargs) {
     const string& function_name = req_json["function_list"][0].asString();
     if (function_name == "ROD") {
       return ExecuteROD(req_json, tcptream, kwargs);
+    } if (function_name == "Quote") {
+      return ExecuteQuote(req_json, tcptream, kwargs);
+    } else {
+      throw domain_error("Unknown function:" + function_name);
     }
   }
   catch (const exception& ex) {
@@ -324,14 +394,14 @@ py::list Execute(py::args args, py::kwargs kwargs) {
   return retval;
 }
 
-void Hi() {
-  cout << "Hi" << endl;
+void Version() {
+  cout << "v2" << endl;
 }
 
 PYBIND11_MODULE(taqpy, m) {
   m.doc() = R"pbdoc(poc)pbdoc";
   m.def("Execute", &Execute, "Interface to tick-proc server");
-  m.def("Hi", &Hi, "");
+  m.def("Version", &Version, "");
 #ifdef VERSION_INFO
   m.attr("__version__") = VERSION_INFO;
 #else
