@@ -15,10 +15,11 @@
 #include <exception>
 #include <limits>
 #include <typeinfo>
-#include <json/json.h>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 #include <string.h>
 #ifdef __unix__
 #pragma GCC diagnostic push
@@ -29,12 +30,9 @@
 #pragma GCC diagnostic pop
 #endif
 
-#ifdef _MSC_VER
-#pragma comment(lib, "jsoncpp.lib")
-#endif
-
 using namespace std;
 using namespace boost::asio;
+using namespace boost::property_tree;
 namespace py = pybind11;
 
 using str6 = char[6];
@@ -85,38 +83,52 @@ map<string, vector<FieldsDef>> tick_functions = {
   }
 };
 
-static string JsonToString(const Json::Value& root) {
-  Json::StreamWriterBuilder builder;
-  string output = Json::writeString(builder, root);
+template <typename T>
+vector<T> as_vector(ptree const& pt, ptree::key_type const& key) {
+  vector<T> retval;
+  try {
+    for (auto& item : pt.get_child(key))
+      retval.push_back(item.second.get_value<T>());
+  }
+  catch (const exception& ex) {
+    throw domain_error(string("Inbound json : ") + ex.what());
+  }
+  return retval;
+}
+
+static string JsonToString(const ptree& root) {
+  stringstream ss;
+  write_json(ss, root);
+  string output = ss.str();
   output.erase(remove_if(output.begin(), output.end(), [](char c) {return c == '\n'; }), output.end());
   replace(output.begin(), output.end(), '\t', ' ');
   output.append("\n");
   return output;
 }
 
-static Json::Value StringToJson(const string& json_str) {
-  Json::Value root;
-  JSONCPP_STRING err;
-  Json::CharReaderBuilder builder;
-  const unique_ptr<Json::CharReader> reader(builder.newCharReader());
-  if (!reader->parse(json_str.c_str(), json_str.c_str() + json_str.size(), &root, &err)) {
-    throw domain_error("Inbound json parsing failure:" + err);
+static ptree StringToJson(const string& json_str) {
+  ptree root;
+  stringstream ss;
+  ss << json_str;
+  try {
+    read_json(ss, root);
+  }
+  catch (const exception& ex) {
+    throw domain_error(string("Inbound json parsing failure:") + ex.what());
   }
   return root;
 }
 
 
 string MakeReplyHeader(const string& request_id, const string& message) {
-  Json::Value error_summary;
-  Json::Value error;
-  error["type"] = "Client";
-  error["message"] = message;
-  error_summary.append(error);
-
-  Json::Value root;
-  root["request_id"] = request_id;
-  root["error_summary"] = error_summary;
-
+  stringstream ss;
+  ptree root, error_summary, error;
+  error.put("type", "Client");
+  error.put("count", 1);
+  error_summary.push_front(make_pair("", error));
+  root.add_child("error_summary", error_summary);
+  root.put("request_id", request_id);
+  root.put("error_message", message);
   return JsonToString(root);
 }
 
@@ -132,52 +144,34 @@ static void ValidateInputFields(const string& function_name, const py::kwargs& k
   }
 }
 
-Json::Value ValidateRequest(const py::args& args, const py::kwargs& kwargs) {
+ptree ValidateRequest(const py::args& args, const py::kwargs& kwargs) {
   if (args.size() < 1) {
     throw domain_error("Missing request json");
   }
-  JSONCPP_STRING json_err;
-  Json::Value   req_json;
-  Json::CharReaderBuilder builder;
-  const unique_ptr<Json::CharReader> reader(builder.newCharReader());
-
   string header(args[0].cast< py::str>());
-  if (false == reader->parse(header.c_str(), header.c_str() + header.size(), &req_json, &json_err)) {
-    throw domain_error("Json parsing error:" + json_err);
-  }
-  else if (!req_json.isMember("request_id")) {
-    throw domain_error("Invalid request missing:request_id");
-  }
-  else if (!req_json.isMember("function_list")) {
-    throw domain_error("Invalid request missing:function_list");
-  }
-  else if (!req_json.isMember("input_cnt")) {
+  const ptree req_json = StringToJson(header);
+  const string request_id = req_json.get<string>("request_id", "");
+  const string tcp = req_json.get<string>("tcp", "");
+  const int input_cnt = req_json.get<int>("input_cnt", 0);
+  const vector<string> function_list = as_vector<string>(req_json, "function_list");
+  if (input_cnt == 0) {
     throw domain_error("Invalid request missing:input_cnt");
-  }
-  else if (!req_json.isMember("tcp")) {
+  } else if (tcp.size() == 0) {
     throw domain_error("Invalid request missing:tcp");
-  }
-
-  const string request_id = req_json["request_id"].asString();
-  const auto& function_list = req_json["function_list"];
-  string function_name;
-  if (function_list.size() == 0) {
+  } else if (function_list.size() == 0) {
     throw domain_error("Missing function name");
-  }
-  else if (function_list.size() > 1) {
+  } else if (function_list.size() > 1) {
     throw domain_error("Multi-function request is not supported");
   }
-  function_name = function_list[0].asString();
-
+  const string & function_name = function_list[0];
   ValidateInputFields(function_name, kwargs);
   return req_json;
 }
 
-
-py::list ExecuteROD(const Json::Value& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs) {
+py::list ExecuteROD(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs) {
   const auto& field_definitions = tick_functions["ROD"];
-  const string separator = req_json.isMember("separator") ? req_json["separator"].asString() : string("|");
-  const ssize_t input_cnt = req_json["input_cnt"].asInt();
+  const string separator = req_json.get<string>("separator", "|");
+  const ssize_t input_cnt = req_json.get<ssize_t>("input_cnt", 0);
   vector<function<void(ostream& os, size_t)>> func;//(field_definitions.size());
   ostringstream ss;
 
@@ -227,8 +221,8 @@ py::list ExecuteROD(const Json::Value& req_json, ip::tcp::iostream& tcptream, co
 
   string json_str;
   getline(tcptream, json_str);
-  Json::Value response = StringToJson(json_str);
-  const size_t record_cnt = response["output_records"].asUInt64();
+  ptree response = StringToJson(json_str);
+  const size_t record_cnt = response.get<size_t>("output_records", 0);
   py::array_t<str64> ord_id(record_cnt);
   memset(ord_id.mutable_data(), 0, ord_id.nbytes());
   py::array_t<double> minus3((record_cnt));
@@ -293,10 +287,10 @@ py::list ExecuteROD(const Json::Value& req_json, ip::tcp::iostream& tcptream, co
   //}
 }
 
-py::list ExecuteQuote(const Json::Value& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs) {
+py::list ExecuteQuote(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs) {
   const auto& field_definitions = tick_functions["Quote"];
-  const string separator = req_json.isMember("separator") ? req_json["separator"].asString() : string("|");
-  const ssize_t input_cnt = req_json["input_cnt"].asInt();
+  const string separator = req_json.get<string>("separator", "|");
+  const ssize_t input_cnt = req_json.get<ssize_t>("input_cnt", 0);
   vector<function<void(ostream& os, size_t)>> func;
   ostringstream ss;
 
@@ -319,8 +313,9 @@ py::list ExecuteQuote(const Json::Value& req_json, ip::tcp::iostream& tcptream, 
 
   string json_str;
   getline(tcptream, json_str);
-  Json::Value response = StringToJson(json_str);
-  const size_t record_cnt = response["output_records"].asUInt64();
+  cout << "RCVD: " << json_str << endl;
+  ptree response = StringToJson(json_str);
+  const size_t record_cnt = response.get<size_t>("output_records", 0);
   py::array_t<int> id((record_cnt));
   py::array_t<str20> time(record_cnt); // 09:35:28.123456789
   memset(time.mutable_data(), 0, time.nbytes());
@@ -333,7 +328,6 @@ py::list ExecuteQuote(const Json::Value& req_json, ip::tcp::iostream& tcptream, 
   string line;
   vector<string> values;
   while (getline(tcptream, line)) {
-    //cout << line_cnt << " " << line << endl;
     values.clear();
     boost::split(values, line, boost::is_any_of("|"));
     id.mutable_at(line_cnt) = stoi(values[0]);
@@ -360,10 +354,10 @@ py::list Execute(py::args args, py::kwargs kwargs) {
   string message("Success");
   string request_id = "N/A";
   try {
-    Json::Value req_json = ValidateRequest(args, kwargs);
-    request_id = req_json["request_id"].asString();
+    ptree req_json = ValidateRequest(args, kwargs);
+    const string request_id = req_json.get<string>("request_id", "");
 
-    string addr = req_json["tcp"].asString();
+    const string addr = req_json.get<string>("tcp", "");
     auto z = addr.find(":");
     if (z == string::npos) {
       throw domain_error("Invalid server address:" + addr);
@@ -376,7 +370,7 @@ py::list Execute(py::args args, py::kwargs kwargs) {
       throw domain_error(tcptream.error().message());
     }
 
-    const string& function_name = req_json["function_list"][0].asString();
+    const string function_name = as_vector<string>(req_json, "function_list")[0];
     if (function_name == "ROD") {
       return ExecuteROD(req_json, tcptream, kwargs);
     } if (function_name == "Quote") {
@@ -386,7 +380,6 @@ py::list Execute(py::args args, py::kwargs kwargs) {
     }
   }
   catch (const exception& ex) {
-    //cout << ex.what() << endl; // to remove
     message.assign(ex.what());
   }
   py::list retval;
