@@ -23,12 +23,13 @@ class QuoteExecutionPlan : public ExecutionPlan {
       const Time time;
       const int id;
     };
-    QuoteExecutionUnit(const string& symbol, Date date, vector<InputRecord> input_records)
-      : symbol(symbol), date(date), input_records(move(input_records)) {}
+    QuoteExecutionUnit(const string& symbol, Date date, bool adjust_time, vector<InputRecord> input_records)
+      : symbol(symbol), date(date), adjust_time(adjust_time), input_records(move(input_records)) {}
     ~QuoteExecutionUnit() {}
     void Execute() override;
     const string symbol;
     const Date date;
+    const bool adjust_time;
     const vector<InputRecord> input_records;
   };
 public:

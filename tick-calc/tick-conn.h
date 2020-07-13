@@ -1,19 +1,19 @@
 #ifndef TICK_CONN_INCLUDED
 #define TICK_CONN_INCLUDED
 
-#include <string_view>
 #include <vector>
 #include <algorithm>
 #include <functional>
 #include <sstream>
-
-#include <json/json.h>
-
+#include <exception>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 #include "taq-proc.h"
 #include "tick-exec.h"
 
 using namespace std;
 using namespace Taq;
+namespace js = boost::property_tree;
 
 namespace tick_calc {
 
@@ -60,6 +60,19 @@ private:
   char* write_ptr_;
 };
 
+template <typename T>
+vector<T> AsVector(js::ptree const& pt, js::ptree::key_type const& key) {
+  vector<T> retval;
+  try {
+    for (auto& item : pt.get_child(key))
+      retval.push_back(item.second.get_value<T>());
+  }
+  catch (const exception& ex) {
+    throw domain_error(string("Json error: ") + ex.what());
+  }
+  return retval;
+}
+
 struct Connection {
   Connection() : fd(-1), request_buffer(), request_parsed(false), input_record_cnt(0),
                  output_ready(false), exit_ready(false) {}
@@ -67,7 +80,7 @@ struct Connection {
   int fd;
   Request       request;
   stringstream  request_buffer;
-  Json::Value   request_json;
+  js::ptree     request_json;
   bool          request_parsed;
   LineBuffer<1024 * 50> input_buffer;
   int           input_record_cnt;

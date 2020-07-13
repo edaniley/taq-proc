@@ -1,7 +1,4 @@
 
-#ifdef _MSC_VER
-#pragma comment(lib, "jsoncpp.lib")
-#endif
 #include <iostream>
 #include <exception>
 #include <chrono>
@@ -75,32 +72,52 @@ static void ValidateRequest(Connection& conn) {
   }
 }
 
+static js::ptree StringToJson(const string& json_str) {
+  js::ptree root;
+  stringstream ss;
+  ss << json_str;
+  try {
+    js::read_json(ss, root);
+  }
+  catch (const exception& ex) {
+    throw domain_error(string("Inbound json parsing failure:") + ex.what());
+  }
+  return root;
+}
+
+static string JsonToString(const js::ptree& root) {
+  stringstream ss;
+  js::write_json(ss, root);
+  cout << ss.str();
+  string output = ss.str();
+  output.erase(remove_if(output.begin(), output.end(), [](char c) {return c == '\n'; }), output.end());
+  replace(output.begin(), output.end(), '\t', ' ');
+  output.append("\n");
+  return output;
+}
+
 static void ParseRequest(Connection& conn) {
-  JSONCPP_STRING err;
-  Json::CharReaderBuilder builder;
-  const unique_ptr<Json::CharReader> reader(builder.newCharReader());
-  const string json_text =  conn.request_buffer.str();
-  if (reader->parse(json_text.c_str(), json_text.c_str() + json_text.size(), &conn.request_json, &err)) {
-    cout << conn.request_json << endl;
-    conn.request.id = conn.request_json["request_id"].asString();
-    conn.request.separator = conn.request_json["separator"].asString();
-    conn.request.response_format = conn.request_json["output_format"].asString();
-    conn.request.input_cnt = conn.request_json["input_cnt"].asInt();
-    conn.request.input_sorted = conn.request_json["input_sorted"].asBool();
-    const string time_zone = conn.request_json.isMember("time_zone")
-      ? conn.request_json["time_zone"].asString() : string("UTC");
-    if (time_zone == "UTC") {
-    } else if (time_zone == "America/New_York" || time_zone == "US/Eastern") {
+  bool parsed = false;
+  try {
+    conn.request_json = StringToJson(conn.request_buffer.str());
+    parsed = true;
+  } catch (...) {
+  }
+  if (parsed) {
+    js::write_json(cout, conn.request_json);
+    conn.request.id = conn.request_json.get<string>("request_id", "");
+    conn.request.separator = conn.request_json.get<string>("separator", "|");
+    conn.request.output_format = conn.request_json.get<string>("output_format", "psv");
+    conn.request.input_cnt = conn.request_json.get<int>("input_cnt", 0);
+    conn.request.input_sorted = conn.request_json.get<bool>("input_sorted", false);
+    conn.request.tz_name = conn.request_json.get<string>("time_zone", "UTC");
+    if (conn.request.tz_name == "UTC") {
+    } else if (conn.request.tz_name == "America/New_York" || conn.request.tz_name == "US/Eastern") {
     } else {
-      throw invalid_argument("Unknown or unsupported time-zone:" + time_zone);
+      throw invalid_argument("Unknown or unsupported time-zone:" + conn.request.tz_name);
     }
-    conn.request.tz_name = time_zone;
-    for (auto val : conn.request_json["function_list"]) {
-      conn.request.function_list.push_back(val.asString());
-    }
-    for (auto val : conn.request_json["argument_list"]) {
-      conn.request.argument_list.push_back(val.asString());
-    }
+    conn.request.function_list = AsVector<string>(conn.request_json, "function_list");
+    conn.request.argument_list = AsVector<string>(conn.request_json, "argument_list");
     ValidateRequest(conn);
     LoadExecutionPlan(conn);
     conn.request_parsed = true;
@@ -253,6 +270,7 @@ void AddExecutionUnit(shared_ptr<ExecutionUnit> & job) {
 /* ===================================================== page ========================================================*/
 
 ExecutionPlan::State ExecutionPlan::CheckState() {
+  static const auto nulltime = boost::posix_time::ptime();
   // move every completed unit from todo_list to done_list
   for (auto it = todo_list.begin(); it != todo_list.end(); ) {
     if ((*it)->done.load()) {
@@ -263,7 +281,7 @@ ExecutionPlan::State ExecutionPlan::CheckState() {
       ++it;
     }
   }
-  if (todo_list.empty() && output_records.empty()) {
+  if (todo_list.empty() && execution_started != nulltime && execution_ended == nulltime) {
     execution_ended = boost::posix_time::microsec_clock::local_time();
     // once : consolidate all output records into output_records, then sort by id
     size_t total_record_count = 0;
@@ -285,13 +303,11 @@ ExecutionPlan::State ExecutionPlan::CheckState() {
       return left.id < right.id;
       });
   }
-  const bool preparing_execution = 0 == (todo_list.size() + done_list.size());
-  const bool busy = todo_list.size() > 0 || preparing_execution;
-  const bool execution_started = output_records.size() > 0 || errors.size() > 0;
-  const bool output_available  = output_records_done < output_records.size();
-  const bool ready = !busy && execution_started && output_available;
-  ExecutionPlan::State state = busy ? ExecutionPlan::State::Busy
-                            : ready ? ExecutionPlan::State::OuputReady : ExecutionPlan::State::Done;
+
+  const bool done = execution_ended != nulltime;
+  const bool output_available = done && (output_records_done < output_records.size() || false  == output_header_done);
+  ExecutionPlan::State state = false == done ? ExecutionPlan::State::Busy
+                            : output_available ? ExecutionPlan::State::OuputReady : ExecutionPlan::State::Done;
   return state;
 }
 
@@ -332,36 +348,32 @@ void ExecutionPlan::Error(ErrorType error_type, int count) {
 }
 
 string ExecutionPlan::MakeReplyHeader() const {
-  Json::Value runtime_summary;
-  runtime_summary["parsing_input"] = boost::posix_time::to_simple_string(execution_started - created);
-  runtime_summary["execution"] = boost::posix_time::to_simple_string(execution_ended - execution_started);
-  runtime_summary["sorting_output"] = boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::local_time() - execution_ended);
+  js::ptree runtime_summary;
+  runtime_summary.put("parsing_input",  boost::posix_time::to_simple_string(execution_started - created));
+  runtime_summary.put("execution", boost::posix_time::to_simple_string(execution_ended - execution_started));
+  runtime_summary.put("sorting_output", boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::local_time() - execution_ended));
 
-  Json::Value output_fields;
+  js::ptree output_fields;
   for (const auto & field : function.output_fields) {
-    output_fields.append(field);
+    js::ptree fld;
+    fld.put("", field);
+    output_fields.push_back(make_pair("", fld));
   }
-  Json::Value error_summary;
+  js::ptree error_summary;
   for (const auto& error_cnt : errors) {
-    Json::Value error;
-    error["type"] = ErrorToString(error_cnt.first);
-    error["count"] = error_cnt.second;
-    error_summary.append(error);
+    js::ptree err;
+    err.put("type", ErrorToString(error_cnt.first));
+    err.put("count", error_cnt.second);
+    error_summary.push_back(make_pair("", err));
   }
-  Json::Value root;
-  root["request_id"] = request.id;
-  root["output_fields"] = output_fields;
-  root["output_records"] = output_records.size();
-  root["error_summary"] = error_summary;
-  root["runtime_summary"] = runtime_summary;
+  js::ptree root;
+  root.put("request_id", request.id);
+  root.add_child("output_fields", output_fields);
+  root.put("output_records", output_records.size());
+  root.add_child("error_summary", error_summary);
+  root.add_child("runtime_summary", runtime_summary);
 
-  Json::StreamWriterBuilder builder;
-  std::string output = Json::writeString(builder, root);
-  cout << output << endl;
-  output.erase(remove_if(output.begin(), output.end(), [](char c) {return c == '\n';}), output.end());
-  replace(output.begin(), output.end(), '\t', ' ');
-  output.append("\n");
-  return output;
+  return JsonToString(root);
 }
 
 }

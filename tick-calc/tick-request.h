@@ -17,7 +17,7 @@ struct Request {
   string id;
   string separator;
   string tz_name;
-  string response_format;
+  string output_format;
   vector<string> function_list;
   vector<string> argument_list;
   map<string, vector<int>> functions_argument_mapping;

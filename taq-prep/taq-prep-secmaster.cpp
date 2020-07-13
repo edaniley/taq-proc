@@ -10,6 +10,14 @@ using namespace Taq;
 
 namespace taq_prep {
 
+ static void StringCopy(char* desc, const char* src, size_t len) {
+#ifdef _MSC_VER
+  strncpy_s(desc, len, src, len - 1);
+#else
+  strncpy(desc, src, len - 1);
+#endif
+  }
+
 int ProcessSecMaster(AppContext & ctx, istream & is) {
   int cnt = 0;
   cnt++;
@@ -28,21 +36,13 @@ int ProcessSecMaster(AppContext & ctx, istream & is) {
     try {
       memset((void *)&sec, 0, sizeof(sec));
 
-#ifdef _MSC_VER
-      strncpy_s(sec.symb, sizeof(sec.symb), row[MCOL_Symbol].c_str(), sizeof(sec.symb)-1);
-      strncpy_s(sec.CUSIP, sizeof(sec.CUSIP), row[MCOL_CUSIP].c_str(), sizeof(sec.CUSIP)-1);
-      strncpy_s(sec.type, sizeof(sec.type), row[MCOL_Security_Type].c_str(), sizeof(sec.type)-1);
-      strncpy_s(sec.sip_symb, sizeof(sec.sip_symb), row[MCOL_SIP_Symbol].c_str(), sizeof(sec.sip_symb)-1);
-      strncpy_s(sec.prev_symb, sizeof(sec.prev_symb), row[MCOL_Old_Symbol].c_str(), sizeof(sec.prev_symb)-1);
-      strncpy_s(sec.industry_code, sizeof(sec.industry_code), row[MCOL_NYSE_Industry_Code].c_str(), sizeof(sec.industry_code) - 1);
-#else
-      strncpy(sec.symb, row[MCOL_Symbol].c_str(), sizeof(sec.symb)-1);
-      strncpy(sec.CUSIP, row[MCOL_CUSIP].c_str(), sizeof(sec.CUSIP)-1);
-      strncpy(sec.type, row[MCOL_Security_Type].c_str(), sizeof(sec.type)-1);
-      strncpy(sec.sip_symb, row[MCOL_SIP_Symbol].c_str(), sizeof(sec.sip_symb)-1);
-      strncpy(sec.prev_symb, row[MCOL_Old_Symbol].c_str(), sizeof(sec.prev_symb)-1);
-      strncpy(sec.industry_code, row[MCOL_NYSE_Industry_Code].c_str(), sizeof(sec.industry_code) - 1);
-#endif
+      StringCopy(sec.symb, row[MCOL_Symbol].c_str(), sizeof(sec.symb));
+      StringCopy(sec.CUSIP, row[MCOL_CUSIP].c_str(), sizeof(sec.CUSIP));
+      StringCopy(sec.type, row[MCOL_Security_Type].c_str(), sizeof(sec.type));
+      StringCopy(sec.sip_symb, row[MCOL_SIP_Symbol].c_str(), sizeof(sec.sip_symb));
+      StringCopy(sec.prev_symb, row[MCOL_Old_Symbol].c_str(), sizeof(sec.prev_symb));
+      StringCopy(sec.industry_code, row[MCOL_NYSE_Industry_Code].c_str(), sizeof(sec.industry_code));
+
       sec.test_flag = row[MCOL_Test_Symbol_Flag][0];
       sec.exch = row[MCOL_Listed_Exchange][0];
       sec.tape = row[MCOL_Tape][0];

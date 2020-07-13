@@ -84,7 +84,7 @@ map<string, vector<FieldsDef>> tick_functions = {
 };
 
 template <typename T>
-vector<T> as_vector(ptree const& pt, ptree::key_type const& key) {
+vector<T> AsVector(ptree const& pt, ptree::key_type const& key) {
   vector<T> retval;
   try {
     for (auto& item : pt.get_child(key))
@@ -153,7 +153,7 @@ ptree ValidateRequest(const py::args& args, const py::kwargs& kwargs) {
   const string request_id = req_json.get<string>("request_id", "");
   const string tcp = req_json.get<string>("tcp", "");
   const int input_cnt = req_json.get<int>("input_cnt", 0);
-  const vector<string> function_list = as_vector<string>(req_json, "function_list");
+  const vector<string> function_list = AsVector<string>(req_json, "function_list");
   if (input_cnt == 0) {
     throw domain_error("Invalid request missing:input_cnt");
   } else if (tcp.size() == 0) {
@@ -370,7 +370,7 @@ py::list Execute(py::args args, py::kwargs kwargs) {
       throw domain_error(tcptream.error().message());
     }
 
-    const string function_name = as_vector<string>(req_json, "function_list")[0];
+    const string function_name = AsVector<string>(req_json, "function_list")[0];
     if (function_name == "ROD") {
       return ExecuteROD(req_json, tcptream, kwargs);
     } if (function_name == "Quote") {

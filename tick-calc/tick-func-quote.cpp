@@ -63,7 +63,9 @@ void QuoteExecutionPlan::Execute() {
     return (get<2>(left)->size() > get<2>(right)->size());
   });
   for (auto& slice : slices) {
-    shared_ptr<ExecutionUnit> job = make_shared<QuoteExecutionUnit>(get<0>(slice), get<1>(slice), move(*get<2>(slice)));
+    shared_ptr<ExecutionUnit> job = make_shared<QuoteExecutionUnit>(
+      get<0>(slice), get<1>(slice), request.tz_name == "UTC", move(*get<2>(slice))
+    );
     todo_list.push_back(job);
     AddExecutionUnit(job);
   }
