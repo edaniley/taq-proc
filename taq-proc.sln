@@ -10,15 +10,15 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{44641B7D-2BF5-48F2-A77A-2200697BFF6D}"
 	ProjectSection(SolutionItems) = preProject
 		CMakeLists.txt = CMakeLists.txt
-		taqpy\MANIFEST.in = taqpy\MANIFEST.in
+		taq-py\MANIFEST.in = taq-py\MANIFEST.in
 		README.md = README.md
-		taqpy\setup.py = taqpy\setup.py
+		taq-py\setup.py = taq-py\setup.py
 		test.json.txt = test.json.txt
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "taq-ctrl", "taq-ctrl\taq-ctrl.vcxproj", "{BBCA46B3-46CD-494F-97D5-7747302DFCE5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "taqpy", "taqpy\build\taqpy.vcxproj", "{51B29CB0-B961-3E1F-BF6C-8626737723B8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "taq-py", "taq-py\build\taqpy.vcxproj", "{51B29CB0-B961-3E1F-BF6C-8626737723B8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
