@@ -20,17 +20,18 @@ class QuoteExecutionPlan : public ExecutionPlan {
   public:
     struct InputRecord {
       InputRecord(int id, Time time) : time(time), id(id) {}
-      const Time time;
-      const int id;
+      Time time;
+      int id;
     };
-    QuoteExecutionUnit(const string& symbol, Date date, bool adjust_time, vector<InputRecord> input_records)
-      : symbol(symbol), date(date), adjust_time(adjust_time), input_records(move(input_records)) {}
+    QuoteExecutionUnit(const string& symbol, Date date, bool sorted, bool adjust_time, vector<InputRecord> input_records)
+      : symbol(symbol), date(date), input_sorted(input_sorted), adjust_time(adjust_time), input_records(move(input_records)) {}
     ~QuoteExecutionUnit() {}
     void Execute() override;
     const string symbol;
     const Date date;
+    const bool input_sorted;
     const bool adjust_time;
-    const vector<InputRecord> input_records;
+    vector<InputRecord> input_records;
   };
 public:
   QuoteExecutionPlan(const FunctionDefinition& function, const Request& request, const vector<int>& argument_mapping)

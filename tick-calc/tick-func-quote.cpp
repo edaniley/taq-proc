@@ -13,7 +13,6 @@ namespace tick_calc {
 
 void QuoteExecutionPlan::QuoteExecutionUnit::Execute() {
   auto & quote_mgr = QuoteRecordsetManager();
-
   const SymbolRecordset<Nbbo>* symbol_recordset = nullptr;
   try {
     symbol_recordset = &quote_mgr.LoadSymbolRecordset(date, symbol);
@@ -22,13 +21,18 @@ void QuoteExecutionPlan::QuoteExecutionUnit::Execute() {
     Error(ErrorType::DataNotFound, (int)input_records.size());
     return;
   }
+  if (false == input_sorted) {
+    sort(input_records.begin(), input_records.end(), [] (const auto &lh, const auto& rh) {return lh.time < rh.time;});
+  }
+  const Time taq_time_adjustment = adjust_time ? UtcToTaq(date) : ZeroTime();
   auto & quotes = symbol_recordset->records;
   auto it = quotes.begin();
   for (auto rec : input_records) {
-    it = quotes.lower_bound(it, quotes.end(), rec.time);
+    const Time requested_time = rec.time + taq_time_adjustment;
+    it = quotes.lower_bound(it, quotes.end(), requested_time);
     if (it != quotes.end()) {
       ostringstream ss;
-      if (rec.time < it->time && it != quotes.begin()) {
+      if (requested_time < it->time && it != quotes.begin()) {
         --it;
       }
       ss << rec.id << '|' << it->time << '|' << it->bidp << '|' << it->bids << '|' << it->askp << '|' << it->asks << endl;
@@ -64,7 +68,7 @@ void QuoteExecutionPlan::Execute() {
   });
   for (auto& slice : slices) {
     shared_ptr<ExecutionUnit> job = make_shared<QuoteExecutionUnit>(
-      get<0>(slice), get<1>(slice), request.tz_name == "UTC", move(*get<2>(slice))
+      get<0>(slice), get<1>(slice), request.input_sorted, request.tz_name == "UTC", move(*get<2>(slice))
     );
     todo_list.push_back(job);
     AddExecutionUnit(job);

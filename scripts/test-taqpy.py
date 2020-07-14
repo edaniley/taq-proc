@@ -8,60 +8,7 @@ import uuid
 import taqpy
 
 taqpy_addr = "127.0.0.1:21090"
-
-function_def = {
-  "Quote" : {
-      "default_tz" : "America/New_York",
-      "input_fields" : [
-        ("Symbol", "a18"),
-        ("Timestamp", "a36")
-      ],
-      "output_fields" : [
-        ("ID", "int"),
-        ("Timestamp", "str"),
-        ("BestBidPx", "float"),
-        ("BestBidQty", "int"),
-        ("BestOfferPx", "float"),
-        ("BestOfferQty", "int")
-      ]
-    },
-  "ROD" : {
-      "default_tz" : "UTC",
-      "input_fields" : [
-        ("ID", "a64"),
-        ("Symbol", "a18"),
-        ("Date", "a18"),
-        ("StartTime", "a20"),
-        ("EndTime", "a20"),
-        ("Side", "a6"),
-        ("OrdQty", "float"),
-        ("LimitPx", "a18"),
-        ("MPA", "float"),
-        ("ExecTime",  "a20"),
-        ("ExecQty", "float")
-      ],
-      "output_fields" : [
-        ("ID", "a64"),
-        ("MinusThree", "float"),
-        ("MinusTwo", "float"),
-        ("MinusOne", "float"),
-        ("Zero", "float"),
-        ("PlusOne", "float"),
-        ("PlusTwo", "float"),
-        ("PlusThree", "float")
-      ]
-    }
- }
-def DescribeFields(function_name):
-  if function_name not in function_def.keys():
-    raise Exception("Unknown function")
-  input_fields = {}
-  for field in function_def[function_name]["input_fields"]:
-    input_fields[field[0]] = field[1]
-  output_fields = []
-  for field in function_def[function_name]["output_fields"]:
-    output_fields.append(field[0])
-  return input_fields, output_fields
+function_def = json.loads(taqpy.Describe())
 
 def PrepareSampleROD(input_file):
   output_file = ".".join(input_file.split(".")[:-1]) + ".hdf"
@@ -86,14 +33,14 @@ def PrepareSampleROD(input_file):
   df.to_hdf(output_file, "data", mode="w")
   return df
 
-def RequestHeader(df, function_name, time_zone):
-  if function_name not in function_def.keys():
+def MakeRequestJson(df, function_name, time_zone):
+  if function_name not in taqpy.FunctionList():
     raise Exception("Unknown function")
-  argument_list = []
-  for field in function_def[function_name]["input_fields"]:
-    argument_list.append(field[0])
-    if field[0] not in df.columns:
-      raise Exception("Function:{} missing column:{}".format(function_name, field[0]))
+  argument_list = taqpy.ArgumentNames(function_name)
+  for argument_name in argument_list:
+    if argument_name not in df.columns:
+      raise Exception("Function:{} missing argument:{}".format(function_name, argument_name))
+
   hdr = {}
   hdr["tcp"] = taqpy_addr
   hdr["request_id"] = str(uuid.uuid1())
@@ -107,23 +54,25 @@ def RequestHeader(df, function_name, time_zone):
   return json.dumps(hdr)
 
 def ExecuteQuery(df, function_name, time_zone):
-  hdr_str = RequestHeader(df, function_name, time_zone)
+  hdr_str = MakeRequestJson(df, function_name, time_zone)
   kwargs = {}
-  for field in function_def[function_name]["input_fields"]:
+  for field in taqpy.ArgumentList(function_name):
     kwargs[field[0]] = np.array(df[field[0]], dtype=field[1])
 
   ret = taqpy.Execute(hdr_str, **kwargs)
   ret_json = json.loads(ret[0])
   if "error_summary" not in ret_json.keys() or type(ret_json["error_summary"]) != type([]):
     ret_json["error_summary"] = []
+
   ret_data = None
   if len(ret) > 1:
     data = {}
-    i = 1
-    for field in function_def[function_name]["output_fields"]:
-      data[field[0]] = pd.Series(ret[i])
-      i += 1
+    col = 1
+    for field in taqpy.ResultFields(function_name):
+      data[field[0]] = pd.Series(ret[col])
+      col += 1
     ret_data = pd.DataFrame(data)
+
   return ret_json, ret_data
 
 if __name__ == "__main__":

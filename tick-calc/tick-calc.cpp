@@ -15,7 +15,6 @@
 
 using namespace std;
 using namespace Taq;
-//using namespace tick_calc;
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -60,7 +59,7 @@ int main(int argc, char **argv) {
   try {
     tick_calc::InitializeData(args.in_data_dir);
     tick_calc::InitializeFunctionDefinitions();
-    NetInitialize(args);
+    tick_calc::NetInitialize(args);
     tick_calc::CreateThreads(cpu_cores);
     signal(SIGTERM, ExitSignalHandler);
     #ifdef _MSC_VER
@@ -78,7 +77,7 @@ int main(int argc, char **argv) {
   }
   tick_calc::DestroyThreads();
   tick_calc::CleanupData();
-  NetFinalize(args);
+  tick_calc::NetFinalize(args);
   cout << "Done" << endl;
   cout.flush();
   return retval;

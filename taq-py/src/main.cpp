@@ -1,124 +1,28 @@
-#ifdef __unix__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#ifdef __unix__
-#pragma GCC diagnostic pop
-#endif
-#include <iostream>
-#include <sstream>
-#include <algorithm>
-#include <vector>
-#include <map>
-#include <exception>
-#include <limits>
-#include <typeinfo>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/asio.hpp>
-#include <boost/iostreams/stream.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <string.h>
-#ifdef __unix__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
-#include <boost/algorithm/string.hpp>
-#ifdef __unix__
-#pragma GCC diagnostic pop
-#endif
+#include "taq-py.h"
 
-using namespace std;
-using namespace boost::asio;
-using namespace boost::property_tree;
-namespace py = pybind11;
+extern map<string, FunctionDef> tick_functions;
 
-using str6 = char[6];
-using str12 = char[12]; // Date 1970-01-01 1970-Jan-01
-using str18 = char[18]; // Symbol
-using str20 = char[20]; // Time 12:30:00.123456789
-using str36 = char[36]; // Timestamp 1970-01-01T12:30:00.123456789+00:00
-using str64 = char[64]; // Order ID
-
-static void StringCopy(char *desc, const char *src, size_t len) {
-#ifdef _MSC_VER
-  strncpy_s(desc, len, src, len - 1);
-#else
-strncpy(desc, src, len - 1);
-#endif
-}
-
-struct FieldsDef {
-  FieldsDef(const string& name, const string& dtype, size_t size)
-    : name(name), dtype(dtype), size(size) {}
-  const string name;
-  const string dtype;
-  const size_t size;
-};
-struct FunctionDef {
-  FunctionDef(const string& name, const vector<FieldsDef>& args) : name(name), args(args) {}
-  const string name;
-  const vector<FieldsDef> args;
-};
-
-map<string, vector<FieldsDef>> tick_functions = {
-  {"Quote", { FieldsDef("Symbol", typeid(char).name(), 18),
-              FieldsDef("Timestamp", typeid(char).name(), 36)
-            }
-  },
-  {"ROD" , {  FieldsDef("ID", typeid(char).name(), 64),
-              FieldsDef("Symbol", typeid(char).name(), 18),
-              FieldsDef("Date", typeid(char).name(), 12),
-              FieldsDef("StartTime", typeid(char).name(), 20),
-              FieldsDef("EndTime", typeid(char).name(), 20),
-              FieldsDef("Side", typeid(char).name(), 6),
-              FieldsDef("OrdQty", typeid(double).name(), sizeof(double)),
-              FieldsDef("LimitPx", typeid(double).name(), sizeof(double)),
-              FieldsDef("MPA", typeid(double).name(),  sizeof(double)),
-              FieldsDef("ExecTime", typeid(char).name(), 20),
-              FieldsDef("ExecQty", typeid(double).name(),  sizeof(double))
-            }
-  }
-};
-
-template <typename T>
-vector<T> AsVector(ptree const& pt, ptree::key_type const& key) {
-  vector<T> retval;
-  try {
-    for (auto& item : pt.get_child(key))
-      retval.push_back(item.second.get_value<T>());
-  }
-  catch (const exception& ex) {
-    throw domain_error(string("Inbound json : ") + ex.what());
-  }
-  return retval;
-}
-
-static string JsonToString(const ptree& root) {
+string JsonToString(const ptree& root) {
   stringstream ss;
   write_json(ss, root);
   string output = ss.str();
   output.erase(remove_if(output.begin(), output.end(), [](char c) {return c == '\n'; }), output.end());
   replace(output.begin(), output.end(), '\t', ' ');
-  output.append("\n");
   return output;
 }
 
-static ptree StringToJson(const string& json_str) {
+ptree StringToJson(const string& json_str) {
   ptree root;
   stringstream ss;
   ss << json_str;
   try {
     read_json(ss, root);
   }
-  catch (const exception& ex) {
+  catch (const exception & ex) {
     throw domain_error(string("Inbound json parsing failure:") + ex.what());
   }
   return root;
 }
-
 
 string MakeReplyHeader(const string& request_id, const string& message) {
   stringstream ss;
@@ -133,11 +37,11 @@ string MakeReplyHeader(const string& request_id, const string& message) {
 }
 
 static void ValidateInputFields(const string& function_name, const py::kwargs& kwargs) {
-  const auto& field_definitions = tick_functions[function_name];
+  const auto& field_definitions = InputFields(function_name);
   if (kwargs.size() != field_definitions.size()) {
     throw domain_error("Input field count mismatch");
   }
-  for (const auto& fdef : field_definitions) {
+  for (const auto & fdef : field_definitions) {
     if (!kwargs.contains(fdef.name.c_str())) {
       throw domain_error("Missing field name:" + fdef.name);
     }
@@ -168,188 +72,6 @@ ptree ValidateRequest(const py::args& args, const py::kwargs& kwargs) {
   return req_json;
 }
 
-py::list ExecuteROD(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs) {
-  const auto& field_definitions = tick_functions["ROD"];
-  const string separator = req_json.get<string>("separator", "|");
-  const ssize_t input_cnt = req_json.get<ssize_t>("input_cnt", 0);
-  vector<function<void(ostream& os, size_t)>> func;//(field_definitions.size());
-  ostringstream ss;
-
-  py::array_t<str64> arr_id = kwargs["ID"].cast<py::array_t<str64>>();
-  func.push_back([&](ostream& os, ssize_t i) {os << arr_id.at(i) << separator; });
-
-  py::array_t<str18> arr_symb = kwargs["Symbol"].cast<py::array_t<str18>>();
-  func.push_back([&](ostream& os, ssize_t i) {os << arr_symb.at(i) << separator; });
-
-  py::array_t<str12> arr_date = kwargs["Date"].cast<py::array_t<str12>>();
-  func.push_back([&](ostream& os, ssize_t i) {os << arr_date.at(i) << separator; });
-
-  py::array_t<str20> arr_stime = kwargs["StartTime"].cast<py::array_t<str20>>();
-  func.push_back([&](ostream& os, ssize_t i) {os << arr_stime.at(i) << separator; });
-
-  py::array_t<str20> arr_etime = kwargs["EndTime"].cast<py::array_t<str20>>();
-  func.push_back([&](ostream& os, ssize_t i) {os << arr_etime.at(i) << separator; });
-
-  py::array_t<str6> arr_side = kwargs["Side"].cast<py::array_t<str6>>();
-  func.push_back([&](ostream& os, ssize_t i) {os << arr_side.at(i) << separator; });
-
-  py::array_t<double> arr_oqty = kwargs["OrdQty"].cast<py::array_t<double>>();
-  func.push_back([&](ostream& os, ssize_t i) {os << arr_oqty.at(i) << separator; });
-
-  py::array_t<double> arr_lpx = kwargs["LimitPx"].cast<py::array_t<double>>();
-  func.push_back([&](ostream& os, ssize_t i) {os << arr_lpx.at(i) << separator; });
-
-  py::array_t<double> arr_mpa = kwargs["MPA"].cast<py::array_t<double>>();
-  func.push_back([&](ostream& os, ssize_t i) {os << arr_mpa.at(i) << separator; });
-
-  py::array_t<str20> arr_xtime = kwargs["ExecTime"].cast<py::array_t<str20>>();
-  func.push_back([&](ostream& os, ssize_t i) {os << arr_xtime.at(i) << separator; });
-
-  py::array_t<double> arr_xqty = kwargs["ExecQty"].cast<py::array_t<double>>();
-  func.push_back([&](ostream& os, ssize_t i) {os << arr_xqty.at(i) << endl; });
-
-  tcptream << JsonToString(req_json);
-  for (auto i = 0; i < input_cnt; i++) {
-    for_each(func.begin(), func.end(), [&](auto f) {f(ss, i); });
-    if (ss.str().size() > 64 * 1024) {
-      tcptream << ss.str();
-      ss.str("");
-      ss.clear();
-    }
-  }
-  tcptream << ss.str();
-
-  string json_str;
-  getline(tcptream, json_str);
-  ptree response = StringToJson(json_str);
-  const size_t record_cnt = response.get<size_t>("output_records", 0);
-  py::array_t<str64> ord_id(record_cnt);
-  memset(ord_id.mutable_data(), 0, ord_id.nbytes());
-  py::array_t<double> minus3((record_cnt));
-  py::array_t<double> minus2((record_cnt));
-  py::array_t<double> minus1((record_cnt));
-  py::array_t<double> zero((record_cnt));
-  py::array_t<double> plus1((record_cnt));
-  py::array_t<double> plus2((record_cnt));
-  py::array_t<double> plus3((record_cnt));
-
-  int line_cnt = 0;
-  string line;
-  vector<string> values;
-  while (getline(tcptream, line)) {
-    values.clear();
-    boost::split(values, line, boost::is_any_of("|"));
-    StringCopy(ord_id.mutable_at(line_cnt), values[0].c_str(), sizeof(str64));
-    minus3.mutable_at(line_cnt) = stod(values[1]);
-    minus2.mutable_at(line_cnt) = stod(values[2]);
-    minus1.mutable_at(line_cnt) = stod(values[3]);
-    zero.mutable_at(line_cnt) = stod(values[4]);
-    plus1.mutable_at(line_cnt) = stod(values[5]);
-    plus2.mutable_at(line_cnt) = stod(values[6]);
-    plus3.mutable_at(line_cnt) = stod(values[7]);
-    line_cnt++;
-  }
-  py::list retval;
-  retval.append(json_str);
-  retval.append(ord_id);
-  retval.append(minus3);
-  retval.append(minus2);
-  retval.append(minus1);
-  retval.append(zero);
-  retval.append(plus1);
-  retval.append(plus2);
-  retval.append(plus3);
-  tcptream.close();
-  return retval;
-
-  // todo
-  //for (const auto fdef : field_definitions) {
-  //  const char* key = fdef.name.c_str();
-  //  const auto& it = kwargs[key];
-  //  if (fdef.dtype == typeid(char).name()) {
-  //    switch (fdef.size) {
-  //    case 20: {
-  //    }
-  //    case 18: {
-  //    }
-  //    case 12: {
-  //    }
-  //    case 6: {
-  //    }
-  //    case 64: {
-  //    }
-  //    default:
-  //      throw domain_error("Unexpected char type size");
-  //    }
-  //  } else if (fdef.dtype == typeid(double).name()) {
-  //  } else if (fdef.dtype == typeid(int).name()) {
-  //  }
-  //}
-}
-
-py::list ExecuteQuote(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs) {
-  const auto& field_definitions = tick_functions["Quote"];
-  const string separator = req_json.get<string>("separator", "|");
-  const ssize_t input_cnt = req_json.get<ssize_t>("input_cnt", 0);
-  vector<function<void(ostream& os, size_t)>> func;
-  ostringstream ss;
-
-  py::array_t<str18> arr_symb = kwargs["Symbol"].cast<py::array_t<str18>>();
-  func.push_back([&](ostream& os, ssize_t i) {os << arr_symb.at(i) << separator; });
-
-  py::array_t<str36> arr_time = kwargs["Timestamp"].cast<py::array_t<str36>>();
-  func.push_back([&](ostream& os, ssize_t i) {os << arr_time.at(i) << endl; });
-
-  tcptream << JsonToString(req_json);
-  for (auto i = 0; i < input_cnt; i++) {
-    for_each(func.begin(), func.end(), [&](auto f) {f(ss, i); });
-    if (ss.str().size() > 64 * 1024) {
-      tcptream << ss.str();
-      ss.str("");
-      ss.clear();
-    }
-  }
-  tcptream << ss.str();
-
-  string json_str;
-  getline(tcptream, json_str);
-  cout << "RCVD: " << json_str << endl;
-  ptree response = StringToJson(json_str);
-  const size_t record_cnt = response.get<size_t>("output_records", 0);
-  py::array_t<int> id((record_cnt));
-  py::array_t<str20> time(record_cnt); // 09:35:28.123456789
-  memset(time.mutable_data(), 0, time.nbytes());
-  py::array_t<double> bidp((record_cnt));
-  py::array_t<int> bids((record_cnt));
-  py::array_t<double> askp((record_cnt));
-  py::array_t<int> asks((record_cnt));
-
-  int line_cnt = 0;
-  string line;
-  vector<string> values;
-  while (getline(tcptream, line)) {
-    values.clear();
-    boost::split(values, line, boost::is_any_of("|"));
-    id.mutable_at(line_cnt) = stoi(values[0]);
-    StringCopy(time.mutable_at(line_cnt), values[1].c_str(), sizeof(str20));
-    bidp.mutable_at(line_cnt) = stod(values[2]);
-    bids.mutable_at(line_cnt) = stoi(values[3]);
-    askp.mutable_at(line_cnt) = stod(values[4]);
-    asks.mutable_at(line_cnt) = stoi(values[5]);
-    line_cnt++;
-  }
-  py::list retval;
-  retval.append(json_str);
-  retval.append(id);
-  retval.append(time);
-  retval.append(bidp);
-  retval.append(bids);
-  retval.append(askp);
-  retval.append(asks);
-  tcptream.close();
-  return retval;
-}
-
 py::list Execute(py::args args, py::kwargs kwargs) {
   string message("Success");
   string request_id = "N/A";
@@ -357,13 +79,13 @@ py::list Execute(py::args args, py::kwargs kwargs) {
     ptree req_json = ValidateRequest(args, kwargs);
     const string request_id = req_json.get<string>("request_id", "");
 
-    const string addr = req_json.get<string>("tcp", "");
-    auto z = addr.find(":");
+    const string tcpip_addr = req_json.get<string>("tcp", "");
+    auto z = tcpip_addr.find(":");
     if (z == string::npos) {
-      throw domain_error("Invalid server address:" + addr);
+      throw domain_error("Invalid server address:" + tcpip_addr);
     }
-    string ip = string(addr.begin(), addr.begin() + z);
-    string tcp = string(addr.begin() + z + 1, addr.end());
+    string ip = string(tcpip_addr.begin(), tcpip_addr.begin() + z);
+    string tcp = string(tcpip_addr.begin() + z + 1, tcpip_addr.end());
     ip::tcp::iostream tcptream;
     tcptream.connect(ip, tcp);
     if (!tcptream) {
@@ -387,14 +109,89 @@ py::list Execute(py::args args, py::kwargs kwargs) {
   return retval;
 }
 
-void Version() {
-  cout << "v2" << endl;
+const vector<FieldsDef>& InputFields(const string& function_name) {
+  const auto it = tick_functions.find(function_name);
+  if (it == tick_functions.end()) {
+    domain_error("Unsupported function:" + function_name);
+  }
+  return it->second.input_fields;
+}
+
+string Describe() {
+  ptree root;
+  for (const auto fit : tick_functions) {
+    ptree function, input_fields, output_fields;
+    const string &function_name = fit.first;
+    const FunctionDef& function_def = fit.second;
+    for (const auto &fdef : function_def.input_fields) {
+      ptree fld;
+      fld.put("name", fdef.name);
+      fld.put("dtype", fdef.dtype);
+      input_fields.push_back(make_pair("", fld));
+    }
+    for (const auto& fdef : function_def.output_fields) {
+      ptree fld;
+      fld.put("name", fdef.name);
+      fld.put("dtype", fdef.dtype);
+      output_fields.push_back(make_pair("", fld));
+    }
+    function.put("default_tz", function_def.default_tz);
+    function.add_child("input_fields", input_fields);
+    function.add_child("output_fields", output_fields);
+    root.add_child(function_name, function);
+  }
+  return JsonToString(root);
+}
+
+py::list FunctionList() {
+  py::list retval;
+  for (const auto fit : tick_functions) {
+    retval.append(fit.first);
+  }
+  return retval;
+}
+
+py::list ArgumentList(const string function_name) {
+  py::list retval;
+  const auto fit = tick_functions.find(function_name);
+  if (fit != tick_functions.end()) {
+    for (const auto& fdef : fit->second.input_fields) {
+      retval.append(make_pair(fdef.name, fdef.dtype));
+    }
+  }
+  return retval;
+}
+
+py::list ArgumentNames(const string function_name) {
+  py::list retval;
+  const auto fit = tick_functions.find(function_name);
+  if (fit != tick_functions.end()) {
+    for (const auto& fdef : fit->second.input_fields) {
+      retval.append(fdef.name);
+    }
+  }
+  return retval;
+}
+
+py::list ResultFields(const string function_name) {
+  py::list retval;
+  const auto fit = tick_functions.find(function_name);
+  if (fit != tick_functions.end()) {
+    for (const auto& fdef : fit->second.output_fields) {
+      retval.append(make_pair(fdef.name, fdef.dtype));
+    }
+  }
+  return retval;
 }
 
 PYBIND11_MODULE(taqpy, m) {
-  m.doc() = R"pbdoc(poc)pbdoc";
+  m.doc() = "TAQ Calculator Python API";
   m.def("Execute", &Execute, "Interface to tick-proc server");
-  m.def("Version", &Version, "");
+  m.def("Describe", &Describe, "Returns json with all supported functions");
+  m.def("FunctionList", &FunctionList, "Returns list of supported function names");
+  m.def("ArgumentList", &ArgumentList, "Returns list of function's arguments : argument name and datatype");
+  m.def("ArgumentNames", &ArgumentNames, "Returns list of function's argument names");
+  m.def("ResultFields", &ResultFields, "Returns list of function's return fields : field name and datatype");
 #ifdef VERSION_INFO
   m.attr("__version__") = VERSION_INFO;
 #else
