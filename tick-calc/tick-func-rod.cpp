@@ -5,6 +5,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include "taq-proc.h"
+#include "tick-calc.h"
 #include "tick-func.h"
 #include "double.h"
 
@@ -263,12 +264,14 @@ void RodExecutionPlan::Input(InputRecord& input_record) {
   catch (...) {
     Error(ErrorType::InvalidArgument);
   }
-  record_cnt ++;
-  if (record_cnt % 1000 == 0) {
-    if (++progress_cnt == 100) {
-      cout << "." << record_cnt << endl;
-      progress_cnt = 0;
-    } else cout << ".";
+  if (IsVerbose()) {
+    record_cnt ++;
+    if (record_cnt % 1000 == 0) {
+      if (++progress_cnt == 100) {
+        cout << "." << record_cnt << endl;
+        progress_cnt = 0;
+      } else cout << ".";
+    }
   }
 }
 

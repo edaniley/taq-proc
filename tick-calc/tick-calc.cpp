@@ -19,6 +19,11 @@ using namespace Taq;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
+static bool verbose = false;
+bool tick_calc::IsVerbose() {
+  return verbose;
+}
+
 static bool ValidateCmdArgs(tick_calc::AppAruments& args) {
   if (false == (fs::exists(args.in_data_dir) && fs::is_directory(args.in_data_dir)) ) {
     cerr << "Invalid --data-dir: " << args.in_data_dir << endl;
@@ -41,6 +46,7 @@ int main(int argc, char **argv) {
     ("data-dir,d", po::value<string>(&args.in_data_dir)->default_value("."), "output directory")
     ("-tcp,t", po::value<uint16_t>(&args.in_port)->default_value(21090), "TCP port")
     ("-cpu,c", po::value<string>(&args.in_cpu_list), "CPU core list to pin threads")
+    ("-verbose,v", po::value<bool>(&verbose)->default_value(false), "vebose mode with output written to stdout")
     ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);

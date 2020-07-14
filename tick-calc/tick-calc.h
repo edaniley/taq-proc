@@ -22,6 +22,7 @@ struct AppAruments {
 void NetInitialize(AppAruments&);
 void NetPoll(AppAruments&);
 void NetFinalize(AppAruments&);
+bool IsVerbose();
 
 }
 #endif

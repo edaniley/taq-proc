@@ -78,6 +78,9 @@ static js::ptree StringToJson(const string& json_str) {
   ss << json_str;
   try {
     js::read_json(ss, root);
+    if (IsVerbose()) {
+      cout << json_str << endl;
+    }
   }
   catch (const exception& ex) {
     throw domain_error(string("Inbound json parsing failure:") + ex.what());
@@ -88,7 +91,9 @@ static js::ptree StringToJson(const string& json_str) {
 static string JsonToString(const js::ptree& root) {
   stringstream ss;
   js::write_json(ss, root);
-  cout << ss.str();
+  if (IsVerbose()) {
+    cout << ss.str();
+  }
   string output = ss.str();
   output.erase(remove_if(output.begin(), output.end(), [](char c) {return c == '\n'; }), output.end());
   replace(output.begin(), output.end(), '\t', ' ');
@@ -104,7 +109,6 @@ static void ParseRequest(Connection& conn) {
   } catch (...) {
   }
   if (parsed) {
-    js::write_json(cout, conn.request_json);
     conn.request.id = conn.request_json.get<string>("request_id", "");
     conn.request.separator = conn.request_json.get<string>("separator", "|");
     conn.request.output_format = conn.request_json.get<string>("output_format", "psv");
