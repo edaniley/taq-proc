@@ -79,7 +79,6 @@ static js::ptree StringToJson(const string& json_str) {
   try {
     js::read_json(ss, root);
     if (IsVerbose()) {
-      //cout << json_str << endl;
       js::write_json(cout, root);
     }
   }

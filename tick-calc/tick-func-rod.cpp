@@ -38,17 +38,18 @@ static RestType DecodeRestType(const string& str) {
 }
 
 static char DecodeSide(const string& str) {
-  if (str.size() == 1) {
+  if (str.size() > 0) {
     if (str[0] == 'B' || str[0] == 'b')
       return 'B';
     else if (str[0] == 'S' || str[0] == 's')
       return 'S';
   }
+  // dead code for now
   string side(str);
   boost::to_upper(side);
   if (side == "BUY")
     return 'B';
-  else if (side == "SS" || side == "SSE" || side == "SELL")
+  else if (side == "SELL" || side == "SHORT" || side == "SS" || side == "SSE")
     return 'S';
   throw Exception(ErrorType::InvalidSide);
   return '\0';
@@ -265,6 +266,9 @@ void RodExecutionPlan::Input(InputRecord& input_record) {
   }
   catch (const Exception & Ex) {
     Error(Ex.errtype());
+    // if (IsVerbose()) {
+    //   cout << ErrorToString(Ex.errtype()) << " : "  << input_record.values[ID] << endl;
+    // }
   }
   catch (...) {
     Error(ErrorType::InvalidArgument);
