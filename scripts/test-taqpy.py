@@ -10,29 +10,6 @@ import taqpy
 taqpy_addr = "127.0.0.1:21090"
 function_def = json.loads(taqpy.Describe())
 
-def PrepareSampleROD(input_file):
-  output_file = ".".join(input_file.split(".")[:-1]) + ".hdf"
-  sample = pd.read_csv(input_file)
-  sample["ID"] = sample["mpid"] + "." + sample["order_id"]
-  sample["Date"] = sample["entry_time"].apply(lambda x: str(x)[:10])
-  sample["StartTime"] = sample["entry_time"].apply(lambda x: str(x).split("+")[0][11:])
-  sample["EndTime"] = sample["end_time"].apply(lambda x: str(x).split("+")[0][11:])
-  #sample["Side"] = sample["side"].apply(lambda x: "" if np.isnan(x) else str(x)[:1])
-  sample["ExecTime"] = sample["time"].apply(lambda x: str(x).split("+")[0][11:])
-  sample.rename(columns = { "symbol": "Symbol",
-                            "side": "Side",
-                            "astralcalc_venue_order_nonlimit_max_wpa" : "MPA",
-                            "limit_price": "LimitPx",
-                            "order_quantity": "OrdQty",
-                            "lastsize": "ExecQty"
-                          }, inplace = True)
-  input_fields = []
-  for f in function_def["ROD"]["input_fields"]:
-    input_fields.append(f[0])
-  df = sample.loc[sample["astralcalc_is_resting_eligible"] == True, input_fields]
-  df.to_hdf(output_file, "data", mode="w")
-  return df
-
 def MakeRequestJson(df, function_name, time_zone):
   if function_name not in taqpy.FunctionList():
     raise Exception("Unknown function")
@@ -109,4 +86,3 @@ if __name__ == "__main__":
 
   except Exception as ex:
     print(ex)
-    

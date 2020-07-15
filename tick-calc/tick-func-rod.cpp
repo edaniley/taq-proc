@@ -93,7 +93,7 @@ static RestType RestingType(const NbboPrice &nbbo, char side, const Double &limi
   return retval;
 }
 
-// bool verbose = false;
+//bool record_of_interest = false;
 static void CalculateROD(vector<double> &result, const NbboPrice*quote_start, const NbboPrice* quote_end,
                         const vector<RodSlice> slices, char side, const Double &limit_price, const RestType &mpa) {
     auto slice = slices.begin();
@@ -105,7 +105,7 @@ static void CalculateROD(vector<double> &result, const NbboPrice*quote_start, co
         ? min(slice->end_time, next_quote->time)  // earlierst of end of slice or nbbo change i.e. next nbbo time
         : slice->end_time;
 
-      //if (verbose) {
+      //if (record_of_interest) {
       //  ostringstream ss; ss << setprecision(4);
       //  ss << "slice start:" << start_time << " end:" << end_time
       //    << "\ncurr [ " << current_quote->time << " " << current_quote->bidp << " : " << current_quote->askp << " ]";
@@ -149,8 +149,8 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
   });
   for (const auto prec : sorted_input) {
     const InputRecord &rec = *prec;
-    //verbose = rec.order_id == "BERN.SAC63957C";
-    //if (verbose) {
+    //record_of_interest = rec.order_id == "LEHM.xksuxceutq8qC";
+    //if (record_of_interest) {
     //  cout << endl << rec.order_id << "," << symbol << "," << rec.start_time << "," << rec.end_time << ","
     //       << rec.side << "," << rec.ord_qty << "," << rec.limit_price << "," << ((int)rec.mpa -3) << endl;
     //  vector<pair<Time, int>> fills(rec.executions.size());
@@ -164,6 +164,11 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
       const Time start_time_adjusted = rec.start_time + taq_time_adjustment;
       const Time end_time_adjusted = rec.end_time + taq_time_adjustment;
       quote_start = quotes.find_prior(quote_start, quotes.end(), start_time_adjusted);
+      //if (record_of_interest) {
+      //  cout << "current_quote_time ";
+      //  if (quote_start == quotes.end()) cout << "None"; else cout << quote_start->time;
+      //  cout << " start_time_adjusted " << start_time_adjusted << " end_time_adjusted " << end_time_adjusted << endl;
+      //}
       if (quote_start == quotes.end()) {
         throw Exception(ErrorType::DataNotFound, "Market data not found");
       }

@@ -61,7 +61,7 @@ public:
   }
   const T* find_prior(const T* left, const T* right, Time time) const {
     auto retval = lower_bound(left, right, time);
-    if (retval->time > time && retval > begin()) {
+    if ((retval == end() || retval->time > time) && retval > begin()) {
       -- retval;
     }
     return retval;
