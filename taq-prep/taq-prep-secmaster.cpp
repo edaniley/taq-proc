@@ -74,9 +74,14 @@ int ProcessSecMaster(AppContext & ctx, istream & is) {
       if (MCOL_TradedOnLTSE < (int)row.size()) {
         sec.exch_mask.set(Exch_L, row[MCOL_TradedOnLTSE][0]);
       }
-      if (false == row[MCOL_Effective_Date].empty()) {
-        sec.eff_date = MkTaqDate(row[MCOL_Effective_Date]);
+      if (MCOL_TradedOnMEMX < (int)row.size()) {
+        sec.exch_mask.set(Exch_U, row[MCOL_TradedOnMEMX][0]);
       }
+      if (MCOL_TradedOnMIAX < (int)row.size()) {
+        sec.exch_mask.set(Exch_H, row[MCOL_TradedOnMIAX][0]);
+      }
+      const string utp_symb = sec.tape == 'C' ? row[MCOL_SIP_Symbol] : CtaToUtp(row[MCOL_Symbol]);
+      StringCopy(sec.utp_symb, utp_symb.c_str(), sizeof(sec.utp_symb));
     } catch (exception &ex) {
       cerr << line << endl;
       cerr << "record-cnt:" << sec_list.size() << " err-text" << ex.what() << endl;

@@ -52,8 +52,12 @@ def MakeQuote(args):
     symbol = symbols[symbols_idx[0]]
     times_by_symbol[symbol].append(trade_date + datetime.timedelta(microseconds=delta))
     symbols_idx.rotate(1)
+  record_cnt = 0
   for symbol in symbols:
     for trade_time in times_by_symbol[symbol]:
+      record_cnt += 1
+      if record_cnt > args.test_size:
+          return
       print("{}|{}".format(symbol,trade_time.isoformat('T')))
 
 def MakeROD(args):

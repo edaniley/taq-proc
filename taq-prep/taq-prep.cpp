@@ -30,13 +30,13 @@ static void CloseOutputStream(taq_prep::AppContext& ctx) {
 }
 /* ===================================================== page ========================================================*/
 static int ProcessInputStream(taq_prep::AppContext& ctx, istream& is) {
-  if (ctx.input_type == "master") {
+  if (ctx.output_file_hdr.type == RecordType::SecMaster) {
     return taq_prep::ProcessSecMaster(ctx, is);
   }
-  else if (ctx.input_type == "quote" || ctx.input_type == "quote-po") {
+  else if (ctx.output_file_hdr.type == RecordType::Nbbo || ctx.output_file_hdr.type == RecordType::NbboPrice) {
     return taq_prep::ProcessQuotes(ctx, is);
   }
-  else if (ctx.input_type == "trade") {
+  else if (ctx.output_file_hdr.type == RecordType::Trade) {
     return taq_prep::ProcessTrades(ctx, is);
   }
   return 0;
@@ -70,19 +70,21 @@ static bool ValidateCmdArgs(taq_prep::AppContext & ctx) {
     return false;
   }
 
-  ctx.output_file_hdr.type = RecordTypeFromString(ctx.input_type);
-  if (ctx.output_file_hdr.type == RecordType::NA) {
+  RecordType rec_type = RecordTypeFromString(ctx.input_type);
+  if (rec_type == RecordType::NA) {
       cerr << "Invalid --in-type:" << ctx.input_type << endl;
       return false;
   }
-  if (ctx.output_file_hdr.type == RecordType::SecMaster && ctx.symb.empty()) {
+  bool symbol_grp_required = rec_type == RecordType::Nbbo || rec_type == RecordType::NbboPrice;
+  if (symbol_grp_required && ctx.symb.empty()) {
     cerr << "--symbol-group required for stdin" << endl;
     return false;
   }
-  if (ctx.output_file_hdr.type == RecordType::SecMaster && ctx.symb.size() > 1) {
+  if (symbol_grp_required && ctx.symb.size() > 1) {
     cerr << "Invalid --symbol-group:" << ctx.symb << endl;
     return false;
   }
+  ctx.output_file_hdr.type = rec_type;
   return true;
 }
 /* ===================================================== page ========================================================*/

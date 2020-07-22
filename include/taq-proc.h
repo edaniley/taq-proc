@@ -44,6 +44,7 @@ enum class RecordType {
 
 struct Security {
   Symbol symb;
+  Symbol utp_symb;
   char CUSIP[10];
   char type[4];
   Symbol sip_symb;
@@ -57,7 +58,6 @@ struct Security {
   char industry_code[5];
   char halt_reason;
   double shares_outstanding_m;
-  Date eff_date;
 };
 
 struct Nbbo {
@@ -78,12 +78,20 @@ struct NbboPrice {
 };
 
 struct Trade {
+  struct Attr {
+    unsigned int exch : 8;
+    unsigned int trf : 8;
+    unsigned int lte : 1;
+    unsigned int ve : 1;
+    unsigned int iso : 1;
+  };
   const Time time;
   const double price;
   const int qty;
+  const struct Attr attr;
   char cond[4];
-  Trade(const Time& trd_time, double trd_price, int trd_qty, char trd_cond[4])
-    : time(trd_time), price(trd_price), qty(trd_qty) {
+  Trade(const Time& trd_time, double trd_price, int trd_qty, Attr attr, const char *trd_cond)
+    : time(trd_time), price(trd_price), qty(trd_qty), attr(attr) {
     memcpy(cond, trd_cond, 4);
   }
 };
@@ -149,7 +157,7 @@ boost::filesystem::path MkDataFilePath(const std::string& data_dir, RecordType t
     ss << yyyymmdd << ".nbbo-po." << symbol_group << ".dat";
   }
   else if (type == RecordType::Trade) {
-    ss << yyyymmdd << ".trades." << symbol_group << ".dat";
+    ss << yyyymmdd << ".trd" << ".dat";
   }
   file_path /= ss.str();
   if (false == boost::filesystem::exists(file_path) && boost::filesystem::is_regular_file(file_path)) {

@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
   desc.add_options()
     ("help,h", "produce help message")
     ("data-dir,d", po::value<string>(&args.in_data_dir)->default_value("."), "output directory")
-    ("-tcp,t", po::value<uint16_t>(&args.in_port)->default_value(21090), "TCP port")
+    ("-tcp,t", po::value<uint16_t>(&args.in_port)->default_value(3090), "TCP port")
     ("-cpu,c", po::value<string>(&args.in_cpu_list), "CPU core list to pin threads")
     ("-verbose,v", po::value<bool>(&verbose)->default_value(false), "vebose mode with output written to stdout")
     ;

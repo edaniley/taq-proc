@@ -80,6 +80,25 @@ namespace taq_prep
     QCOL_Max
   };
 
+  enum TradeColumn {
+    TCOL_Time,
+    TCOL_Exchange,
+    TCOL_Symbol,
+    TCOL_Sale_Condition,
+    TCOL_Trade_Volume,
+    TCOL_Trade_Price,
+    TCOL_Trade_Stop_Stock_Indicator,
+    TCOL_Trade_Correction_Indicator,
+    TCOL_Sequence_Number,
+    TCOL_Trade_Id,
+    TCOL_Source_of_Trade,
+    TCOL_Trade_Reporting_Facility,
+    TCOL_Participant_Timestamp,
+    TCOL_Trade_Reporting_Facility_TRF_Timestamp,
+    TCOL_Trade_Through_Exempt_Indicator,
+    TCOL_Max
+  };
+
 
   struct AppContext {
     std::string date;
@@ -96,6 +115,9 @@ namespace taq_prep
 int ProcessSecMaster(AppContext &, std::istream & is);
 int ProcessQuotes(AppContext &, std::istream & is);
 int ProcessTrades(AppContext &, std::istream & is);
+void LoadSecMaster(AppContext &);
+char PrimaryExchange(const std::string symbol);
+std::string CtaToUtp(const std::string& cta_symbol);
 
 }
 

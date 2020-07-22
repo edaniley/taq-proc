@@ -30,6 +30,9 @@
     <ClCompile Include="taq-prep-trades.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="taq-prep-symb.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="taq-prep.h">

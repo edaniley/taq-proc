@@ -6,7 +6,7 @@
     <LocalDebuggerWorkingDirectory>$(ProjectDir)\..\data</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-i quote-short.psv -t quote-po -o . -d 20200601 -sA</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-i AMZN.psv -t trade -o . -d 20200331</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>$(ProjectDir)\..\data</LocalDebuggerWorkingDirectory>
   </PropertyGroup>

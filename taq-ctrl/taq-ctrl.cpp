@@ -38,8 +38,39 @@ string ToString(int value, int width) {
   return str;
 }
 
-void HandleSecMasterFile(const FileHeader& , const mm::mapped_region & ) {//mm_region) {
-
+void HandleSecMasterFile(const FileHeader& fh , const mm::mapped_region& mm_region) {
+  if (sizeof(fh) + fh.symb_cnt * sizeof(Security) != mm_region.get_size()) {
+    throw domain_error("Input file corruption : " + file_path);
+  }
+  if (false == no_header) {
+    auto thousands = make_unique<separate_thousands>();
+    auto saved_locale = cout.imbue(locale(cout.getloc(), thousands.release()));
+    cout << "date file     " << file_path << endl;
+    cout << "file size     " << mm_region.get_size() << endl;
+    cout << "record type   " "SecMaster" << endl;
+    cout << "record size   " << sizeof(Security) << endl;
+    cout << "symbol count  " << fh.symb_cnt << endl << endl;
+    cout.imbue(saved_locale);
+    if (pretty) {
+      cout << "cta_symb    utp_symb    prim_exch tape lot_size" << endl;
+    } else {
+      cout << "cta_symb,utp_symb,prim_exch,tape,lot_size" << endl;
+    }
+  }
+  const Security* symbols = (const Security*)((char*)(mm_region.get_address()) + sizeof(fh));
+  for (auto i = 0; i < fh.symb_cnt; i++) {
+    const Security& sec = symbols[i];
+    if (pretty) {
+      string cta_symb(sec.symb); cta_symb.append(12 - cta_symb.size(), ' ');
+      string utp_symb(sec.utp_symb); utp_symb.append(12 - utp_symb.size(), ' ');
+      string exch(10, ' '); exch[0] = sec.exch;
+      string tape(5, ' '); tape[0] = sec.tape;
+      string lot_size = to_string((int)sec.lot_size); lot_size.insert(0, 8 - lot_size.size(), ' ');
+      cout << cta_symb << utp_symb << exch << tape << lot_size << endl;
+    } else {
+      cout << sec.symb << "," << sec.utp_symb << "," << sec.exch << "," << sec.tape << "," << (int)sec.lot_size << endl;
+    }
+  }
 }
 
 void ShowRecords(const Nbbo* rec, const Nbbo* end) {
@@ -56,6 +87,21 @@ void ShowRecords(const NbboPrice *rec, const NbboPrice * end) {
   cout << setprecision(4);
   do {
     cout << "time:" << rec->time << " bid:" << rec->bidp << " offer:" << rec->askp << endl;
+  } while (++rec < end);
+}
+
+void ShowRecords(const Trade* rec, const Trade* end) {
+  do {
+    if (pretty) {
+      cout << "time:" << rec->time << " price:" << rec->price << " qty:" << rec->qty
+           << " exch:" << (char)rec->attr.exch << " trf:'" << (char)rec->attr.exch
+           << "' lte:" << (rec->attr.lte ? 'Y' : 'N') << " ve:" << (rec->attr.ve ? 'Y' : 'N') << endl;
+    } else {
+      cout << rec->time << ',' << rec->price << ',' << rec->qty
+        << ',' << (char)rec->attr.exch << ',' << (char)rec->attr.exch
+        << ',' << (rec->attr.lte ? 'Y' : 'N') << ',' << (rec->attr.ve ? 'Y' : 'N') << endl;
+
+    }
   } while (++rec < end);
 }
 
@@ -77,6 +123,10 @@ void ShowSymbolRecords(const FileHeader& fh, const mm::mapped_region& mm_region,
       const NbboPrice* begin = (const NbboPrice*)((char*)(mm_region.get_address()) + sizeof(fh) + (symb->start - 1) * sizeof(NbboPrice));
       const NbboPrice* end = begin + rec_cnt;
       ShowRecords(begin, end);
+    } else if (fh.type == RecordType::Trade) {
+      const Trade* begin = (const Trade*)((char*)(mm_region.get_address()) + sizeof(fh) + (symb->start - 1) * sizeof(Trade));
+      const Trade* end = begin + rec_cnt;
+      ShowRecords(begin, end);
     }
   }
 }
@@ -92,6 +142,7 @@ void HandleNbboFile(const FileHeader& fh, const mm::mapped_region & mm_region) {
     cout << "date file     " << file_path << endl;
     cout << "file size     " << mm_region.get_size() << endl;
     cout << "record type   " << (fh.type == RecordType::Nbbo ? "Nbbo (with size)" : "Nbbo (price only)") << endl;
+    cout << "record size   " << (fh.type == RecordType::Nbbo ? sizeof(Nbbo) : sizeof(NbboPrice)) << endl;
     cout << "symbol count  " << fh.symb_cnt << endl;
     cout << "symbols" << endl;
     cout.imbue(saved_locale);
@@ -114,6 +165,44 @@ void HandleNbboFile(const FileHeader& fh, const mm::mapped_region & mm_region) {
     }
   }
   if (! query_symbol.empty()) {
+    ShowSymbolRecords(fh, mm_region, symbol_map);
+  }
+}
+
+void HandleTradeFile(const FileHeader& fh, const mm::mapped_region& mm_region) {
+  if ((sizeof(fh) + fh.symb_cnt * sizeof(SymbolMap) + fh.rec_cnt * sizeof(Trade)) != mm_region.get_size()) {
+    throw domain_error("Input file corruption : " + file_path);
+  }
+  if (false == no_header) {
+    auto thousands = make_unique<separate_thousands>();
+    auto saved_locale = cout.imbue(locale(cout.getloc(), thousands.release()));
+    cout << "date file     " << file_path << endl;
+    cout << "file size     " << mm_region.get_size() << endl;
+    cout << "record type   " "Trade" << endl;
+    cout << "record type   " << sizeof(Trade) << endl;
+    cout << "symbol count  " << fh.symb_cnt << endl;
+    cout << "symbols" << endl;
+    cout.imbue(saved_locale);
+  }
+  const SymbolMap* symbol_map = (const SymbolMap*)((char*)(mm_region.get_address()) + sizeof(fh) + fh.rec_cnt * sizeof(Trade));
+  vector<pair<string, int>> symbols;
+  for (int i = 0; i < fh.symb_cnt; i++) {
+    const SymbolMap& map = symbol_map[i];
+    symbols.push_back(make_pair(map.symb, map.end - map.start + 1));
+  }
+  if (sorted) {
+    sort(symbols.begin(), symbols.end(), [](const auto& left, const auto& right) {return right.second < left.second; });
+  }
+  for (auto& symbol : symbols) {
+    if (pretty) {
+      symbol.first.append(12 - symbol.first.length(), ' ');
+      cout << symbol.first << ToString(symbol.second, 10) << endl;
+    }
+    else {
+      cout << symbol.first << "," << symbol.second << endl;
+    }
+  }
+  if (!query_symbol.empty()) {
     ShowSymbolRecords(fh, mm_region, symbol_map);
   }
 }
@@ -159,6 +248,9 @@ int main(int argc, char** argv) {
     }
     else if (fh.type == RecordType::Nbbo || fh.type == RecordType::NbboPrice) {
       HandleNbboFile(fh, mmreg);
+    }
+    else if (fh.type == RecordType::Trade) {
+      HandleTradeFile(fh, mmreg);
     }
   }
   catch (const exception& ex) {

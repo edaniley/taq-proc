@@ -148,6 +148,7 @@
   <ItemGroup>
     <ClCompile Include="taq-prep-quotes.cpp" />
     <ClCompile Include="taq-prep-secmaster.cpp" />
+    <ClCompile Include="taq-prep-symb.cpp" />
     <ClCompile Include="taq-prep-trades.cpp" />
     <ClCompile Include="taq-prep.cpp" />
   </ItemGroup>
