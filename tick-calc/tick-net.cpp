@@ -112,7 +112,7 @@ void ConnectionWrite(Connection &conn) {
   }
 }
 
-void NetPoll(AppAruments&) {
+void NetPoll() {
   vector<int> to_free;
   for (int fd : conn_fds) {
     if (client_connections[fd]) {

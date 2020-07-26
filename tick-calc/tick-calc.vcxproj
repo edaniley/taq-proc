@@ -155,6 +155,7 @@
     <ClCompile Include="tick-exec.cpp" />
     <ClCompile Include="tick-func-quote.cpp" />
     <ClCompile Include="tick-func-rod.cpp" />
+    <ClCompile Include="tick-log.cpp" />
     <ClCompile Include="tick-winsock.cpp" />
   </ItemGroup>
   <ItemGroup>

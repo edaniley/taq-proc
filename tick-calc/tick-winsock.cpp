@@ -67,7 +67,7 @@ void FreeConnection(DWORD idx) {
   conn_count--;
 }
 
-void NetPoll(AppAruments&) {
+void NetPoll() {
   FD_SET write_set;
   FD_SET read_set;
   FD_ZERO(&read_set);
