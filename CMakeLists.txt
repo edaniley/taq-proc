@@ -4,10 +4,9 @@ project(taq-proc C CXX ASM-ATT)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
 set(CXX_FLAGS "-std=c++17 -Wall -Werror -Wpedantic")
-set(CXX_FLAGS_DEBUG   "-ggdb -Og")
 set(CXX_FLAGS_RELEASE "-O3")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  ${CXX_FLAGS} ${CXX_FLAGS_DEBUG}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  ${CXX_FLAGS}")
 
 add_definitions(-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
 
