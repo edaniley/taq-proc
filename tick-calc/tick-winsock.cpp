@@ -1,5 +1,6 @@
 #ifdef _MSC_VER
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #include <errors.h>
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Quartz.lib")
@@ -20,6 +21,8 @@ namespace tick_calc {
 struct WinConnection {
   SOCKET socket;
   Connection conn;
+  string ip;
+  short tcp;
 };
 
 DWORD conn_count = 0;
@@ -49,17 +52,25 @@ void NetInitialize(AppAruments & args) {
   }
 }
 
-void CreateConnection(SOCKET s) {
+void CreateConnection(SOCKET s, const char *ip, short tcp) {
   WinConnection* si = new WinConnection();
   si->socket = s;
+  si->ip.assign(ip);
+  si->tcp = tcp;
   connections[conn_count] = si;
   conn_count++;
+  ostringstream ss;
+  ss << "Accepted client connection " << ip << ':' << tcp;
+  Log(LogLevel::INFO, ss.str());
 }
 
 void FreeConnection(DWORD idx) {
   WinConnection* si = connections[idx];
   DWORD i;
   ::closesocket(si->socket);
+  ostringstream ss;
+  ss << "Teminated client connection " << si->ip << ':' << si->tcp;
+  Log(LogLevel::INFO, ss.str());
   delete si;
   for (i = idx; i < conn_count; i++)   {
     connections[i] = connections[i + 1];
@@ -96,12 +107,16 @@ void NetPoll() {
   if (FD_ISSET(listen_socket, &read_set)) {
     total--;
     SOCKET accept_socket;
-    if ((accept_socket = ::accept(listen_socket, NULL, NULL)) != INVALID_SOCKET) {
+    SOCKADDR_IN client_info = { 0 };
+    int addr_size = sizeof(client_info);
+    if ((accept_socket = ::accept(listen_socket, (struct sockaddr*)&client_info, &addr_size)) != INVALID_SOCKET) {
       DWORD NonBlock = 1;
       if (ioctlsocket(accept_socket, FIONBIO, &NonBlock) == SOCKET_ERROR) {
         throw runtime_error(LastErrorToString());
       }
-      CreateConnection(accept_socket);
+      char buff[32];
+      const char * client_ip = inet_ntop(AF_INET, &client_info.sin_addr, buff, sizeof(buff));
+      CreateConnection(accept_socket, client_ip, ntohs(client_info.sin_port));
     } else if (WSAGetLastError() != WSAEWOULDBLOCK) {
       throw runtime_error(LastErrorToString());
     }

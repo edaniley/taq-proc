@@ -227,13 +227,17 @@ bool SetThreadCpuAffinity(int cpu_core) {
   bool success = sched_setaffinity(0, sizeof(cpuset), &cpuset) == 0;
 #endif
   if (success) {
-    cout << "Pinned current thread:" << this_thread::get_id() << " cpu-core:" << cpu_core << endl;
+    ostringstream ss;
+    ss << "Pinned current thread:" << this_thread::get_id() << " cpu-core:" << cpu_core;
+    Log(LogLevel::INFO, ss.str());
   }
   return success;
 }
 
 void ExecutionThread(int cpu_core) {
-  cout << CurrentTimestamp() << " thread:" << this_thread::get_id() << " started" << endl;
+  ostringstream ss;
+  ss << CurrentTimestamp() << " thread:" << this_thread::get_id() << " started";
+  Log(LogLevel::INFO, ss.str());
   if (cpu_core != 1) {
     SetThreadCpuAffinity(cpu_core);
   }

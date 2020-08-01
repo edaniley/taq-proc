@@ -10,7 +10,7 @@ using namespace std;
 using namespace Taq;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
-/* ===================================================== page ========================================================*/
+
 static void OpenOutputStream(taq_prep::AppContext& ctx) {
   fs::path out_path = MkDataFilePath(ctx.output_dir, ctx.output_file_hdr.type, MkTaqDate(ctx.date), ctx.symb.size() ? ctx.symb[0] : '\0');
   if (fs::exists(out_path) && fs::is_regular_file(out_path)) {
@@ -19,7 +19,7 @@ static void OpenOutputStream(taq_prep::AppContext& ctx) {
   ctx.output_file = out_path.string();
   ctx.output.open(ctx.output_file, ios::out | ios::binary);
 }
-/* ===================================================== page ========================================================*/
+
 static void CloseOutputStream(taq_prep::AppContext& ctx) {
   const bool rewrite_header = ctx.input_type != "master";
   if (rewrite_header) {
@@ -28,7 +28,7 @@ static void CloseOutputStream(taq_prep::AppContext& ctx) {
   }
   ctx.output.close();
 }
-/* ===================================================== page ========================================================*/
+
 static int ProcessInputStream(taq_prep::AppContext& ctx, istream& is) {
   if (ctx.output_file_hdr.type == RecordType::SecMaster) {
     return taq_prep::ProcessSecMaster(ctx, is);
@@ -41,7 +41,7 @@ static int ProcessInputStream(taq_prep::AppContext& ctx, istream& is) {
   }
   return 0;
 }
-/* ===================================================== page ========================================================*/
+
 static int ProcessFiles(taq_prep::AppContext &ctx) {
   int retval = 0;
   for(const auto & file : ctx.input_files) {
@@ -50,7 +50,7 @@ static int ProcessFiles(taq_prep::AppContext &ctx) {
   }
   return retval;
 }
-/* ===================================================== page ========================================================*/
+
 static bool ValidateCmdArgs(taq_prep::AppContext & ctx) {
   if (false == (fs::exists(ctx.output_dir) && fs::is_directory(ctx.output_dir))) {
     cerr << "Invalid --out-dir: " << ctx.output_dir << endl;
@@ -87,7 +87,7 @@ static bool ValidateCmdArgs(taq_prep::AppContext & ctx) {
   ctx.output_file_hdr.type = rec_type;
   return true;
 }
-/* ===================================================== page ========================================================*/
+
 int main(int argc, char **argv) {
   int retval = 0;
   taq_prep::AppContext ctx;

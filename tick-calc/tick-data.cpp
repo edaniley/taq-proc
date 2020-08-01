@@ -9,16 +9,23 @@ using namespace std;
 using namespace Taq;
 
 namespace  tick_calc {
+
+unique_ptr<SecMasterManager> secmaster_manager;
 unique_ptr<RecordsetManager<Nbbo>> nbbo_data_manager;
 unique_ptr<RecordsetManager<NbboPrice>> nbbo_po_data_manager;
 unique_ptr<RecordsetManager<Trade>> trade_data_manager;
 
 void InitializeData(const string & data_dir) {
+  secmaster_manager = make_unique<SecMasterManager>(data_dir);
   nbbo_data_manager = make_unique<RecordsetManager<Nbbo>>(data_dir);
   nbbo_po_data_manager = make_unique<RecordsetManager<NbboPrice>>(data_dir);
 }
 void CleanupData() {
   nbbo_data_manager.release();
+}
+
+tick_calc::SecMasterManager & SecurityMasterManager() {
+  return *secmaster_manager;
 }
 
 tick_calc::RecordsetManager<Nbbo>& QuoteRecordsetManager() {
@@ -89,7 +96,7 @@ const SecMaster&  SecMasterManager::Load(Date date) {
 void SecMasterManager::Release(const SecMaster &obj) {
   lock_guard<mutex> lock(mtx_);
   obj.use_cnt_ --;
-  assert(obj.use_cnt_ > 0);
+  assert(obj.use_cnt_ >= 0);
   //sec_master_.erase(obj.date_);
 }
 

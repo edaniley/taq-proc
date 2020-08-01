@@ -7,7 +7,7 @@ import json
 import uuid
 import taqpy
 
-taqpy_addr = "127.0.0.1:21090"
+taqpy_addr = "127.0.0.1:3090"
 function_def = json.loads(taqpy.Describe())
 
 def MakeRequestJson(df, function_name, time_zone):

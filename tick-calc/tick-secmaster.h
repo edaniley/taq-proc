@@ -38,15 +38,21 @@ class SecMaster {
       list_ = vector<Security>(start, start + sec_no);
       for_each(list_.begin(), list_.end(), [&](const auto& sec) {
         by_symb_.insert(make_pair(sec.symb, &sec));
-        });
+        if (sec.symb != sec.utp_symb) {
+          by_symb_.insert(make_pair(sec.utp_symb, &sec));
+        }
+      });
     }
 
     ~SecMaster() {
       cout << "~SecMaster date:" << boost::gregorian::to_iso_string(date_) << endl;
     }
-    const Security* FindBySymbol(const string& symbol) {
+    const Security & FindBySymbol(const string& symbol) const {
       auto it = by_symb_.find(symbol);
-      return it != by_symb_.end() ? it->second : 0;
+      if (it == by_symb_.end()) {
+        throw(domain_error("Not found date:" + boost::gregorian::to_simple_string(date_) + " symbol:" + symbol));
+      }
+      return *(it->second);
     }
 
   private:

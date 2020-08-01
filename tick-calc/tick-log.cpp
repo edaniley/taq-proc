@@ -16,7 +16,6 @@ namespace tick_calc {
 struct LogMsg {
   LogMsg(LogLevel level, const string &message)
     : time(boost::posix_time::microsec_clock::local_time()), level(level), message(message) {}
-  ~LogMsg() {cout << "-- LogMsg" << endl;}
   const Timestamp time;
   const LogLevel level;
   const string message;

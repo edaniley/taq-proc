@@ -129,10 +129,14 @@ static void CalculateROD(vector<double> &result, const NbboPrice*quote_start, co
 }
 
 void RodExecutionPlan::RodExecutionUnit::Execute() {
+  auto& secmaster_mgr = SecurityMasterManager();
   auto& quote_mgr = NbboPoRecordsetManager();
+  const SecMaster* secmaster = nullptr;
   const SymbolRecordset<NbboPrice> * symbol_recordset = nullptr;
   try {
-    symbol_recordset = &quote_mgr.LoadSymbolRecordset(date, symbol);
+    secmaster = &secmaster_mgr.Load(date);
+    const Security& security = secmaster->FindBySymbol(symbol);
+    symbol_recordset = &quote_mgr.LoadSymbolRecordset(date, security.symb);
   } catch (...) {
     Error(ErrorType::DataNotFound, (int)input_records.size());
     return;
@@ -231,6 +235,7 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
   }
 
   quote_mgr.UnloadSymbolRecordset(date, symbol);
+  secmaster_mgr.Release(*secmaster);
 }
 
 void RodExecutionPlan::Input(InputRecord& input_record) {

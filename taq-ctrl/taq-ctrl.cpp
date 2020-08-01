@@ -11,7 +11,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
-
+#include "boost-algorithm-string.h"
 #include "taq-proc.h"
 
 using namespace std;
@@ -73,60 +73,66 @@ void HandleSecMasterFile(const FileHeader& fh , const mm::mapped_region& mm_regi
   }
 }
 
-void ShowRecords(const Nbbo* rec, const Nbbo* end) {
+void ShowRecords(const string & symb, const Nbbo* rec, const Nbbo* end) {
   cout << setprecision(4);
   do {
-    cout << "time:" << rec->time
+    cout << "symbol:" << symb << " time:" << rec->time
       << " bid:[ " << rec->bidp << " " << rec->bids
       << " ] offer: [" << rec->askp << " " << rec->asks
       << " ]" << endl;
   } while (++rec < end);
 }
 
-void ShowRecords(const NbboPrice *rec, const NbboPrice * end) {
+void ShowRecords(const string& symb, const NbboPrice *rec, const NbboPrice * end) {
   cout << setprecision(4);
   do {
-    cout << "time:" << rec->time << " bid:" << rec->bidp << " offer:" << rec->askp << endl;
+    cout << "symbol:" << symb << " time:" << rec->time << " bid:" << rec->bidp << " offer:" << rec->askp << endl;
   } while (++rec < end);
 }
 
-void ShowRecords(const Trade* rec, const Trade* end) {
+void ShowRecords(const string& symb, const Trade* rec, const Trade* end) {
   do {
     if (pretty) {
-      cout << "time:" << rec->time << " price:" << rec->price << " qty:" << rec->qty
+      cout << "symbol:" << symb << " time:" << rec->time << " price:" << rec->price << " qty:" << rec->qty
            << " exch:" << (char)rec->attr.exch << " trf:'" << (char)rec->attr.exch
-           << "' lte:" << (rec->attr.lte ? 'Y' : 'N') << " ve:" << (rec->attr.ve ? 'Y' : 'N') << endl;
+           << "' lte:" << (rec->attr.lte ? 'Y' : 'N') << " ve:" << (rec->attr.ve ? 'Y' : 'N') 
+           << " iso:" << (rec->attr.iso ? 'Y' : 'N')  << endl;
     } else {
-      cout << rec->time << ',' << rec->price << ',' << rec->qty
+      cout << symb << ',' << rec->time << ',' << rec->price << ',' << rec->qty
         << ',' << (char)rec->attr.exch << ',' << (char)rec->attr.exch
-        << ',' << (rec->attr.lte ? 'Y' : 'N') << ',' << (rec->attr.ve ? 'Y' : 'N') << endl;
+        << ',' << (rec->attr.lte ? 'Y' : 'N') << ',' << (rec->attr.ve ? 'Y' : 'N')
+        << ',' << (rec->attr.iso ? 'Y' : 'N') << endl;
 
     }
   } while (++rec < end);
 }
 
 void ShowSymbolRecords(const FileHeader& fh, const mm::mapped_region& mm_region, const SymbolMap* symbol_map) {
-  const SymbolMap *symb = nullptr;
-  for (int i = 0; i < fh.symb_cnt; i ++) {
-    if (query_symbol == string(symbol_map[i].symb)) {
-      symb = symbol_map + i;
-      break;
+  vector<string> symbol_list;
+  boost::split(symbol_list, query_symbol, boost::is_any_of(","));
+  for (const string & symbol: symbol_list) {
+    const SymbolMap *symb = nullptr;
+    for (int i = 0; i < fh.symb_cnt; i ++) {
+      if (symbol == string(symbol_map[i].symb)) {
+        symb = symbol_map + i;
+        break;
+      }
     }
-  }
-  if (symb) {
-    const int rec_cnt = symb->end - symb->start + 1;
-    if (fh.type == RecordType::Nbbo) {
-      const Nbbo* begin = (const Nbbo*)((char*)(mm_region.get_address()) + sizeof(fh) + (symb->start - 1) * sizeof(Nbbo));
-      const Nbbo* end = begin + rec_cnt;
-      ShowRecords(begin, end);
-    } else if (fh.type == RecordType::NbboPrice) {
-      const NbboPrice* begin = (const NbboPrice*)((char*)(mm_region.get_address()) + sizeof(fh) + (symb->start - 1) * sizeof(NbboPrice));
-      const NbboPrice* end = begin + rec_cnt;
-      ShowRecords(begin, end);
-    } else if (fh.type == RecordType::Trade) {
-      const Trade* begin = (const Trade*)((char*)(mm_region.get_address()) + sizeof(fh) + (symb->start - 1) * sizeof(Trade));
-      const Trade* end = begin + rec_cnt;
-      ShowRecords(begin, end);
+    if (symb) {
+      const int rec_cnt = symb->end - symb->start + 1;
+      if (fh.type == RecordType::Nbbo) {
+        const Nbbo* begin = (const Nbbo*)((char*)(mm_region.get_address()) + sizeof(fh) + (symb->start - 1) * sizeof(Nbbo));
+        const Nbbo* end = begin + rec_cnt;
+        ShowRecords(symbol, begin, end);
+      } else if (fh.type == RecordType::NbboPrice) {
+        const NbboPrice* begin = (const NbboPrice*)((char*)(mm_region.get_address()) + sizeof(fh) + (symb->start - 1) * sizeof(NbboPrice));
+        const NbboPrice* end = begin + rec_cnt;
+        ShowRecords(symbol, begin, end);
+      } else if (fh.type == RecordType::Trade) {
+        const Trade* begin = (const Trade*)((char*)(mm_region.get_address()) + sizeof(fh) + (symb->start - 1) * sizeof(Trade));
+        const Trade* end = begin + rec_cnt;
+        ShowRecords(symbol, begin, end);
+      }
     }
   }
 }
@@ -143,28 +149,28 @@ void HandleNbboFile(const FileHeader& fh, const mm::mapped_region & mm_region) {
     cout << "file size     " << mm_region.get_size() << endl;
     cout << "record type   " << (fh.type == RecordType::Nbbo ? "Nbbo (with size)" : "Nbbo (price only)") << endl;
     cout << "record size   " << (fh.type == RecordType::Nbbo ? sizeof(Nbbo) : sizeof(NbboPrice)) << endl;
-    cout << "symbol count  " << fh.symb_cnt << endl;
-    cout << "symbols" << endl;
+    cout << "symbol count  " << fh.symb_cnt << endl << endl;
     cout.imbue(saved_locale);
   }
-  const SymbolMap* symbol_map =  (const SymbolMap * )((char *)(mm_region.get_address()) + sizeof(fh) + fh.rec_cnt * rec_size);
-  vector<pair<string, int>> symbols;
-  for (int i = 0; i < fh.symb_cnt; i++) {
-    const SymbolMap& map = symbol_map[i];
-    symbols.push_back(make_pair(map.symb, map.end - map.start + 1));
-  }
-  if (sorted) {
-    sort(symbols.begin(), symbols.end(), [] (const auto & left, const auto& right) {return right.second < left.second;});
-  }
-  for (auto & symbol : symbols ) {
-    if (pretty) {
-      symbol.first.append(12 - symbol.first.length(), ' ');
-      cout << symbol.first  << ToString(symbol.second, 10) << endl;
-    } else {
-      cout << symbol.first<< ","  << symbol.second << endl;
+  const SymbolMap* symbol_map = (const SymbolMap*)((char*)(mm_region.get_address()) + sizeof(fh) + fh.rec_cnt * rec_size);
+  if (query_symbol.empty()) {
+    vector<pair<string, int>> symbols;
+    for (int i = 0; i < fh.symb_cnt; i++) {
+      const SymbolMap& map = symbol_map[i];
+      symbols.push_back(make_pair(map.symb, map.end - map.start + 1));
     }
-  }
-  if (! query_symbol.empty()) {
+    if (sorted) {
+      sort(symbols.begin(), symbols.end(), [] (const auto & left, const auto& right) {return right.second < left.second;});
+    }
+    for (auto & symbol : symbols ) {
+      if (pretty) {
+        symbol.first.append(12 - symbol.first.length(), ' ');
+        cout << symbol.first  << ToString(symbol.second, 10) << endl;
+      } else {
+        cout << symbol.first<< ","  << symbol.second << endl;
+      }
+    }
+  } else {
     ShowSymbolRecords(fh, mm_region, symbol_map);
   }
 }
@@ -180,29 +186,29 @@ void HandleTradeFile(const FileHeader& fh, const mm::mapped_region& mm_region) {
     cout << "file size     " << mm_region.get_size() << endl;
     cout << "record type   " "Trade" << endl;
     cout << "record type   " << sizeof(Trade) << endl;
-    cout << "symbol count  " << fh.symb_cnt << endl;
-    cout << "symbols" << endl;
+    cout << "symbol count  " << fh.symb_cnt << endl << endl;
     cout.imbue(saved_locale);
   }
   const SymbolMap* symbol_map = (const SymbolMap*)((char*)(mm_region.get_address()) + sizeof(fh) + fh.rec_cnt * sizeof(Trade));
-  vector<pair<string, int>> symbols;
-  for (int i = 0; i < fh.symb_cnt; i++) {
-    const SymbolMap& map = symbol_map[i];
-    symbols.push_back(make_pair(map.symb, map.end - map.start + 1));
-  }
-  if (sorted) {
-    sort(symbols.begin(), symbols.end(), [](const auto& left, const auto& right) {return right.second < left.second; });
-  }
-  for (auto& symbol : symbols) {
-    if (pretty) {
-      symbol.first.append(12 - symbol.first.length(), ' ');
-      cout << symbol.first << ToString(symbol.second, 10) << endl;
+  if (query_symbol.empty()) {
+    vector<pair<string, int>> symbols;
+    for (int i = 0; i < fh.symb_cnt; i++) {
+      const SymbolMap& map = symbol_map[i];
+      symbols.push_back(make_pair(map.symb, map.end - map.start + 1));
     }
-    else {
-      cout << symbol.first << "," << symbol.second << endl;
+    if (sorted) {
+      sort(symbols.begin(), symbols.end(), [](const auto& left, const auto& right) {return right.second < left.second; });
     }
-  }
-  if (!query_symbol.empty()) {
+    for (auto& symbol : symbols) {
+      if (pretty) {
+        symbol.first.append(12 - symbol.first.length(), ' ');
+        cout << symbol.first << ToString(symbol.second, 10) << endl;
+      }
+      else {
+        cout << symbol.first << "," << symbol.second << endl;
+      }
+    }
+  } else {
     ShowSymbolRecords(fh, mm_region, symbol_map);
   }
 }
@@ -216,8 +222,8 @@ int main(int argc, char** argv) {
     ("file,f", po::value<string>(&file_path), "path to datafile")
     ("pretty", po::bool_switch(&pretty)->default_value(false), "use pretty formatting")
     ("sort", po::bool_switch(&sorted)->default_value(false), "sort symbols by record count in descending order")
-    ("no-header", po::bool_switch(&no_header)->default_value(false), "print output without summary header")
-    ("symbol,s", po::value<string>(&query_symbol), "display records for specified symbol")
+    ("no-header", po::bool_switch(&no_header)->default_value(false), "print output without header information")
+    ("symbols,s", po::value<string>(&query_symbol), "comma-separated symbol list")
     ;
   po::variables_map vm;
   try {

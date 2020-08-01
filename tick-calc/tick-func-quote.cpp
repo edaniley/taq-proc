@@ -12,10 +12,16 @@ using namespace Taq;
 namespace tick_calc {
 
 void QuoteExecutionPlan::QuoteExecutionUnit::Execute() {
+  auto & secmaster_mgr = SecurityMasterManager();
   auto & quote_mgr = QuoteRecordsetManager();
+  const SecMaster* secmaster = nullptr;
   const SymbolRecordset<Nbbo>* symbol_recordset = nullptr;
+  int lot_size = 100;
   try {
-    symbol_recordset = &quote_mgr.LoadSymbolRecordset(date, symbol);
+    secmaster = &secmaster_mgr.Load(date);
+    const Security &security = secmaster->FindBySymbol(symbol);
+    lot_size = security.lot_size;
+    symbol_recordset = &quote_mgr.LoadSymbolRecordset(date, security.symb);
   }
   catch (...) {
     Error(ErrorType::DataNotFound, (int)input_records.size());
@@ -42,6 +48,7 @@ void QuoteExecutionPlan::QuoteExecutionUnit::Execute() {
     }
   }
   quote_mgr.UnloadSymbolRecordset(date, symbol);
+  secmaster_mgr.Release(*secmaster);
 }
 
 void QuoteExecutionPlan::Input(InputRecord& input_record) {
