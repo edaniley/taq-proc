@@ -41,7 +41,8 @@ void QuoteExecutionPlan::QuoteExecutionUnit::Execute() {
       if (requested_time < it->time && it != quotes.begin()) {
         --it;
       }
-      ss << rec.id << '|' << it->time << '|' << it->bidp << '|' << it->bids << '|' << it->askp << '|' << it->asks << endl;
+      ss << rec.id << '|' << it->time << '|' << it->bidp << '|' << (it->bids * lot_size)
+                                      << '|' << it->askp << '|' << (it->asks * lot_size) << endl;
       output_records.emplace_back(rec.id, ss.str());
     } else {
       Error(ErrorType::DataNotFound);
