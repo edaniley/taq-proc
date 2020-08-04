@@ -35,12 +35,9 @@ void QuoteExecutionPlan::QuoteExecutionUnit::Execute() {
   auto it = quotes.begin();
   for (auto rec : input_records) {
     const Time requested_time = rec.time + taq_time_adjustment;
-    it = quotes.lower_bound(it, quotes.end(), requested_time);
+    it = quotes.find_prior(it, quotes.end(), requested_time);
     if (it != quotes.end()) {
       ostringstream ss;
-      if (requested_time < it->time && it != quotes.begin()) {
-        --it;
-      }
       ss << rec.id << '|' << it->time << '|' << it->bidp << '|' << (it->bids * lot_size)
                                       << '|' << it->askp << '|' << (it->asks * lot_size) << endl;
       output_records.emplace_back(rec.id, ss.str());
