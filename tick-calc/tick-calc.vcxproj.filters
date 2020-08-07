@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\taq-proc">
+      <UniqueIdentifier>{eecd5c4b-428a-4c19-9249-d5fa8090b688}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="tick-calc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-data.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-exec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-func-quote.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-func-rod.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-winsock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tick-calc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-conn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-secmaster.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\taq-proc.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\taq-time.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-exec.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-func.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\boost-algorithm-string.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\taq-exception.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-request.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
