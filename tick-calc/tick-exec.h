@@ -19,12 +19,26 @@ using namespace Taq;
 
 namespace tick_calc {
 
-struct FunctionDefinition {
-  FunctionDefinition(const string &name, const vector<string> & argument_names, const vector<string>& output_fields)
-    : name(name), argument_names(argument_names), output_fields(output_fields) { }
+class FunctionDefinition {
+public:
+  using Validator = function<void(const vector<int> & argument_mapping)>;
+  FunctionDefinition(const string &name, const vector<string> & argument_names, const vector<string>& output_fields, Validator validator = Validator())
+    : name(name), argument_names(argument_names), output_fields(output_fields) , validator(validator) { }
   const string name;
   const vector<string> argument_names;
   const vector<string> output_fields;
+  Validator validator;
+  void ValidateArgumentList(const vector<int>& argument_mapping) const {
+    if (validator) {  // use custom validator
+      validator(argument_mapping);
+    } else {          // use default validator expects all arguments present
+      for (size_t i = 0; i < argument_names.size(); i++) {
+        if (argument_mapping[i] == -1) {
+          throw invalid_argument("Missing argument:" + argument_names[i] + " function:" + name);
+        }
+      }
+    }
+  }
 };
 
 template <typename T>

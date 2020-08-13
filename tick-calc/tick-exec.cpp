@@ -3,6 +3,7 @@
 #include <exception>
 #include <chrono>
 #include <cstdlib>
+#include <set>
 #include "boost-algorithm-string.h"
 #include "tick-calc.h"
 #include "tick-conn.h"
@@ -28,6 +29,18 @@ void InitializeFunctionDefinitions() {
     vector<string> {"ID", "Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPx", "MPA", "ExecTime", "ExecQty"},
     vector<string> {"ID", "MinusThree", "MinusTwo", "MinusOne", "Zero", "PlusOne", "PlusTwo", "PlusThree"}
   )));
+
+  function_definitions.insert(make_pair("VWAP", FunctionDefinition("VWAP",
+    vector<string> {"Symbol", "Date", "StartTime", "Side", "LimitPx", "Flavor", "EndTime", "POV", "Ticks"},
+    vector<string> {"ID", "TradeCnt", "TradeVolume", "VWAP"}, [] (const vector<int> & argument_mapping) { // use custom validator
+      enum ArgumentNo { Symbol, Date, StartTime, Side, LimitPx, Flavor, EndTime, POV, Ticks };
+      bool valid = argument_mapping[Symbol] != -1 && argument_mapping[Date] != -1 && argument_mapping[StartTime] != -1;
+      valid = valid && (argument_mapping[EndTime] != -1 || argument_mapping[POV] != -1 || argument_mapping[Ticks] != -1);
+      if (!valid) {
+        throw invalid_argument("Invalid argument list");
+      }
+    }
+  )));
 }
 
 static void LoadExecutionPlan(Connection& conn) {
@@ -41,6 +54,9 @@ static void LoadExecutionPlan(Connection& conn) {
     else if (function_name == "Quote") {
       conn.exec_plans.push_back(make_unique<QuoteExecutionPlan>(function, request, it->second));
     }
+    else if (function_name == "VWAP") {
+      conn.exec_plans.push_back(make_unique<VwapExecutionPlan>(function, request, it->second));
+    }
     else if (function_name == "ROD") {
       conn.exec_plans.push_back(make_unique<RodExecutionPlan>(function, request, it->second));
     }
@@ -51,8 +67,9 @@ static void ValidateRequest(Connection& conn) {
   for (string &function_name : conn.request.function_list) {
     const auto it = function_definitions.find(function_name);
     if (it != function_definitions.end()) {
-      const vector<string> & function_arguments = it->second.argument_names;
-      for (const string &required_argument : function_arguments) {
+      const FunctionDefinition & function_def = it->second;
+      vector<int> & argument_mapping = conn.request.functions_argument_mapping[function_name];
+      for (const string &required_argument : function_def.argument_names) {
         int input_index = -1;
         for (size_t i = 0; i < conn.request.argument_list.size(); i ++) {
           if (conn.request.argument_list[i] == required_argument) {
@@ -60,12 +77,9 @@ static void ValidateRequest(Connection& conn) {
             break;
           }
         }
-        if (input_index == -1) {
-          throw invalid_argument("Missing argument:" + required_argument + " function:" + function_name);
-        }
-        vector<int> & argument_mapping = conn.request.functions_argument_mapping[function_name];
         argument_mapping.push_back(input_index);
       }
+      function_def.ValidateArgumentList(argument_mapping);
     } else {
       throw invalid_argument("Unknown function: " + function_name);
     }

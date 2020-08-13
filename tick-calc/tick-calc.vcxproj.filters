@@ -39,6 +39,9 @@
     <ClCompile Include="tick-log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tick-func-vwap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tick-calc.h">
