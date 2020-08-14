@@ -79,7 +79,6 @@ int main(int argc, char **argv) {
   try {
     LogInitialize(args);
     InitializeData(args.in_data_dir);
-    InitializeFunctionDefinitions();
     NetInitialize(args);
     CreateThreads(cpu_cores);
     Log(LogLevel::INFO, "Ready");

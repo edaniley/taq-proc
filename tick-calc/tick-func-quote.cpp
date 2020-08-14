@@ -11,6 +11,12 @@ using namespace Taq;
 
 namespace tick_calc {
 
+
+static const bool registered = RegisterFunctionDefinition(make_unique<FunctionDefinition>("Quote",
+  vector<string> {"Symbol", "Timestamp"},
+  vector<string> {"ID", "Timestamp", "BestBidPx", "BestBidQty", "BestOfferPx", "BestOfferQty"})
+  );
+
 void QuoteExecutionPlan::QuoteExecutionUnit::Execute() {
   auto & secmaster_mgr = SecurityMasterManager();
   auto & quote_mgr = QuoteRecordsetManager();

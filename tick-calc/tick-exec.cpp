@@ -17,36 +17,26 @@ using namespace Taq;
 namespace tick_calc {
 
 
-static map<string, FunctionDefinition> function_definitions;
+static map<string, unique_ptr<FunctionDefinition>> function_definitions;
+bool RegisterFunctionDefinition(unique_ptr<FunctionDefinition> ptr) {
+  const string function_name = ptr->name;
+  auto it = function_definitions.insert(make_pair(function_name, move(ptr)));
+  assert(it.second == true);
+  return true;
+}
 
-void InitializeFunctionDefinitions() {
-  function_definitions.insert(make_pair("Quote", FunctionDefinition("Quote",
-    vector<string> {"Symbol", "Timestamp"},
-    vector<string> {"ID", "Timestamp", "BestBidPx", "BestBidQty", "BestOfferPx", "BestOfferQty"}
-  )));
-
-  function_definitions.insert(make_pair("ROD", FunctionDefinition("ROD",
-    vector<string> {"ID", "Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPx", "MPA", "ExecTime", "ExecQty"},
-    vector<string> {"ID", "MinusThree", "MinusTwo", "MinusOne", "Zero", "PlusOne", "PlusTwo", "PlusThree"}
-  )));
-
-  function_definitions.insert(make_pair("VWAP", FunctionDefinition("VWAP",
-    vector<string> {"Symbol", "Date", "StartTime", "Side", "LimitPx", "Flavor", "EndTime", "POV", "Ticks"},
-    vector<string> {"ID", "TradeCnt", "TradeVolume", "VWAP"}, [] (const vector<int> & argument_mapping) { // use custom validator
-      enum ArgumentNo { Symbol, Date, StartTime, Side, LimitPx, Flavor, EndTime, POV, Ticks };
-      bool valid = argument_mapping[Symbol] != -1 && argument_mapping[Date] != -1 && argument_mapping[StartTime] != -1;
-      valid = valid && (argument_mapping[EndTime] != -1 || argument_mapping[POV] != -1 || argument_mapping[Ticks] != -1);
-      if (!valid) {
-        throw invalid_argument("Invalid argument list");
-      }
-    }
-  )));
+const FunctionDefinition & FindFunctionDefinition(const string & function_name) {
+  auto it  = function_definitions.find(function_name);
+  if (it == function_definitions.end()) {
+    throw invalid_argument("Unknown function:" + function_name);
+  }
+  return *it->second;
 }
 
 static void LoadExecutionPlan(Connection& conn) {
   const Request& request = conn.request;
   for (const string& function_name : request.function_list) {
-    const auto &function = function_definitions.find(function_name)->second;
+    const FunctionDefinition& function = FindFunctionDefinition(function_name);
     const auto it = request.functions_argument_mapping.find(function_name);
     if (it == request.functions_argument_mapping.end()) {
       throw invalid_argument("Not implemented function:" + function_name);
@@ -65,24 +55,10 @@ static void LoadExecutionPlan(Connection& conn) {
 
 static void ValidateRequest(Connection& conn) {
   for (string &function_name : conn.request.function_list) {
-    const auto it = function_definitions.find(function_name);
-    if (it != function_definitions.end()) {
-      const FunctionDefinition & function_def = it->second;
-      vector<int> & argument_mapping = conn.request.functions_argument_mapping[function_name];
-      for (const string &required_argument : function_def.argument_names) {
-        int input_index = -1;
-        for (size_t i = 0; i < conn.request.argument_list.size(); i ++) {
-          if (conn.request.argument_list[i] == required_argument) {
-            input_index = (int)i;
-            break;
-          }
-        }
-        argument_mapping.push_back(input_index);
-      }
-      function_def.ValidateArgumentList(argument_mapping);
-    } else {
-      throw invalid_argument("Unknown function: " + function_name);
-    }
+    const FunctionDefinition& function_def = FindFunctionDefinition(function_name);
+    vector<int> argument_mapping = function_def.MapArgumentList(conn.request.argument_list);
+    function_def.ValidateArgumentList(argument_mapping);
+    conn.request.functions_argument_mapping.insert(make_pair(function_name, move(argument_mapping)));
   }
 }
 

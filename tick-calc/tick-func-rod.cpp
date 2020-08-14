@@ -14,6 +14,11 @@ using namespace Taq;
 
 namespace tick_calc {
 
+static const bool registered = RegisterFunctionDefinition(make_unique<FunctionDefinition>("ROD",
+  vector<string> {"ID", "Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPx", "MPA", "ExecTime", "ExecQty"},
+  vector<string> {"ID", "MinusThree", "MinusTwo", "MinusOne", "Zero", "PlusOne", "PlusTwo", "PlusThree"})
+  );
+
 using RestType = RodExecutionPlan::RestType;
 
 struct RodSlice{
