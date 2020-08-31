@@ -20,7 +20,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "taq-ctrl", "taq-ctrl\taq-ct
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "taqpy", "taq-py\build\taqpy.vcxproj", "{CF849D31-3D4A-3AAE-9A59-7DE91CA12E9E}"
 EndProject
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "scripts", "scripts\scripts.pyproj", "{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "scripts", "scripts\scripts.pyproj", "{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -120,24 +120,24 @@ Global
 		{CF849D31-3D4A-3AAE-9A59-7DE91CA12E9E}.RelWithDebInfo|x64.ActiveCfg = RelWithDebInfo|x64
 		{CF849D31-3D4A-3AAE-9A59-7DE91CA12E9E}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|x64
 		{CF849D31-3D4A-3AAE-9A59-7DE91CA12E9E}.RelWithDebInfo|x86.ActiveCfg = RelWithDebInfo|x64
-		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}.MinSizeRel|Any CPU.ActiveCfg = Release|Any CPU
-		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}.MinSizeRel|x64.ActiveCfg = Release|Any CPU
-		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}.MinSizeRel|x86.ActiveCfg = Release|Any CPU
-		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}.Release|x64.ActiveCfg = Release|Any CPU
-		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}.Release|x86.ActiveCfg = Release|Any CPU
-		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}.RelWithDebInfo|Any CPU.ActiveCfg = Release|Any CPU
-		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
-		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}.RelWithDebInfo|x86.ActiveCfg = Release|Any CPU
+		{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B}.MinSizeRel|Any CPU.ActiveCfg = Release|Any CPU
+		{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B}.MinSizeRel|x64.ActiveCfg = Release|Any CPU
+		{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B}.MinSizeRel|x86.ActiveCfg = Release|Any CPU
+		{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B}.Release|x64.ActiveCfg = Release|Any CPU
+		{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B}.Release|x86.ActiveCfg = Release|Any CPU
+		{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B}.RelWithDebInfo|Any CPU.ActiveCfg = Release|Any CPU
+		{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
+		{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B}.RelWithDebInfo|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC} = {44641B7D-2BF5-48F2-A77A-2200697BFF6D}
+		{0DB5249D-2FE2-45FE-9060-EBB9FA86A56B} = {44641B7D-2BF5-48F2-A77A-2200697BFF6D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A4FA8403-58E7-4449-BF4C-0B316342BBB4}

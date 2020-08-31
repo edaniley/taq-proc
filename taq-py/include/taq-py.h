@@ -91,6 +91,7 @@ ptree StringToJson(const string &);
 
 py::list ExecuteROD(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
 py::list ExecuteQuote(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
+py::list ExecuteVWAP(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
 
 inline void StringCopy(char* desc, const char* src, size_t len) {
 #ifdef _MSC_VER

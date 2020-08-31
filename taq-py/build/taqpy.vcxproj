@@ -59,25 +59,25 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\Ed\src\taq-proc\taq-py\build\Debug\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)taq-py\build\Debug\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">taqpy.dir\Debug\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">taqpy.cp37-win_amd64</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.pyd</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\Ed\src\taq-proc\taq-py\build\Release\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)taq-py\build\Release\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">taqpy.dir\Release\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">taqpy.cp37-win_amd64</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.pyd</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\Ed\src\taq-proc\taq-py\build\MinSizeRel\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">$(SolutionDir)taq-py\build\MinSizeRel\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">taqpy.dir\MinSizeRel\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">taqpy.cp37-win_amd64</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.pyd</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\Ed\src\taq-proc\taq-py\build\RelWithDebInfo\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">$(SolutionDir)taq-py\build\RelWithDebInfo\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">taqpy.dir\RelWithDebInfo\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">taqpy.cp37-win_amd64</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.pyd</TargetExt>
@@ -86,7 +86,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python\Python37\lib\site-packages\numpy\core\include;$(SolutionDir)taq-py\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python3.7\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -109,10 +109,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_WIN32_WINNT=0x0A00;CMAKE_INTDIR=\"Debug\";taqpy_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Ed\src\taq-proc\taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python\Python37\lib\site-packages\numpy\core\include;C:\Users\Ed\src\taq-proc\taq-py\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python3.7\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\Ed\src\taq-proc\taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python\Python37\lib\site-packages\numpy\core\include;C:\Users\Ed\src\taq-proc\taq-py\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python3.7\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -120,7 +120,7 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>C:\Python\Python37\libs\Python37.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>C:\Python3.7\libs\Python37.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:/Toolbox/boost/boost_1_72_0/stage/lib;C:/Toolbox/boost/boost_1_72_0/stage/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -135,7 +135,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python\Python37\lib\site-packages\numpy\core\include;$(SolutionDir)taq-py\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python3.7\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -159,10 +159,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_WIN32_WINNT=0x0A00;NDEBUG;CMAKE_INTDIR=\"Release\";taqpy_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Ed\src\taq-proc\taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python\Python37\lib\site-packages\numpy\core\include;C:\Users\Ed\src\taq-proc\taq-py\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python3.7\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\Ed\src\taq-proc\taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python\Python37\lib\site-packages\numpy\core\include;C:\Users\Ed\src\taq-proc\taq-py\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python3.7\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -170,7 +170,7 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>C:\Python\Python37\libs\Python37.lib;-LTCG;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>C:\Python3.7\libs\Python37.lib;-LTCG;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:/Toolbox/boost/boost_1_72_0/stage/lib;C:/Toolbox/boost/boost_1_72_0/stage/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -185,7 +185,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python\Python37\lib\site-packages\numpy\core\include;$(SolutionDir)taq-py\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python3.7\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -209,10 +209,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_WIN32_WINNT=0x0A00;NDEBUG;CMAKE_INTDIR=\"MinSizeRel\";taqpy_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Ed\src\taq-proc\taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python\Python37\lib\site-packages\numpy\core\include;C:\Users\Ed\src\taq-proc\taq-py\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python3.7\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\Ed\src\taq-proc\taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python\Python37\lib\site-packages\numpy\core\include;C:\Users\Ed\src\taq-proc\taq-py\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python3.7\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -220,7 +220,7 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>C:\Python\Python37\libs\Python37.lib;-LTCG;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>C:\Python3.7\libs\Python37.lib;-LTCG;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:/Toolbox/boost/boost_1_72_0/stage/lib;C:/Toolbox/boost/boost_1_72_0/stage/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -235,7 +235,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python\Python37\lib\site-packages\numpy\core\include;$(SolutionDir)taq-py\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python3.7\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -258,10 +258,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_WIN32_WINNT=0x0A00;NDEBUG;CMAKE_INTDIR=\"RelWithDebInfo\";taqpy_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Ed\src\taq-proc\taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python\Python37\lib\site-packages\numpy\core\include;C:\Users\Ed\src\taq-proc\taq-py\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python3.7\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\Ed\src\taq-proc\taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python\Python37\lib\site-packages\numpy\core\include;C:\Users\Ed\src\taq-proc\taq-py\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python3.7\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -269,7 +269,7 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>C:\Python\Python37\libs\Python37.lib;-LTCG;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>C:\Python3.7\libs\Python37.lib;-LTCG;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:/Toolbox/boost/boost_1_72_0/stage/lib;C:/Toolbox/boost/boost_1_72_0/stage/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -283,7 +283,7 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CustomBuild Include="C:\Users\Ed\src\taq-proc\taq-py\CMakeLists.txt">
+    <CustomBuild Include="$(SolutionDir)taq-py\CMakeLists.txt">
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/Ed/src/taq-proc/taq-py/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 "C:\Program Files (x86)\CMake\bin\cmake.exe" -SC:/Users/Ed/src/taq-proc/taq-py -BC:/Users/Ed/src/taq-proc/taq-py/build --check-stamp-file C:/Users/Ed/src/taq-proc/taq-py/build/CMakeFiles/generate.stamp
@@ -294,8 +294,8 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCXXInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeGenericSystem.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeInitializeConfigs.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeLanguageInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeRCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\WindowsPaths.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeCCompiler.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeCXXCompiler.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeRCCompiler.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\generate.stamp</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCXXInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeGenericSystem.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeInitializeConfigs.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeLanguageInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeRCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\WindowsPaths.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeCCompiler.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeCXXCompiler.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeRCCompiler.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)taq-py\build\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/Ed/src/taq-proc/taq-py/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
@@ -307,8 +307,8 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCXXInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeGenericSystem.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeInitializeConfigs.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeLanguageInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeRCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\WindowsPaths.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeCCompiler.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeCXXCompiler.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeRCCompiler.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\generate.stamp</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCXXInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeGenericSystem.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeInitializeConfigs.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeLanguageInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeRCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\WindowsPaths.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeCCompiler.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeCXXCompiler.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeRCCompiler.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)taq-py\build\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/Ed/src/taq-proc/taq-py/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
@@ -320,8 +320,8 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCXXInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeGenericSystem.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeInitializeConfigs.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeLanguageInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeRCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\WindowsPaths.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeCCompiler.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeCXXCompiler.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeRCCompiler.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\generate.stamp</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCXXInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeGenericSystem.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeInitializeConfigs.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeLanguageInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeRCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\WindowsPaths.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeCCompiler.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeCXXCompiler.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeRCCompiler.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">$(SolutionDir)taq-py\build\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/Ed/src/taq-proc/taq-py/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
@@ -333,24 +333,28 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCXXInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeGenericSystem.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeInitializeConfigs.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeLanguageInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeRCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\WindowsPaths.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeCCompiler.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeCXXCompiler.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeRCCompiler.cmake;C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\3.17.2\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\Ed\src\taq-proc\taq-py\build\CMakeFiles\generate.stamp</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCXXInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeGenericSystem.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeInitializeConfigs.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeLanguageInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeRCInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\Windows.cmake;C:\Program Files (x86)\CMake\share\cmake-3.17\Modules\Platform\WindowsPaths.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeCCompiler.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeCXXCompiler.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeRCCompiler.cmake;$(SolutionDir)taq-py\build\CMakeFiles\3.17.2\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">$(SolutionDir)taq-py\build\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="C:\Users\Ed\src\taq-proc\taq-py\src\main.cpp" />
-    <ClCompile Include="C:\Users\Ed\src\taq-proc\taq-py\src\config.cpp" />
-    <ClCompile Include="C:\Users\Ed\src\taq-proc\taq-py\src\func-quotes.cpp" />
-    <ClCompile Include="C:\Users\Ed\src\taq-proc\taq-py\src\func-rod.cpp" />
+    <ClCompile Include="$(SolutionDir)taq-py\src\main.cpp" />
+    <ClCompile Include="$(SolutionDir)taq-py\src\config.cpp" />
+    <ClCompile Include="$(SolutionDir)taq-py\src\func-quotes.cpp" />
+    <ClCompile Include="$(SolutionDir)taq-py\src\func-rod.cpp" />
+    <ClCompile Include="..\src\func-vwap.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="C:\Users\Ed\src\taq-proc\taq-py\build\ZERO_CHECK.vcxproj">
+    <ProjectReference Include="$(SolutionDir)taq-py\build\ZERO_CHECK.vcxproj">
       <Project>{4E8337C5-1951-30B9-8801-264100B755E3}</Project>
       <Name>ZERO_CHECK</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\taq-py.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

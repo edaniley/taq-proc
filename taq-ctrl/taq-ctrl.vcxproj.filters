@@ -35,5 +35,13 @@
     <ClInclude Include="..\include\double.h">
       <Filter>Header Files\taq-proc</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\taq-exception.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

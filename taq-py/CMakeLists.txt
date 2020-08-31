@@ -44,4 +44,5 @@ pybind11_add_module(
     src/config.cpp
     src/func-quotes.cpp
     src/func-rod.cpp
+    src/func-vwap.cpp
 )

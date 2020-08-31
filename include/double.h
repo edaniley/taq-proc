@@ -27,6 +27,10 @@ public:
     value_ = value;
     return *this;
   }
+  Double& operator = (const Double & rhs ) {
+    value_ = rhs.value_;
+    return *this;
+  }
   operator const double& () const {
     return value_;
   }

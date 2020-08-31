@@ -12,9 +12,31 @@ map<string, FunctionDef> tick_functions = {
           FieldsDef("ID", typeid(int).name(), sizeof(int)),
           FieldsDef("Timestamp", typeid(char).name(), 36),
           FieldsDef("BestBidPx", typeid(double).name(), sizeof(double)),
-          FieldsDef("BestBidQty", typeid(char).name(), sizeof(int)),
+          FieldsDef("BestBidQty", typeid(int).name(), sizeof(int)),
           FieldsDef("BestOfferPx", typeid(double).name(), sizeof(double)),
-          FieldsDef("BestOfferQty", typeid(char).name(), sizeof(int))
+          FieldsDef("BestOfferQty", typeid(int).name(), sizeof(int))
+        }
+      )
+  },
+  {
+    "VWAP",
+    FunctionDef(
+        "America/New_York", {
+          FieldsDef("Symbol", typeid(char).name(), 18),
+          FieldsDef("Date", typeid(char).name(), 12),
+          FieldsDef("StartTime", typeid(char).name(), 20),
+          FieldsDef("Side", typeid(char).name(), 6),
+          FieldsDef("LimitPx", typeid(double).name(), sizeof(double)),
+          FieldsDef("Flavor", typeid(char).name(), 6),
+          FieldsDef("EndTime", typeid(char).name(), 20),
+          FieldsDef("TargetVolume", typeid(int).name(), sizeof(int)),
+          FieldsDef("TargetPOV", typeid(double).name(), sizeof(double)),
+          FieldsDef("Ticks", typeid(int).name(), sizeof(int))
+        }, {
+          FieldsDef("ID", typeid(int).name(), sizeof(int)),
+          FieldsDef("TradeCnt", typeid(int).name(), sizeof(int)),
+          FieldsDef("TradeVolume", typeid(int).name(), sizeof(int)),
+          FieldsDef("VWAP", typeid(double).name(), sizeof(double)),
         }
       )
   },

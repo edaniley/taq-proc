@@ -19,6 +19,7 @@ void InitializeData(const string & data_dir) {
   secmaster_manager = make_unique<SecMasterManager>(data_dir);
   nbbo_data_manager = make_unique<RecordsetManager<Nbbo>>(data_dir);
   nbbo_po_data_manager = make_unique<RecordsetManager<NbboPrice>>(data_dir);
+  trade_data_manager = make_unique<RecordsetManager<Trade>>(data_dir);
 }
 void CleanupData() {
   nbbo_data_manager.release();
@@ -34,6 +35,10 @@ tick_calc::RecordsetManager<Nbbo>& QuoteRecordsetManager() {
 
 tick_calc::RecordsetManager<NbboPrice>& NbboPoRecordsetManager() {
   return *nbbo_po_data_manager;
+}
+
+tick_calc::RecordsetManager<Trade>& TradeRecordsetManager() {
+  return *trade_data_manager;
 }
 
 void SecMasterManager::trim() {

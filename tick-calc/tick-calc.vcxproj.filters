@@ -77,5 +77,16 @@
     <ClInclude Include="tick-request.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\double.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-func-vwap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

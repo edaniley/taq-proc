@@ -7,7 +7,7 @@
 namespace Taq {
 
 enum class ErrorType {
-  OK, DataNotFound, MissingSymbol, InvalidArgument,
+  OK, DataNotFound, MissingSymbol, MissingArgument, InvalidArgument,
   InvalidTimestamp, InvalidDate,
   InvalidSide, InvalidQuantity, InvalidPrice
 };

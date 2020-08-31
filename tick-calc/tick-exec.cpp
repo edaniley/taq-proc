@@ -10,6 +10,7 @@
 #include "tick-data.h"
 #include "tick-exec.h"
 #include "tick-func.h"
+#include "tick-func-vwap.h"
 
 using namespace std;
 using namespace Taq;

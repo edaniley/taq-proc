@@ -85,45 +85,6 @@ private:
   int progress_cnt;
 };
 
-class VwapExecutionPlan : public ExecutionPlan {
-public:
-  enum class VwapType { ByTime, ByPov, ByTicks };
-private:
-  class VwapExecutionUnit : public ExecutionUnit {
-  public:
-    struct InputRecord {
-      Time start_time;
-      int id;
-      union {
-        Time end_time;
-        double pov;
-        int ticks;
-      };
-      InputRecord(int id, Time start_time, Time end_time) : start_time(start_time), id(id), end_time(end_time) {}
-      InputRecord(int id, Time start_time, double pov)    : start_time(start_time), id(id), pov(pov) {}
-      InputRecord(int id, Time start_time, int ticks)     : start_time(start_time), id(id), ticks(ticks) {}
-    };
-    VwapExecutionUnit(const string& symbol, Date date, bool input_sorted, bool adjust_time,
-                      VwapExecutionPlan::VwapType type, vector<InputRecord> input_records)
-      : symbol(symbol), date(date), input_sorted(input_sorted), adjust_time(adjust_time), type(type), input_records(move(input_records)) {}
-    ~VwapExecutionUnit() {}
-    void Execute() override;
-    const string symbol;
-    const Date date;
-    const bool input_sorted;
-    const bool adjust_time;
-    VwapExecutionPlan::VwapType type;
-    vector<InputRecord> input_records;
-  };
-public:
-  VwapExecutionPlan(const FunctionDefinition& function, const Request& request, const vector<int>& argument_mapping)
-    : ExecutionPlan(function, request, argument_mapping) {}
-  void Input(InputRecord& input_record) override;
-  void Execute() override;
-private:
-  using InputRecordRange = vector<VwapExecutionUnit::InputRecord>;
-  map<SymbolDateKey, InputRecordRange> input_record_ranges;
-};
 
 }
 #endif

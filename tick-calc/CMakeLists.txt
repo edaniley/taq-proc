@@ -7,6 +7,7 @@ add_executable( tick-calc
     tick-log.cpp
     tick-func-quote.cpp
     tick-func-rod.cpp
+    tick-func-vwap.cpp
 )
 
 TARGET_LINK_LIBRARIES( tick-calc

@@ -288,6 +288,7 @@ void CleanupData();
 tick_calc::SecMasterManager & SecurityMasterManager();
 tick_calc::RecordsetManager<Nbbo> & QuoteRecordsetManager();
 tick_calc::RecordsetManager<NbboPrice>& NbboPoRecordsetManager();
+tick_calc::RecordsetManager<Trade>& TradeRecordsetManager();
 
 }
 

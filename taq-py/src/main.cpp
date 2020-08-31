@@ -37,6 +37,9 @@ string MakeReplyHeader(const string& request_id, const string& message) {
 }
 
 static void ValidateInputFields(const string& function_name, const py::kwargs& kwargs) {
+  if (function_name == "VWAP") {
+    return;
+  }
   const auto& field_definitions = InputFields(function_name);
   if (kwargs.size() != field_definitions.size()) {
     throw domain_error("Input field count mismatch");
@@ -97,6 +100,8 @@ py::list Execute(py::args args, py::kwargs kwargs) {
       return ExecuteROD(req_json, tcptream, kwargs);
     } if (function_name == "Quote") {
       return ExecuteQuote(req_json, tcptream, kwargs);
+    } if (function_name == "VWAP") {
+      return ExecuteVWAP(req_json, tcptream, kwargs);
     } else {
       throw domain_error("Unknown function:" + function_name);
     }

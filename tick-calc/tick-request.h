@@ -13,7 +13,7 @@ using namespace Taq;
 namespace tick_calc {
 
 struct Request {
-  Request() : input_cnt(0) {}
+  Request() : input_sorted(false), input_cnt(0) {}
   string id;
   string separator;
   string tz_name;
