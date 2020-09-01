@@ -15,7 +15,7 @@ using namespace Taq;
 namespace tick_calc {
 
 static bool IsArgumentPresent(const vector<int> & arg_map, int f) {
-  return arg_map[f] != -1;
+  return f < (int)arg_map.size() && arg_map[f] != -1;
 }
 
 static char DecodeSide(const string& str) {

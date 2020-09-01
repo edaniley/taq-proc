@@ -11,8 +11,10 @@ from datetime import date
 
 symbols = []
 quotes = {}
+trades = {}
 requests = {}
 results = {}
+strict_functions = ["ROD", "Quote"]
 
 def AddSymbol(symbol : str, **kwargs):
   global symbols
@@ -95,6 +97,45 @@ def MakeQuotes(yyyymmdd : str):
     MakeSymbolQuotes(yyyymmdd, k,  symb_quotes)
   quotes = {}
 
+def AddTrade(symbol : str, timestamp, trd_vol : int, trd_px: float, **kwargs):
+  # Time|Exchange|Symbol|Sale_Condition|Trade_Volume|Trade_Price}
+  # Trade_Stop_Stock_Indicator|Trade_Correction_Indicator|Sequence_Number|Trade_Id|
+  # Source_of_Trade|Trade_Reporting_Facility|Participant_Timestamp|
+  # Trade_Reporting_Facility_TRF_Timestamp|Trade_Through_Exempt_Indicator
+  global trades
+  taq_time = ToTaqTime(timestamp)
+  ts = datetime.strptime(taq_time, "%H:%M:%S.%f")
+  Time = ts.strftime("%H%M%S%f000")
+  Exchange = "N" if "Exchange" not in kwargs.keys() else str(kwargs["Exchange"])
+  Sale_Condition = "" if "Sale_Condition" not in kwargs.keys() else str(kwargs["Sale_Condition"])
+  Sale_Condition = Sale_Condition.strip()[:4]
+  Sale_Condition = Sale_Condition+' '*(4-len(Sale_Condition))
+  Trade_Correction_Indicator = "00" if "Trade_Correction_Indicator" not in kwargs.keys() else str(kwargs["Trade_Correction_Indicator"])
+  Source_of_Trade = "C" if "Source_of_Trade" not in kwargs.keys() else str(kwargs["Source_of_Trade"])
+  Trade_Reporting_Facility = "N" if "Trade_Reporting_Facility" not in kwargs.keys() else str(kwargs["Trade_Reporting_Facility"])
+  Trade_Through_Exempt_Indicator = "0" if "Trade_Through_Exempt_Indicator" not in kwargs.keys() else str(kwargs["Trade_Through_Exempt_Indicator"])
+  base = "{}|{}|{}|{}|{}|{}| |{}| | |{}|{}| | |{}"
+  rec = base.format(Time, Exchange, symbol, Sale_Condition, trd_vol, trd_px,
+                    Trade_Correction_Indicator, Source_of_Trade, Trade_Reporting_Facility,
+                    Trade_Through_Exempt_Indicator)
+  if not symbol in trades:
+    trades[symbol] = []
+  trades[symbol].append((ts.time(), rec))
+
+def MakeTrades(yyyymmdd : str):
+  global trades
+  tmp = tempfile.NamedTemporaryFile(mode='w')
+  for k, v in trades.items():
+    v.sort()
+    symb_trades = [ x[1] for x in v ]
+    data = "\n".join(symb_trades)
+    tmp.write(data)
+    tmp.flush()
+  cmd = "taq-prep -t trade -d {} -i {} ".format(yyyymmdd, tmp.name)
+  proc = subprocess.run(cmd,shell=True, capture_output=True)
+  tmp.close()
+  trades = {}
+
 def AddFunctionRequest(**kwargs):
   global requests
   function_name = kwargs["function_name"]
@@ -102,7 +143,8 @@ def AddFunctionRequest(**kwargs):
     requests[function_name] = []
   args = {}
   for argument_name in taqpy.ArgumentNames(function_name):
-    args[argument_name] = kwargs[argument_name]
+    if argument_name in kwargs.keys():
+      args[argument_name] = kwargs[argument_name]
   requests[function_name].append(args)
 
 def AddRequest(**kwargs):
@@ -111,22 +153,29 @@ def AddRequest(**kwargs):
   function_name = kwargs["function_name"]
   if function_name not in taqpy.FunctionList():
     raise Exception("Unknown function")
-  for argument_name in taqpy.ArgumentNames(function_name):
-    if not argument_name in kwargs.keys():
-      raise Exception("Function:{} missing argument:{}".format(function_name, argument_name))
+  if function_name in strict_functions:
+    for argument_name in taqpy.ArgumentNames(function_name):
+      if not argument_name in kwargs.keys():
+        raise Exception("Function:{} missing argument:{}".format(function_name, argument_name))
   AddFunctionRequest(**kwargs)
 
 def ExecuteFunction(function_name:str, yyyymmdd:str, tz="America/New_York"):
   global results
   kwargs = {}
-  for field in taqpy.ArgumentList(function_name):
-    argv = [d[field[0]] for d in requests[function_name]]
-    kwargs[field[0]] = np.array(argv, dtype=field[1])
+  arg_list = []
+  req_args = [k for k in requests[function_name][0].keys()]
+  for arg in taqpy.ArgumentList(function_name):
+    if arg[0] in req_args:
+      arg_list.append(arg)
+  for arg_name,arg_type in arg_list:
+    lst = [arr[arg_name] for arr in requests[function_name]]
+    kwargs[arg_name] = np.array(lst, dtype=arg_type)
+
   hdr = {}
   hdr["tcp"] = "127.0.0.1:3090"
   hdr["request_id"] = str(uuid.uuid1())
   hdr["function_list"] = [function_name]
-  hdr["argument_list"] = taqpy.ArgumentNames(function_name)
+  hdr["argument_list"] = [arg[0] for arg in arg_list]
   hdr["separator"] = "|"
   hdr["input_sorted"] = False
   hdr["input_cnt"] = len(requests[function_name])
