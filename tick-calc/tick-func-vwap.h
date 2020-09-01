@@ -48,13 +48,13 @@ struct VwapInputRecord {
   int id;
   VwapInputRecord(int id, Time start_time, Time end_time, char side, Double limit_price, VwapFlavor flavor)
     : start_time(start_time), end_time(end_time),
-      side(side), limit_price(limit_price), flavor((uint8_t)flavor), id(id) {}
+      limit_price(limit_price), side(side), flavor((uint8_t)flavor), id(id) {}
   VwapInputRecord(int id, Time start_time, pair<uint64_t, double> pov, char side, double limit_price, VwapFlavor flavor)
     : start_time(start_time), end_time(pov),
-      side(side), limit_price(limit_price), flavor((uint8_t)flavor), id(id) {}
+      limit_price(limit_price), side(side), flavor((uint8_t)flavor), id(id) {}
   VwapInputRecord(int id, Time start_time, int ticks, char side, double limit_price, VwapFlavor flavor)
     : start_time(start_time), end_time(ticks),
-      side(side), limit_price(limit_price), flavor((uint8_t)flavor), id(id) {}
+      limit_price(limit_price), side(side), flavor((uint8_t)flavor), id(id) {}
   VwapInputRecord(const VwapInputRecord& rhs) = default;
   VwapInputRecord(VwapInputRecord&& rhs) = default;
   VwapInputRecord & operator = (const VwapInputRecord & rhs) {

@@ -68,7 +68,7 @@ static bool IsEligible(const Trade& trd, char side, Double price) {
     || (side == 'B' && price.LessOrEqual(trd.price))
     || (side == 'S' && price.GreaterOrEqual(trd.price))
     );
-};
+}
 
 static bool IsNormal(const Trade& trd) {
   return 0 == memcmp(trd.cond, "    ", 4) || 0 == memcmp(trd.cond, "@   ", 4);

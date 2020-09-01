@@ -27,6 +27,7 @@ inline const char * ErrorToString(ErrorType error_type) {
   switch (error_type) {
   case ErrorType::DataNotFound: return "DataNotFound";
   case ErrorType::MissingSymbol: return "MissingSymbol";
+  case ErrorType::MissingArgument: return "MissingArgument";
   case ErrorType::InvalidArgument: return "InvalidArgument";
   case ErrorType::InvalidTimestamp: return "InvalidTimestamp";
   case ErrorType::InvalidDate: return "InvalidDate";

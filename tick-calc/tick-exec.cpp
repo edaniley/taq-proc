@@ -22,7 +22,7 @@ static map<string, unique_ptr<FunctionDefinition>> function_definitions;
 bool RegisterFunctionDefinition(unique_ptr<FunctionDefinition> ptr) {
   const string function_name = ptr->name;
   auto it = function_definitions.insert(make_pair(function_name, move(ptr)));
-  assert(it.second == true);
+  (void)it;assert(it.second == true);
   return true;
 }
 
