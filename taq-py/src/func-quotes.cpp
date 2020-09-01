@@ -1,7 +1,6 @@
 #include "taq-py.h"
 
 py::list ExecuteQuote(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs) {
-  const auto& field_definitions = InputFields("Quote");
   const string separator = req_json.get<string>("separator", "|");
   const ssize_t input_cnt = req_json.get<ssize_t>("input_cnt", 0);
   vector<function<void(ostream& os, size_t)>> func;

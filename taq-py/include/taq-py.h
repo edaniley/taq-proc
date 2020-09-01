@@ -20,7 +20,14 @@
 #include <typeinfo>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio.hpp>
+#ifdef __unix__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 #include <boost/iostreams/stream.hpp>
+#ifdef __unix__
+#pragma GCC diagnostic pop
+#endif
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <string.h>

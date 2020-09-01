@@ -85,6 +85,5 @@ private:
   int progress_cnt;
 };
 
-
 }
 #endif

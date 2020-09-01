@@ -61,7 +61,7 @@ void SecMasterManager::trim() {
     }
   }
 }
-/* ===================================================== page ========================================================*/
+
 const SecMaster&  SecMasterManager::Load(Date date) {
   SecMaster* retval = nullptr;
   lock_guard<mutex> lock(mtx_);

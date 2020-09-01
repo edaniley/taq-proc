@@ -63,7 +63,7 @@ typedef map<string, NbboTableEntry> NbboTable;
 static NbboTable nbbo;
 static RecordType record_type = RecordType::NbboPrice;
 
-/* ===================================================== page ========================================================*/
+
 static void ValidateQuote(const vector<string> & row, Bbo & bbo) {
     const char src = row[QCOL_Source_Of_Quote][0];
     const char cond = row[QCOL_Quote_Condition][0];
@@ -81,7 +81,7 @@ static void ValidateQuote(const vector<string> & row, Bbo & bbo) {
       throw(domain_error("Unknown i source" + src));
     }
 }
-/* ===================================================== page ========================================================*/
+
 static void ResetNbboSide(NbboTableEntry & entry, NbboSide::Side side) {
   NbboSide & best_quote = side == NbboSide::BID ? entry.current_nbbo.bid : entry.current_nbbo.offer;
   const BboSide * exchange_quotes = side == NbboSide::BID  ? entry.exchange_bids : entry.exchange_offers;
@@ -107,7 +107,7 @@ static void ResetNbboSide(NbboTableEntry & entry, NbboSide::Side side) {
     }
   }
 }
-/* ===================================================== page ========================================================*/
+
 static bool UpdateNbboSide(NbboTableEntry & entry, NbboSide::Side side, int exch_idx, const BboSide & new_quote) {
   BboSide & current_quote = side == NbboSide::BID ? entry.exchange_bids[exch_idx] : entry.exchange_offers[exch_idx];
   NbboSide & best_quote = side == NbboSide::BID ? entry.current_nbbo.bid : entry.current_nbbo.offer;
@@ -159,7 +159,7 @@ static bool UpdateNbboSide(NbboTableEntry & entry, NbboSide::Side side, int exch
         ? best_quote.price != previous_best_price
         : best_quote.size != previous_best_size || best_quote.price != previous_best_price;
 }
-/* ===================================================== page ========================================================*/
+
 static bool UpdateNbbo(const string & timestamp, const string & symbol, const string & exchange, const Bbo & bbo, ofstream & os) {
   const int exch_idx = exchange[0] - 'A';
   NbboTableEntry & entry = nbbo[symbol];
@@ -176,7 +176,7 @@ static bool UpdateNbbo(const string & timestamp, const string & symbol, const st
   }
   return update_nbbo;
 }
-/* ===================================================== page ========================================================*/
+
 static bool ValidateInputRecord(const vector<string> & row) {
   if (row[0] == "Time" || row[0] == "END" || row[0].size() == 0)
     return false;
@@ -190,7 +190,7 @@ static bool ValidateInputRecord(const vector<string> & row) {
   }
   return true;
 }
-/* ===================================================== page ========================================================*/
+
 int ProcessQuotes(AppContext & ctx, istream & is) {
   record_type = RecordTypeFromString(ctx.input_type);
   vector<SymbolMap> symbol_map;

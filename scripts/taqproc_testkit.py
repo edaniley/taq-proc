@@ -3,7 +3,6 @@ import tempfile
 import uuid
 import json
 import numpy as np
-import pandas as pd
 import taqpy
 from datetime import datetime
 from datetime import time
@@ -38,8 +37,8 @@ def MakeSecmaster(yyyymmdd : str):
   tmp = tempfile.NamedTemporaryFile(mode='w')
   tmp.write(data)
   tmp.flush()
-  cmd = "taq-prep -t master -d {} -i {} ".format(yyyymmdd, tmp.name)
-  proc = subprocess.run(cmd,shell=True, capture_output=True)
+  cmd = "taq-prep -t master -d {} -i {} -o /tmp".format(yyyymmdd, tmp.name)
+  proc = subprocess.run(cmd,shell=True)
   tmp.close()
   symbols = []
 
@@ -85,8 +84,8 @@ def MakeSymbolQuotes(yyyymmdd : str, symb_grp : str, quote_list):
   tmp = tempfile.NamedTemporaryFile(mode='w')
   tmp.write(data)
   tmp.flush()
-  cmd = "taq-prep -t quote -d {} -s {} -i {} ".format(yyyymmdd, symb_grp, tmp.name)
-  proc = subprocess.run(cmd,shell=True, capture_output=True)
+  cmd = "taq-prep -t quote -d {} -s {} -i {} -o /tmp".format(yyyymmdd, symb_grp, tmp.name)
+  proc = subprocess.run(cmd,shell=True)
   tmp.close()
 
 def MakeQuotes(yyyymmdd : str):
@@ -131,8 +130,8 @@ def MakeTrades(yyyymmdd : str):
     data = "\n".join(symb_trades)
     tmp.write(data)
     tmp.flush()
-  cmd = "taq-prep -t trade -d {} -i {} ".format(yyyymmdd, tmp.name)
-  proc = subprocess.run(cmd,shell=True, capture_output=True)
+  cmd = "taq-prep -t trade -d {} -i {} -o /tmp".format(yyyymmdd, tmp.name)
+  proc = subprocess.run(cmd,shell=True)
   tmp.close()
   trades = {}
 
@@ -187,16 +186,8 @@ def ExecuteFunction(function_name:str, yyyymmdd:str, tz="America/New_York"):
   if "error_summary" not in ret_json.keys() or type(ret_json["error_summary"]) != type([]):
     ret_json["error_summary"] = []
 
-  df = None
-  if len(ret) > 1:
-    data = {}
-    col = 1
-    for field in taqpy.ResultFields(function_name):
-      data[field[0]] = pd.Series(ret[col])
-      col += 1
-    df = pd.DataFrame(data)
-
-  results[function_name] = (ret_json, df)
+  arrs = { col_name[0] : ret[idx+1] for idx, col_name in enumerate(taqpy.ResultFields(function_name)) }
+  results[function_name] = (ret_json, arrs)
 
 def ExecuteRequests(yyyymmdd:str, tz="America/New_York"):
   global requests, results
