@@ -118,7 +118,7 @@ void VwapExecutionUnit::Execute() {
     double vwap = .0;
     if (rec.end_time.type == VwapDurationType::ByTime) {
       const Time end_time = requested_time +  (rec.end_time.duration.end_time - rec.start_time);
-      for (auto trd = it; trd < trades.end() && trd->time < end_time; ++ trd) {
+      for (auto trd = it; trd < trades.end() && trd->time <= end_time; ++ trd) {
         if (validator(*trd, rec.side, rec.limit_price)) {
           trade_count ++;
           trade_volume += trd->qty;
@@ -165,7 +165,9 @@ void VwapExecutionUnit::Execute() {
     if (trade_volume) {
       vwap /= trade_volume;
     }
-    ss << rec.id << '|' << trade_count << '|' << trade_volume << '|' << vwap << endl;
+    ss.setf(ios::fixed);
+    ss << rec.id << '|' << trade_count << '|' << trade_volume << '|'
+       << setprecision(6) << vwap << endl;
     output_records.emplace_back(rec.id, ss.str());
   }
   trade_mgr.UnloadSymbolRecordset(date, symbol);
