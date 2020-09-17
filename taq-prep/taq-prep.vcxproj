@@ -158,6 +158,7 @@
     <ClInclude Include="..\include\taq-exception.h" />
     <ClInclude Include="..\include\taq-proc.h" />
     <ClInclude Include="..\include\taq-time.h" />
+    <ClInclude Include="taq-prep-trades.h" />
     <ClInclude Include="taq-prep.h" />
   </ItemGroup>
   <ItemGroup>

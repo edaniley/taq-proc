@@ -58,6 +58,25 @@ struct Security {
   char industry_code[5];
   char halt_reason;
   double shares_outstanding_m;
+  // calculated fields
+  uint64_t  volume_total;         // daily volume
+  uint64_t  volume_regular;       // VWAP-eligible i.e. regular prints during main session, including auctions
+  uint64_t  volume_trf;           // off-exchange volume
+  uint64_t  volume_block;
+  uint64_t  volume_pre_open;      // early morning session
+  uint64_t  volume_post_close;    // late evening session
+  Time      open_time_primary;
+  double    open_price_primary;
+  uint64_t  open_volume_primary;
+  Time      close_time_primary;
+  double    close_price_primary;
+  uint64_t  close_volume_primary;
+  int       average_trade_size;   // average regular trade size during main session
+  double    min_price_regular;    // minimum regular trade price during main session
+  double    max_price_regular;    // maximum regular trade price during main session
+  double    vwap_regular;         // unconstrained VWAP for regular trades during main session
+
+
 };
 
 struct Nbbo {
@@ -81,9 +100,12 @@ struct Trade {
   struct Attr {
     unsigned int exch : 8;
     unsigned int trf : 8;
+    // flags
     unsigned int lte : 1;
     unsigned int ve : 1;
-    unsigned int iso : 1;
+    unsigned int primary_session : 1;
+    unsigned int vwap_eligible : 1;
+    unsigned int block_trade : 1;
   };
   const Time time;
   const double price;
@@ -159,10 +181,11 @@ boost::filesystem::path MkDataFilePath(const std::string& data_dir, RecordType t
   else if (type == RecordType::Trade) {
     ss << yyyymmdd << ".trd" << ".dat";
   }
-  file_path /= ss.str();
-  if (false == boost::filesystem::exists(file_path) && boost::filesystem::is_regular_file(file_path)) {
-    throw std::domain_error("Input file not found : " + file_path.string());
+  file_path /= yyyymmdd;
+  if (false == boost::filesystem::exists(file_path)) {
+    boost::filesystem::create_directory(file_path);
   }
+  file_path /= ss.str();
   return file_path;
 }
 

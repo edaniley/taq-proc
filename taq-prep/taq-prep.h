@@ -99,7 +99,6 @@ namespace taq_prep
     TCOL_Max
   };
 
-
   struct AppContext {
     std::string date;
     std::string symb;
@@ -115,8 +114,9 @@ namespace taq_prep
 int ProcessSecMaster(AppContext &, std::istream & is);
 int ProcessQuotes(AppContext &, std::istream & is);
 int ProcessTrades(AppContext &, std::istream & is);
-void LoadSecMaster(AppContext &);
-char PrimaryExchange(const std::string symbol);
+void SecMasterLoad(AppContext &);
+void SecMasterFlush();
+Taq::Security * GetSecurity(const std::string symbol);
 std::string CtaToUtp(const std::string& cta_symbol);
 
 }

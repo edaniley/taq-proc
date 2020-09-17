@@ -6,8 +6,14 @@
     <LocalDebuggerWorkingDirectory>$(ProjectDir)\..\data</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-i AMZN.psv -t trade -o . -d 20200331</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-d 20200331 -o $(SolutionDir)data -t trade -i  EQY_US_ALL_TRADE_20200331.psv</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerWorkingDirectory>$(ProjectDir)\..\data</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)data</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerCommandArguments>
+    </LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir) </LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 </Project>

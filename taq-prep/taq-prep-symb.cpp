@@ -79,37 +79,45 @@ string CtaToUtp(const string & cta_symbol) {
   return symb.size() == 1 ? cta_symbol : symb[0] + NyseSuffixToNasdaq(symb[1]);
 }
 
-static map<string, char> symbol_primary_map;
 
-void LoadSecMaster(AppContext & ctx) {
-  symbol_primary_map.clear();
+static mm::file_mapping mmfile;
+static mm::mapped_region mmreg;
+static map<string, Security *> security_by_symbol;
+
+void SecMasterLoad(AppContext & ctx) {
+  security_by_symbol.clear();
   auto file_path = MkDataFilePath(ctx.output_dir, RecordType::SecMaster, MkTaqDate(ctx.date));
   if (false == (fs::exists(file_path) && fs::is_regular_file(file_path))) {
     throw domain_error("SecMaster file not found : " + file_path.string());
   }
   const size_t file_size = (size_t)fs::file_size(file_path);
   if (file_size < sizeof(FileHeader)) {
-    throw domain_error("Input file size too small to accomodate header : " + file_path.string());
+    throw domain_error("Input file size is too small : " + file_path.string());
   }
-  mm::file_mapping mmfile(file_path.string().c_str(), mm::read_only);
-  mm::mapped_region mmreg(mmfile, mm::read_only);
+  mmfile = mm::file_mapping(file_path.string().c_str(), mm::read_write);
+  mmreg = mm::mapped_region(mmfile, mm::read_write);
   const void *base = mmreg.get_address();
   const FileHeader &fh = *(FileHeader*)base;
   if (fh.type == RecordType::SecMaster) {
-    const Security* symbols = (const Security *)((char *)base + sizeof(FileHeader));
+    Security* symbols = (Security *)((
+    char *)base + sizeof(FileHeader));
     for (int i = 0; i < fh.symb_cnt; i++) {
       const Security& sec = symbols[i];
-      symbol_primary_map.insert(make_pair(sec.symb, sec.exch));
-      if (sec.symb != sec.utp_symb) {
-        symbol_primary_map.insert(make_pair(sec.utp_symb, sec.exch));
+      security_by_symbol.insert(make_pair(sec.symb, &symbols[i]));
+      if (strcmp(sec.symb, sec.utp_symb)) {
+        security_by_symbol.insert(make_pair(sec.utp_symb, &symbols[i]));
       }
     }
   }
 }
 
-char PrimaryExchange(const std::string symbol) {
-  auto it = symbol_primary_map.find(symbol);
-  return it != symbol_primary_map.end() ? it->second : '\0';
+void SecMasterFlush() {
+  mmreg.flush(0, mmreg.get_size(), false);
+}
+
+Security * GetSecurity(const std::string symbol) {
+  auto it = security_by_symbol.find(symbol);
+  return it != security_by_symbol.end() ? it->second : nullptr;
 }
 
 

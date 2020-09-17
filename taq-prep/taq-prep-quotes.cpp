@@ -54,7 +54,6 @@ struct NbboTableEntry {
   Nbbo current_nbbo;
   BboSide exchange_bids[Exch_Max];
   BboSide exchange_offers[Exch_Max];
-  //vector<Taq::Nbbo> out_nbbo;
   NbboTableEntry() = default;
 };
 
@@ -78,7 +77,7 @@ static void ValidateQuote(const vector<string> & row, Bbo & bbo) {
       bbo.bid.is_set = valid && bbo.bid.size > 0 ;
       bbo.offer.is_set = valid && bbo.offer.size > 0;
     } else {
-      throw(domain_error("Unknown i source" + src));
+      throw(domain_error("Unknown source" + src));
     }
 }
 
@@ -208,21 +207,18 @@ int ProcessQuotes(AppContext & ctx, istream & is) {
       if (UpdateNbbo(row[QCOL_Time], row[QCOL_Symbol], row[QCOL_Exchange], bbo, ctx.output)) {
         rec_cnt++;
         if (!current || current->symb != row[QCOL_Symbol]) {
-          if (current) {
-            current->end = rec_cnt - 1;
-          }
           symbol_map.push_back(SymbolMap(row[QCOL_Symbol], rec_cnt, 0));
           current = &*symbol_map.rbegin();
         }
+        current->end = rec_cnt;
       }
     }
   }
-  if (current) {
-    current->end = rec_cnt;
-  }
+  // append symbol map
   for (const auto & sm : symbol_map) {
     ctx.output.write((const char*)&sm, sizeof(sm));
   }
+  // update file header
   ctx.output_file_hdr.symb_cnt = (int)symbol_map.size();
   ctx.output_file_hdr.rec_cnt = rec_cnt;
   ctx.output_file_hdr.type = record_type;

@@ -45,7 +45,7 @@ void HandleSecMasterFile(const FileHeader& fh , const mm::mapped_region& mm_regi
   if (false == no_header) {
     auto thousands = make_unique<separate_thousands>();
     auto saved_locale = cout.imbue(locale(cout.getloc(), thousands.release()));
-    cout << "date file     " << file_path << endl;
+    cout << "data file     " << file_path << endl;
     cout << "file size     " << mm_region.get_size() << endl;
     cout << "record type   " "SecMaster" << endl;
     cout << "record size   " << sizeof(Security) << endl;
@@ -54,7 +54,12 @@ void HandleSecMasterFile(const FileHeader& fh , const mm::mapped_region& mm_regi
     if (pretty) {
       cout << "cta_symb    utp_symb    prim_exch tape lot_size" << endl;
     } else {
-      cout << "cta_symb,utp_symb,prim_exch,tape,lot_size" << endl;
+      cout << "cta_symb,utp_symb,prim_exch,tape,lot_size,"
+      "volume_total,volume_regular,volume_trf,volume_block,volume_pre_open,volume_post_close,"
+      "open_time_primary,open_price_primary,open_volume_primary,"
+      "close_time_primary,close_price_primary,close_volume_primary,"
+      "average_trade_size,min_price_regular,max_price_regular,vwap_regular"
+      << endl;
     }
   }
   const Security* symbols = (const Security*)((char*)(mm_region.get_address()) + sizeof(fh));
@@ -68,7 +73,19 @@ void HandleSecMasterFile(const FileHeader& fh , const mm::mapped_region& mm_regi
       string lot_size = to_string((int)sec.lot_size); lot_size.insert(0, 8 - lot_size.size(), ' ');
       cout << cta_symb << utp_symb << exch << tape << lot_size << endl;
     } else {
-      cout << sec.symb << "," << sec.utp_symb << "," << sec.exch << "," << sec.tape << "," << (int)sec.lot_size << endl;
+      char buff[32];
+      auto PrintPrice = [&buff](double px) {
+        px  = px == numeric_limits<double>::max() ? .0 : px;
+        sprintf_s(buff, sizeof(buff), "%.6f", px);
+        return string(buff);
+      };
+      cout << sec.symb << "," << sec.utp_symb << "," << sec.exch << "," << sec.tape << "," << (int)sec.lot_size
+        << "," << sec.volume_total << "," << sec.volume_regular << "," << sec.volume_trf << "," << sec.volume_block
+        << "," << sec.volume_pre_open << "," << sec.volume_post_close
+        << "," << sec.open_time_primary << "," << PrintPrice(sec.open_price_primary) << "," << sec.open_volume_primary
+        << "," << sec.close_time_primary << "," << PrintPrice(sec.close_price_primary) << "," << sec.close_volume_primary
+        << "," << sec.average_trade_size << "," << PrintPrice(sec.min_price_regular) << "," << PrintPrice(sec.max_price_regular)
+        << "," << PrintPrice(sec.vwap_regular)<< endl;
     }
   }
 }
@@ -94,14 +111,16 @@ void ShowRecords(const string& symb, const Trade* rec, const Trade* end) {
   do {
     if (pretty) {
       cout << "symbol:" << symb << " time:" << rec->time << " price:" << rec->price << " qty:" << rec->qty
-           << " exch:" << (char)rec->attr.exch << " trf:'" << (char)rec->attr.exch
-           << "' lte:" << (rec->attr.lte ? 'Y' : 'N') << " ve:" << (rec->attr.ve ? 'Y' : 'N') 
-           << " iso:" << (rec->attr.iso ? 'Y' : 'N')  << endl;
+        << " exch:" << (char)rec->attr.exch << " cond:'" << string(rec->cond, sizeof(rec->cond)) << "' trf:" << (char)rec->attr.exch
+        << "' lte:" << (rec->attr.lte ? 'Y' : 'N') << " ve:" << (rec->attr.ve ? 'Y' : 'N')
+        << " vwap:" << (rec->attr.vwap_eligible? 'Y' : 'N')  << " trf:" << (rec->attr.trf ? 'Y' : 'N')
+        << " block:" << (rec->attr.block_trade ? 'Y' : 'N')  << endl;
     } else {
       cout << symb << ',' << rec->time << ',' << rec->price << ',' << rec->qty
-        << ',' << (char)rec->attr.exch << ',' << (char)rec->attr.exch
+        << ',' << (char)rec->attr.exch << ',' << (char)rec->attr.exch << ',' << string(rec->cond, sizeof(rec->cond))
         << ',' << (rec->attr.lte ? 'Y' : 'N') << ',' << (rec->attr.ve ? 'Y' : 'N')
-        << ',' << (rec->attr.iso ? 'Y' : 'N') << endl;
+        << ',' << (rec->attr.vwap_eligible ? 'Y' : 'N') << ',' << (rec->attr.trf ? 'Y' : 'N')
+        << ',' << (rec->attr.block_trade ? 'Y' : 'N') << endl;
 
     }
   } while (++rec < end);
@@ -145,7 +164,7 @@ void HandleNbboFile(const FileHeader& fh, const mm::mapped_region & mm_region) {
   if (false == no_header) {
     auto thousands = make_unique<separate_thousands>();
     auto saved_locale = cout.imbue(locale(cout.getloc(), thousands.release()));
-    cout << "date file     " << file_path << endl;
+    cout << "data file     " << file_path << endl;
     cout << "file size     " << mm_region.get_size() << endl;
     cout << "record type   " << (fh.type == RecordType::Nbbo ? "Nbbo (with size)" : "Nbbo (price only)") << endl;
     cout << "record size   " << (fh.type == RecordType::Nbbo ? sizeof(Nbbo) : sizeof(NbboPrice)) << endl;
@@ -182,7 +201,7 @@ void HandleTradeFile(const FileHeader& fh, const mm::mapped_region& mm_region) {
   if (false == no_header) {
     auto thousands = make_unique<separate_thousands>();
     auto saved_locale = cout.imbue(locale(cout.getloc(), thousands.release()));
-    cout << "date file     " << file_path << endl;
+    cout << "data file     " << file_path << endl;
     cout << "file size     " << mm_region.get_size() << endl;
     cout << "record type   " "Trade" << endl;
     cout << "record type   " << sizeof(Trade) << endl;
