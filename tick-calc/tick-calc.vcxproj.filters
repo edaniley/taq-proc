@@ -27,9 +27,6 @@
     <ClCompile Include="tick-exec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tick-func-quote.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="tick-func-rod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -40,6 +37,24 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tick-func-vwap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-duration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-func-vwap-calc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-func-nbbo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-func.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-conn.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick-json.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -77,11 +92,26 @@
     <ClInclude Include="tick-request.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\double.h">
-      <Filter>Header Files\taq-proc</Filter>
-    </ClInclude>
     <ClInclude Include="tick-func-vwap.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-duration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\taq-text.h">
+      <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-func-nbbo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-func-rod.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-json.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\taq-double.h">
+      <Filter>Header Files\taq-proc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

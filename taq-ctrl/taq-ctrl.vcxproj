@@ -90,6 +90,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;BOOST_DATE_TIME_POSIX_TIME_STD_CONFIG;BOOST_USE_WINDOWS_H;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)include;C:\Toolbox\boost\boost_1_72_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -120,6 +121,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;BOOST_DATE_TIME_POSIX_TIME_STD_CONFIG;BOOST_USE_WINDOWS_H;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)include;C:\Toolbox\boost\boost_1_72_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -150,7 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\boost-algorithm-string.h" />
-    <ClInclude Include="..\include\double.h" />
+    <ClInclude Include="..\include\taq-double.h" />
     <ClInclude Include="..\include\taq-exception.h" />
     <ClInclude Include="..\include\taq-proc.h" />
     <ClInclude Include="..\include\taq-time.h" />

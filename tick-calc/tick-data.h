@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <functional>
 #include <iterator>
-#include <sstream>
 #include <map>
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
@@ -235,58 +234,10 @@ private:
   map<Key, unique_ptr<DayRecordset<T>>> daily_records_;
 };
 
-
-struct InputRecord {
-  InputRecord(int id) : id(id) {}
-  const int id;
-  vector<string> values;
-};
-
-typedef vector<InputRecord> InputRecordSet;
-
-struct InputRecordRange {
-  InputRecordRange(const InputRecordSet& records, size_t first, size_t end)
-    : records(records), first(first), end(end) {}
-  const InputRecordSet& records;
-  size_t first;
-  size_t end;
-};
-
-struct OutputRecord {
-  OutputRecord(int id) : id(id) {}
-  OutputRecord(int id, const string &value) : id(id), value(value){}
-  int id;
-  string value;
-};
-typedef vector<OutputRecord> OutputRecordset;
-
-template <int SIZE>
-class OutputBuffer {
-public:
-  OutputBuffer() { Reset(); }
-  char* Data() const { return read_ptr_; }
-  int DataSize() const { return (int)(write_ptr_ - read_ptr_); }
-  int AvailableSize() const { return SIZE - DataSize(); }
-  int Write(const char* data, int datalen) {
-    int write_size = std::min(AvailableSize(), datalen);
-    memcpy(write_ptr_, data, write_size);
-    write_ptr_ += write_size;
-    return write_size;
-  }
-  char* WritePtr() { return write_ptr_; }
-  void CommitWrite(int write_size) { write_ptr_ += write_size; }
-  void CommitRead(int read_size) { read_ptr_ += read_size; }
-  void Reset() { read_ptr_ = write_ptr_ = data_; }
-private:
-  char data_[SIZE];
-  char* read_ptr_;
-  char* write_ptr_;
-};
-
-void InitializeData(const string& data_dir);
-void CleanupData();
+void DataInitialize(const string& data_dir);
+void DataCleanup();
 tick_calc::SecMasterManager & SecurityMasterManager();
-tick_calc::RecordsetManager<Nbbo> & QuoteRecordsetManager();
+tick_calc::RecordsetManager<Nbbo> & NbboRecordsetManager();
 tick_calc::RecordsetManager<NbboPrice>& NbboPoRecordsetManager();
 tick_calc::RecordsetManager<Trade>& TradeRecordsetManager();
 

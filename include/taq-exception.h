@@ -2,7 +2,7 @@
 #define TAQ_EXEPTION_INCLUDED
 
 #include <string>
-#include <exception>
+#include <stdexcept>
 
 namespace Taq {
 

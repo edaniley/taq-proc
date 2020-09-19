@@ -6,14 +6,13 @@
 #include <functional>
 #include <sstream>
 #include <exception>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
 #include "taq-proc.h"
 #include "tick-exec.h"
+#include "tick-json.h"
 
 using namespace std;
 using namespace Taq;
-namespace js = boost::property_tree;
+
 
 namespace tick_calc {
 
@@ -60,18 +59,28 @@ private:
   char* write_ptr_;
 };
 
-template <typename T>
-vector<T> AsVector(js::ptree const& pt, js::ptree::key_type const& key) {
-  vector<T> retval;
-  try {
-    for (auto& item : pt.get_child(key))
-      retval.push_back(item.second.get_value<T>());
+template <int SIZE>
+class OutputBuffer {
+public:
+  OutputBuffer() { Reset(); }
+  char* Data() const { return read_ptr_; }
+  int DataSize() const { return (int)(write_ptr_ - read_ptr_); }
+  int AvailableSize() const { return SIZE - DataSize(); }
+  int Write(const char* data, int datalen) {
+    int write_size = std::min(AvailableSize(), datalen);
+    memcpy(write_ptr_, data, write_size);
+    write_ptr_ += write_size;
+    return write_size;
   }
-  catch (const exception& ex) {
-    throw domain_error(string("Json error: ") + ex.what());
-  }
-  return retval;
-}
+  char* WritePtr() { return write_ptr_; }
+  void CommitWrite(int write_size) { write_ptr_ += write_size; }
+  void CommitRead(int read_size) { read_ptr_ += read_size; }
+  void Reset() { read_ptr_ = write_ptr_ = data_; }
+private:
+  char data_[SIZE];
+  char* read_ptr_;
+  char* write_ptr_;
+};
 
 struct Connection {
   Connection() : fd(-1), request_buffer(), request_parsed(false), input_record_cnt(0),

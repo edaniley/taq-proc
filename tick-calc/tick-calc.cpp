@@ -25,6 +25,7 @@ bool tick_calc::IsVerbose() {
   return verbose;
 }
 
+
 static bool ValidateCmdArgs(AppAruments& args) {
   if (false == (fs::exists(args.in_data_dir) && fs::is_directory(args.in_data_dir)) ) {
     cerr << "Invalid --data-dir: " << args.in_data_dir << endl;
@@ -78,7 +79,7 @@ int main(int argc, char **argv) {
   #endif
   try {
     LogInitialize(args);
-    InitializeData(args.in_data_dir);
+    DataInitialize(args.in_data_dir);
     NetInitialize(args);
     CreateThreads(cpu_cores);
     Log(LogLevel::INFO, "Ready");
@@ -92,7 +93,7 @@ int main(int argc, char **argv) {
     Log(LogLevel::CRITICAL, ex.what());
   }
   DestroyThreads();
-  CleanupData();
+  DataCleanup();
   NetFinalize(args);
   Log(LogLevel::INFO, "Done");
   LogFinalize(args);

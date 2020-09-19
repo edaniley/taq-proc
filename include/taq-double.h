@@ -1,11 +1,12 @@
 
-#ifndef DOUBLE_INCLUDED
-#define DOUBLE_INCLUDED
+#ifndef TAQ_DOUBLE_INCLUDED
+#define TAQ_DOUBLE_INCLUDED
 
 #include <string>
+#include <string_view>
 #include <limits>
 
-namespace taq_proc {
+namespace Taq {
 
 class Double {
 public:
@@ -20,6 +21,7 @@ public:
       value_ = std::numeric_limits<double>::quiet_NaN();
     }
   }
+  Double(const std::string_view& str) : Double(std::string(str.data(), str.size())) {}
   Double (const char* s) {
     value_ = !s || *s == '\0' ? std::numeric_limits<double>::quiet_NaN() : std::stod(s);
   }

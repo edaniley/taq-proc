@@ -66,18 +66,18 @@ py::list ExecuteROD(const ptree& req_json, ip::tcp::iostream& tcptream, const py
 
   int line_cnt = 0;
   string line;
-  vector<string> values;
+  vector<string_view> values;
   while (getline(tcptream, line)) {
     values.clear();
-    boost::split(values, line, boost::is_any_of("|"));
-    StringCopy(ord_id.mutable_at(line_cnt), values[0].c_str(), sizeof(str64));
-    minus3.mutable_at(line_cnt) = stod(values[1]);
-    minus2.mutable_at(line_cnt) = stod(values[2]);
-    minus1.mutable_at(line_cnt) = stod(values[3]);
-    zero.mutable_at(line_cnt) = stod(values[4]);
-    plus1.mutable_at(line_cnt) = stod(values[5]);
-    plus2.mutable_at(line_cnt) = stod(values[6]);
-    plus3.mutable_at(line_cnt) = stod(values[7]);
+    Split(values, line, '|');
+    StringCopy(ord_id.mutable_at(line_cnt), string(values[0]).c_str(), sizeof(str64));
+    minus3.mutable_at(line_cnt) = TextToNumeric<double>(values[1]);
+    minus2.mutable_at(line_cnt) = TextToNumeric<double>(values[2]);
+    minus1.mutable_at(line_cnt) = TextToNumeric<double>(values[3]);
+    zero.mutable_at(line_cnt) = TextToNumeric<double>(values[4]);
+    plus1.mutable_at(line_cnt) = TextToNumeric<double>(values[5]);
+    plus2.mutable_at(line_cnt) = TextToNumeric<double>(values[6]);
+    plus3.mutable_at(line_cnt) = TextToNumeric<double>(values[7]);
     line_cnt++;
   }
   py::list retval;

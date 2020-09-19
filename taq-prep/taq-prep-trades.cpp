@@ -143,7 +143,7 @@ void SymbolTradeState::SetTradeAttributes(const TradeTick &tick) {
       }
     }
     else if (lte == '5') {
-      static const Time time_160130 = MkTime("16:01:30");
+      static const Time time_160130 = MkTime(string("16:01:30"));
       is_lte = tick.time < time_160130;
     }
   }
@@ -198,7 +198,7 @@ void SymbolTradeState::AccumulateStatistics(const TradeTick& tick) {
       }
     }
     if (current_trade_attr.primary_session == false) {
-      static const Time time_160000 = MkTime("16:00:00");
+      static const Time time_160000 = MkTime(string("16:00:00"));
       if (tick.time < time_160000) {
         volume_pre_open += tick.qty;
       } else {

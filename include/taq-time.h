@@ -2,6 +2,7 @@
 #define TAQ_TIME_INCLUDED
 
 #include <string>
+#include <string_view>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "boost/date_time/local_time_adjustor.hpp"
@@ -39,10 +40,28 @@ inline Date MkTaqDate(const std::string & yyyymmdd) {
   }
 }
 
+inline Date MkTaqDate(const std::string_view& yyyymmdd) {
+  try {
+    return  boost::gregorian::from_undelimited_string(std::string(yyyymmdd.data(), yyyymmdd.size()));
+  }
+  catch (...) {
+    throw Exception(ErrorType::InvalidDate);
+  }
+}
+
 inline Time MkTime(const std::string& time) {
   try {
     return  boost::posix_time::duration_from_string(time);
   } catch (...) {
+    throw Exception(ErrorType::InvalidTimestamp);
+  }
+}
+
+inline Time MkTime(const std::string_view & time) {
+  try {
+    return  boost::posix_time::duration_from_string(std::string(time.data(), time.size()));
+  }
+  catch (...) {
     throw Exception(ErrorType::InvalidTimestamp);
   }
 }
@@ -55,9 +74,18 @@ inline Date MkDate(const std::string& yyyymmdd) {
   }
 }
 
+inline Date MkDate(const std::string_view& yyyymmdd) {
+  try {
+    return boost::gregorian::from_string(std::string(yyyymmdd.data(), yyyymmdd.size()));
+  }
+  catch (...) {
+    throw Exception(ErrorType::InvalidDate);
+  }
+}
+
 inline Time UtcToTaq(Date date) { // add to UTC time to produce local time (NYSE TAQ)
-  Timestamp ts(date, MkTime("12:00:00"));
-  const Timestamp utc_ts(date, MkTime("12:00:00"));
+  Timestamp ts(date, MkTime(std::string("12:00:00")));
+  const Timestamp utc_ts(date, MkTime(std::string("12:00:00")));
   const Timestamp est_ts = LocalTzAdjustor::utc_to_local(utc_ts);
   return est_ts - utc_ts;
 }

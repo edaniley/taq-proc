@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <map>
 #include <atomic>
 #include <functional>
 #include <thread>
@@ -12,44 +13,13 @@
 
 #include "taq-proc.h"
 #include "tick-data.h"
+#include "tick-func.h"
 #include "tick-request.h"
 
 using namespace std;
 using namespace Taq;
 
 namespace tick_calc {
-
-class FunctionDefinition {
-public:
-  FunctionDefinition(const string &name, const vector<string> & argument_names, const vector<string>& output_fields)
-    : name(name), argument_names(argument_names), output_fields(output_fields) { }
-  virtual ~FunctionDefinition() {}
-
-  vector<int> MapArgumentList(const vector<string>& request_arguments) const {
-    vector<int> argument_mapping(argument_names.size(), -1);
-    for (size_t i = 0; i < argument_names.size(); i++) {
-      for (size_t j = 0; j < request_arguments.size(); j++) {
-        if (request_arguments[j] == argument_names[i]) {
-          argument_mapping[i] = (int)j;
-          break;
-        }
-      }
-    }
-    return argument_mapping;
-  }
-
-  virtual void ValidateArgumentList(const vector<int> & argument_mapping) const {
-    for (size_t i = 0; i < argument_names.size(); i++) {
-      if (argument_mapping[i] == -1) { // by default presence of all arguments is expected
-        throw invalid_argument("Missing argument:" + argument_names[i] + " function:" + name);
-      }
-    }
-  }
-
-  const string name;
-  const vector<string> argument_names;
-  const vector<string> output_fields;
-};
 
 template <typename T>
 class ProducerConsumerQueue {
@@ -82,9 +52,37 @@ private:
   list<shared_ptr<T>> que_;
 };
 
+struct InputRecord {
+  InputRecord(int id) : id(id) {}
+  const int id;
+  vector<string_view> values;
+};
+
+typedef vector<InputRecord> InputRecordSet;
+
+struct InputRecordRange {
+  InputRecordRange(const InputRecordSet& records, size_t first, size_t end)
+    : records(records), first(first), end(end) {}
+  const InputRecordSet& records;
+  size_t first;
+  size_t end;
+};
+
+struct OutputRecord {
+  OutputRecord(int id) : id(id) {}
+  OutputRecord(int id, const string& value) : id(id), value(value) {}
+  int id;
+  string value;
+};
+
+typedef vector<OutputRecord> OutputRecordset;
+
 class ExecutionUnit {
 public:
-  ExecutionUnit() { done.store(false); }
+  ExecutionUnit(const string &symbol, Date date, bool adjust_time)
+    : symbol(symbol), date(date), taq_time_adjustment(adjust_time ? UtcToTaq(date) : ZeroTime()) {
+    done.store(false);
+  }
   virtual ~ExecutionUnit() {};
   virtual void Execute() = 0;
   void Error(ErrorType error_type, int count = 1) {
@@ -95,6 +93,9 @@ public:
       ret.first->second += count;
     }
   }
+  const string symbol;
+  const Date date;
+  const Time taq_time_adjustment;
   atomic<bool> done;
   OutputRecordset output_records;
   map<ErrorType, int> errors;
@@ -111,6 +112,9 @@ public:
   virtual ~ExecutionPlan() {};
   virtual void Input(InputRecord&) = 0;
   virtual void Execute() = 0;
+  virtual const vector<string>& ResultFields() const {
+    return function.output_fields;
+  }
   void StartExecution() {
     execution_started = boost::posix_time::microsec_clock::local_time();
     Execute();
@@ -136,7 +140,6 @@ protected:
 };
 
 // public routines
-bool RegisterFunctionDefinition(unique_ptr<FunctionDefinition>);
 vector<int> AvailableCpuCores(string& cpu_list);
 bool SetThreadCpuAffinity(int cpu_core);
 void ExecutionThread(int core);

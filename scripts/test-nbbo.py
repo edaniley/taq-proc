@@ -1,9 +1,9 @@
 # sample to demonstrate TAQ processor Python API
 
 taqproc = "127.0.0.1:3090"
-test_size = 3
+test_size = 8
 date = "20200331"
-function_name = "VWAP"
+function_name = "NBBOPrice"
 
 # helper routines
 import taqpy
@@ -40,51 +40,31 @@ times_by_symbol={}
 for symbol in symbols:
     times_by_symbol[symbol]=[]
 stime = [random.randrange(USEC_MIN, USEC_MAX) for i in range(test_size)]
-dtime = [random.randrange(SPAN_MIN, SPAN_MAX) for i in range(test_size)]
 req_symb = []
-req_date = [date] * test_size
-req_stime = []
-req_etime = []
-req_lmtpx = []
-req_side    = [sides[random.randrange(0, len(sides))] for i in range(test_size)]
-req_flavor  = [flavors[random.randrange(0, len(flavors))] for i in range(test_size)]
-req_tvol    = [volumes[random.randrange(0, len(volumes))] for i in range(test_size)]
-req_tpov    = [povs[random.randrange(0, len(povs))] for i in range(test_size)]
-req_ticks   = [random.choice([5,10,-5,50]) for i in range(test_size)]
+req_time = []
 req_markouts = [markouts] * test_size
 
 
 stime.sort()
 for i in range(len(stime)):
     symbol = symbols[symbols_idx[0]]
-    start_time = str(trade_date + datetime.timedelta(microseconds=stime[i])).split()[1]
-    end_time = str(trade_date + datetime.timedelta(microseconds=min(stime[i] + dtime[i], USEC_MAX))).split()[1]
-    times_by_symbol[symbol].append((start_time, end_time))
+    timestamp = trade_date + datetime.timedelta(microseconds=stime[i])
+    #print("{}|{}".format(symbol,timestamp.isoformat('T')))
+    times_by_symbol[symbol].append(timestamp)
     symbols_idx.rotate(1)
 
 i = 0
 for symbol in symbols:
-    for times in times_by_symbol[symbol]:
+    for tstamp in times_by_symbol[symbol]:
         req_symb.append(symbol)
-        req_stime.append(times[0])
-        req_etime.append(times[1])
-        limit_price = ref_prices[symbol] if req_side[i] == 'B' or req_side[i] == 'S' else 0
-        req_lmtpx.append(limit_price)
+        req_time.append(tstamp.isoformat('T'))
         i += 1
 
 req_df = pd.DataFrame({"Symbol" : pd.Series(req_symb)
-                      ,"Date" : pd.Series(req_date)
-                      ,"StartTime" : pd.Series(req_stime)
-                      ,"Side" : pd.Series(req_side)
-                      ,"LimitPx" : pd.Series(req_lmtpx)
-                      ,"Flavor" : pd.Series(req_flavor)
-#                      ,"EndTime" : pd.Series(req_etime)
-#                      ,"TargetVolume" : pd.Series(req_tvol)
-#                      ,"TargetPOV" : pd.Series(req_tpov)
-                      ,"Ticks" : pd.Series(req_ticks)
-#                      ,"Markouts" : pd.Series(req_markouts)
+                      ,"Timestamp" : pd.Series(req_time)
+                      #,"Markouts" : pd.Series(req_markouts)
                       })
-print(req_df.head())
+print(req_df.head(10))
 
 
 # validate input
@@ -157,7 +137,7 @@ if len(ret) > 1:
     for fld in range(len(ret_flds)):
         data[ret_flds[fld]] = pd.Series(ret[fld+1])
     ret_df = pd.DataFrame(data)
-    print (ret_df.head())
+    print (ret_df.head(10))
 
 print("")
 

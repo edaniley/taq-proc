@@ -20,13 +20,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\config.cpp" />
-    <ClCompile Include="src\func-quotes.cpp" />
+    <ClCompile Include="src\func-nbbo-po.cpp" />
+    <ClCompile Include="src\func-nbbo.cpp" />
     <ClCompile Include="src\func-rod.cpp" />
     <ClCompile Include="src\func-vwap.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\taq-py.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -136,6 +140,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -155,6 +160,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir)taq-py\include;C:\Toolbox\boost\boost_1_72_0;C:\Python3.7\lib\site-packages\numpy\core\include;C:\Toolbox\pybind11\include;C:\Python\Python37\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

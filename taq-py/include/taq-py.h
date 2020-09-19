@@ -12,6 +12,8 @@
 #endif
 #include <iostream>
 #include <sstream>
+#include <string_view>
+#include <charconv>
 #include <algorithm>
 #include <vector>
 #include <map>
@@ -51,13 +53,15 @@ using str18 = char[18]; // Symbol
 using str20 = char[20]; // Time 12:30:00.123456789
 using str36 = char[36]; // Timestamp 1970-01-01T12:30:00.123456789+00:00
 using str64 = char[64]; // Order ID
+using str96 = char[96]; // Markouts
 
 struct FieldsDef {
-  FieldsDef(const string& name, const string& ctype, size_t size)
-    : name(name), ctype(ctype), size(size), dtype(type(ctype, size))  {}
+  FieldsDef(const string& name, const string& ctype, size_t size, bool required = true)
+    : name(name), ctype(ctype), size(size), required(required), dtype(type(ctype, size))  {}
   const string name;
   const string ctype;
   const size_t size;
+  const bool required;
   const string dtype;
   static string type(const string& ctype, size_t size) {
     ostringstream ss;
@@ -92,12 +96,36 @@ vector<T> AsVector(ptree const& pt, ptree::key_type const& key) {
   return retval;
 }
 
+template<typename T>
+T TextToNumeric(const std::string_view& str) {
+  T retval;
+  auto [p, ec] = std::from_chars(str.data(), str.data() + str.size(), retval);
+  if ((bool)ec)
+    throw domain_error("Text to numeric conversion failure");
+  return retval;
+}
+
+inline
+void Split(std::vector<std::string_view>& result, const std::string_view& str, const char delim) {
+  for (size_t first = 0; first < str.size();) {
+    size_t second = str.find(delim, first);
+    result.emplace_back(str.substr(first, second - first));
+    if (second == std::string_view::npos)
+      break;
+    first = second + 1;
+  }
+  if (*str.rbegin() == delim) {
+    result.emplace_back(&*str.rbegin(), 0);
+  }
+}
+
 const vector<FieldsDef>& InputFields(const string& function_name);
 string JsonToString(const ptree &);
 ptree StringToJson(const string &);
 
 py::list ExecuteROD(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
-py::list ExecuteQuote(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
+py::list ExecuteNBBO(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
+py::list ExecuteNBBOPrice(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
 py::list ExecuteVWAP(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
 
 inline void StringCopy(char* desc, const char* src, size_t len) {

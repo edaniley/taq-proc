@@ -1,48 +1,23 @@
 #include <tuple>
 #include <algorithm>
-#include <iterator>
-#include <cmath>
 
 #include <boost/algorithm/string.hpp>
 #include "taq-proc.h"
-#include "tick-calc.h"
-#include "tick-func.h"
-#include "double.h"
+#include "taq-text.h"
+#include "tick-func-rod.h"
 
 using namespace std;
 using namespace Taq;
 
 namespace tick_calc {
+namespace ROD {
 
 static const bool registered = RegisterFunctionDefinition(make_unique<FunctionDefinition>("ROD",
   vector<string> {"ID", "Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPx", "MPA", "ExecTime", "ExecQty"},
   vector<string> {"ID", "MinusThree", "MinusTwo", "MinusOne", "Zero", "PlusOne", "PlusTwo", "PlusThree"})
   );
 
-using RestType = RodExecutionPlan::RestType;
-
-struct RodSlice{
-  RodSlice(Time start_time, Time end_time, int leaves_qty)
-    : start_time(start_time), end_time(end_time), leaves_qty(leaves_qty) { }
-  const Time start_time;
-  const Time end_time;
-  const int leaves_qty;
-};
-
-static bool LooksLikeNumber(const string& str) {
-  return false == str.empty() && str.compare("nan");
-}
-static RestType DecodeRestType(const string& str) {
-  if (LooksLikeNumber(str)) {
-    const int val = stoi(str);
-    if (val >= -(int)RestType::Zero && val <= (int)RestType::Zero) {
-      return (RestType)(val + (int)RestType::Zero);
-    }
-  }
-  return RestType::None;
-}
-
-static char DecodeSide(const string& str) {
+static char DecodeSide(const string_view& str) {
   if (str.size() > 0) {
     if (str[0] == 'B' || str[0] == 'b')
       return 'B';
@@ -50,7 +25,7 @@ static char DecodeSide(const string& str) {
       return 'S';
   }
   // dead code for now
-  string side(str);
+  string side(str.data(), str.size());
   boost::to_upper(side);
   if (side == "BUY")
     return 'B';
@@ -60,38 +35,52 @@ static char DecodeSide(const string& str) {
   return '\0';
 }
 
-static RestType InvertRestType(const RestType mpa) {
-  return (RestType)(-1 * ((int)mpa - (int)RestType::Zero) + (int)RestType::Zero);
+static bool LooksLikeNumber(const string_view & str) {
+  return false == str.empty() && str.compare("nan");
 }
 
-static RestType RestingType(const NbboPrice &nbbo, char side, const Double &limit_price, const RestType &mpa) {
-  if (limit_price.Empty() || limit_price.IsZero() || mpa == RestType::MinusThree) {
+static RestingType DecodeRestType(const string_view& str) {
+  if (LooksLikeNumber(str)) {
+    const int val = TextToNumeric<int>(str);
+    if (val >= -(int)RestingType::Zero && val <= (int)RestingType::Zero) {
+      return (RestingType)(val + (int)RestingType::Zero);
+    }
+  }
+  return RestingType::None;
+}
+
+static RestingType InvertRestType(const RestingType mpa) {
+  return (RestingType)(-1 * ((int)mpa - (int)RestingType::Zero) + (int)RestingType::Zero);
+}
+
+static RestingType DetermineRestingType(const NbboPrice &nbbo, char side, const Double &limit_price, const RestingType & mpa) {
+  if (limit_price.Empty() || limit_price.IsZero() || mpa == RestingType::MinusThree) {
     return mpa;
   }
-  RestType retval = RestType::None;
+  RestingType retval = RestingType::None;
   const bool valid_nbbo = nbbo.bidp > 0 && nbbo.askp < numeric_limits<double>::max();
   if (valid_nbbo) {
     const Double bid(nbbo.bidp);
     const Double offer(nbbo.askp);
     const Double mid(.5 * (nbbo.bidp + nbbo.askp));
     if (limit_price.Less(bid)) {
-      retval = RestType::MinusThree;
+      retval = RestingType::MinusThree;
     } else if (limit_price.Equal(bid)) {
-      retval = RestType::MinusTwo;
+      retval = RestingType::MinusTwo;
     } else if (limit_price.Greater(bid) && limit_price.Less(mid)) {
-      retval = RestType::MinusOne;
+      retval = RestingType::MinusOne;
     } else if (limit_price.Equal(mid)) {
-      retval = RestType::Zero;
+      retval = RestingType::Zero;
     } else if (limit_price.Greater(mid) && limit_price.Less(offer)) {
-      retval = RestType::PlusOne;
+      retval = RestingType::PlusOne;
     } else if (limit_price.Equal(offer)) {
-      retval = RestType::PlusTwo;
+      retval = RestingType::PlusTwo;
     } else {
-      retval = RestType::PlusThree;
+      retval = RestingType::PlusThree;
     }
-    if (mpa == RestType::PlusThree) {
-      retval = min(retval, RestType::Zero);
-    } else if (mpa != RestType::None) {
+    if (mpa == RestingType::PlusThree) {
+      retval = min(retval, RestingType::Zero);
+    } else if (mpa != RestingType::None) {
       retval = min(retval, mpa);
     }
     retval = side == 'B' ? retval : InvertRestType(retval);
@@ -100,7 +89,7 @@ static RestType RestingType(const NbboPrice &nbbo, char side, const Double &limi
 }
 
 static void CalculateROD(vector<double> &result, const NbboPrice*quote_start, const NbboPrice* quote_end,
-                        const vector<RodSlice> slices, char side, const Double &limit_price, const RestType &mpa) {
+                        const vector<RodSlice> slices, char side, const Double &limit_price, const RestingType & mpa) {
     auto slice = slices.begin();
     const NbboPrice* current_quote = quote_start;
     while (slice != slices.end()) {
@@ -110,8 +99,8 @@ static void CalculateROD(vector<double> &result, const NbboPrice*quote_start, co
         ? min(slice->end_time, next_quote->time)  // earlierst of end of slice or nbbo change i.e. next nbbo time
         : slice->end_time;
 
-      const RestType rest_type = RestingType(*current_quote, side, limit_price, mpa);
-      if (rest_type != RestType::None) {
+      const RestingType rest_type = DetermineRestingType(*current_quote, side, limit_price, mpa);
+      if (rest_type != RestingType::None) {
         auto& shares_per_second = result[(int)rest_type];
         shares_per_second += .000001 * (end_time - start_time).total_microseconds() * slice->leaves_qty;
       }
@@ -123,7 +112,7 @@ static void CalculateROD(vector<double> &result, const NbboPrice*quote_start, co
     }
 }
 
-void RodExecutionPlan::RodExecutionUnit::Execute() {
+void ExecutionUnit::Execute() {
   auto& secmaster_mgr = SecurityMasterManager();
   auto& quote_mgr = NbboPoRecordsetManager();
   const SecMaster* secmaster = nullptr;
@@ -136,7 +125,6 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
     Error(ErrorType::DataNotFound, (int)input_records.size());
     return;
   }
-  const Time taq_time_adjustment = adjust_time ? UtcToTaq(date) : ZeroTime();
   auto & quotes = symbol_recordset->records;
   auto quote_start = quotes.begin();
   vector<const InputRecord *> sorted_input(input_records.size());
@@ -197,7 +185,7 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
       }
 
       // calculate rod here
-      vector<double> rod_values((size_t)RestType::Max, .0);
+      vector<double> rod_values((size_t)RestingType::Max, .0);
       if (!slices.empty()) {
         auto quote_end = quotes.upper_bound(quote_start, quotes.end(), slices.rbegin()->end_time);
         CalculateROD(rod_values, quote_start, quote_end, slices, rec.side, rec.limit_price, rec.mpa);
@@ -219,34 +207,34 @@ void RodExecutionPlan::RodExecutionUnit::Execute() {
   secmaster_mgr.Release(*secmaster);
 }
 
-void RodExecutionPlan::Input(InputRecord& input_record) {
+void ExecutionPlan::Input(tick_calc::InputRecord& input_record) {
   enum args {ID, SYMBOL, DATE, START_TIME, END_TIME, SIDE, ORD_QTY, LMT_PX, MPA, EXEC_TIME, EXEC_QTY};
   try {
     if (input_record.values[SYMBOL].empty())
       throw Exception(ErrorType::MissingSymbol);
 
-    const string& id= input_record.values[ID];
-    const string& symbol = input_record.values[SYMBOL];
+    const string id(input_record.values[ID].data(), input_record.values[ID].size());
+    const auto & symbol = input_record.values[SYMBOL];
     const Date date = MkDate(input_record.values[DATE]);
-    InputRecordRange& input_range = input_record_ranges[make_pair(symbol, date)];
-    RodExecutionUnit::InputRecord* rec = nullptr;
+    InputRecordRange& input_range = input_record_ranges[make_pair(string(symbol.data(), symbol.size()), date)];
+    InputRecord* rec = nullptr;
     auto it = input_range.find(id);
     if (it == input_range.end()) {
       const Time start_time = MkTime(input_record.values[START_TIME]);
       const Time end_time = MkTime(input_record.values[END_TIME]);
       const char side = DecodeSide(input_record.values[SIDE]);
-      const int ord_qty = stoi(input_record.values[ORD_QTY]);
+      const int ord_qty = TextToNumeric<int>(input_record.values[ORD_QTY]);
       const Double limit_price(input_record.values[LMT_PX]);
-      const RestType mpa = DecodeRestType(input_record.values[MPA]);
+      const RestingType mpa = DecodeRestType(input_record.values[MPA]);
       auto pit = input_range.try_emplace(id, input_record.id, id, start_time, end_time, side, ord_qty, limit_price, mpa);
       rec = &(pit.first->second);
     } else {
       rec = &(it->second);
     }
-    const string & qty = input_record.values[EXEC_QTY];
+    const auto & qty = input_record.values[EXEC_QTY];
     if (LooksLikeNumber(qty)) {
       const Time exec_time = MkTime(input_record.values[EXEC_TIME]);
-      const int exec_qty = stoi(qty);
+      const int exec_qty = TextToNumeric<int>(qty);
       rec->executions.emplace_back(exec_time, exec_qty);
     }
   }
@@ -256,18 +244,18 @@ void RodExecutionPlan::Input(InputRecord& input_record) {
   catch (...) {
     Error(ErrorType::InvalidArgument);
   }
-  if (IsVerbose()) {
-    record_cnt ++;
-    if (record_cnt % 1000 == 0) {
-      if (++progress_cnt == 100) {
-        cout << "." << record_cnt << endl;
-        progress_cnt = 0;
-      } else cout << ".";
-    }
-  }
+  //if (IsVerbose()) {
+  //  record_cnt ++;
+  //  if (record_cnt % 1000 == 0) {
+  //    if (++progress_cnt == 100) {
+  //      cout << "." << record_cnt << endl;
+  //      progress_cnt = 0;
+  //    } else cout << ".";
+  //  }
+  //}
 }
 
-void RodExecutionPlan::Execute() {
+void ExecutionPlan::Execute() {
   typedef tuple<string, Date, InputRecordRange*> InputRecordSlice;
   vector<InputRecordSlice> slices;
   for (auto& range : input_record_ranges) {
@@ -277,7 +265,7 @@ void RodExecutionPlan::Execute() {
     return (get<2>(left)->size() > get<2>(right)->size());
     });
   for (auto& slice : slices) {
-    shared_ptr<ExecutionUnit> job = make_shared<RodExecutionUnit>(
+    shared_ptr<tick_calc::ExecutionUnit> job = make_shared<ExecutionUnit>(
       get<0>(slice), get<1>(slice), request.tz_name == "UTC", move(*get<2>(slice))
     );
     todo_list.push_back(job);
@@ -285,4 +273,5 @@ void RodExecutionPlan::Execute() {
   }
 }
 
+}
 }

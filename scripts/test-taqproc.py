@@ -43,13 +43,13 @@ class TaqptTest(unittest.TestCase):
     tk.AddQuote("BAC", '09:30:01.123', 32.02, 33.12)
     tk.MakeQuotes(TRADE_DATE)
 
-    tk.AddRequest(function_name="Quote", Symbol="TEST", Timestamp = "2020-08-01T12:00:00.123456")
-    tk.AddRequest(function_name="Quote", Symbol="TEST", Timestamp = "2020-08-01T10:00:00.123456")
+    tk.AddRequest(function_name="NBBO)", Symbol="TEST", Timestamp = "2020-08-01T12:00:00.123456")
+    tk.AddRequest(function_name="NBBO", Symbol="TEST", Timestamp = "2020-08-01T10:00:00.123456")
 
     results = tk.ExecuteRequests(TRADE_DATE)
 
     self.assertEqual(len(results),1)
-    self.assertEqual(len(results["Quote"]), 2)
+    self.assertEqual(len(results["NBBO"]), 2)
 
     arr_dict = results["Quote"][1]
     self.assertEqual(sorted(arr_dict.keys()),

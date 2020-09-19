@@ -3,9 +3,10 @@
 
 #include <string>
 #include <vector>
-
+#include <string_view>
 
 #include "taq-proc.h"
+#include "taq-text.h"
 #include "tick-data.h"
 
 using namespace std;

@@ -37,15 +37,9 @@ string MakeReplyHeader(const string& request_id, const string& message) {
 }
 
 static void ValidateInputFields(const string& function_name, const py::kwargs& kwargs) {
-  if (function_name == "VWAP") {
-    return;
-  }
   const auto& field_definitions = InputFields(function_name);
-  if (kwargs.size() != field_definitions.size()) {
-    throw domain_error("Input field count mismatch");
-  }
   for (const auto & fdef : field_definitions) {
-    if (!kwargs.contains(fdef.name.c_str())) {
+    if (fdef.required && false == kwargs.contains(fdef.name.c_str())) {
       throw domain_error("Missing field name:" + fdef.name);
     }
   }
@@ -98,8 +92,10 @@ py::list Execute(py::args args, py::kwargs kwargs) {
     const string function_name = AsVector<string>(req_json, "function_list")[0];
     if (function_name == "ROD") {
       return ExecuteROD(req_json, tcptream, kwargs);
-    } if (function_name == "Quote") {
-      return ExecuteQuote(req_json, tcptream, kwargs);
+    } if (function_name == "NBBO") {
+      return ExecuteNBBO(req_json, tcptream, kwargs);
+    } if (function_name == "NBBOPrice") {
+      return ExecuteNBBOPrice(req_json, tcptream, kwargs);
     } if (function_name == "VWAP") {
       return ExecuteVWAP(req_json, tcptream, kwargs);
     } else {

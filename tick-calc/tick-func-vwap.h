@@ -1,104 +1,122 @@
 #ifndef TICK_VWAP_INCLUDED
 #define TICK_VWAP_INCLUDED
 
-#include "tick-func.h"
+#include <string>
+#include <vector>
+#include <string>
 
+#include "taq-time.h"
+#include "taq-double.h"
+
+#include "tick-exec.h"
+#include "tick-duration.h"
+
+using namespace std;
+using namespace Taq;
 
 namespace tick_calc {
+namespace VWAP {
 
-enum class VwapDurationType {
-  Unknown, ByTime = 1 , ByPov = 2, ByTicks = 3, RecordSpecific = 4, MaxVal
+enum class Type {
+  Unknown, ByTime, ByPov, ByTicks, ByMarkouts, MaxVal
 };
 
-enum class VwapFlavor{
-  Unknown, Exchange , TRF, Regular, All, MaxVal
+enum class Flavor{
+  Unknown, Exchange , TRF, Regular, Block, All, MaxVal
 };
 
-union VwapDuration {
-  VwapDuration(const VwapDuration & copy) { pov = copy.pov; }
-  VwapDuration(VwapDuration&& obj) { pov = obj.pov; }
-  VwapDuration(Time end_time) : end_time(end_time) {}
-  VwapDuration(pair<size_t, double> pov) : pov(pov) {}
-  VwapDuration(int ticks) : ticks(ticks) {}
-  VwapDuration & operator = (const VwapDuration & obj) { pov = obj.pov; return *this; }
-  Time end_time;
-  pair<uint64_t, double> pov;// target volume and participation
-  int ticks;
-};
-
-struct VwapEndTime {
-  VwapEndTime(Time end_time) : duration(end_time) , type(VwapDurationType::ByTime) {}
-  VwapEndTime(pair<uint64_t, double> pov) : duration(pov), type(VwapDurationType::ByPov) {}
-  VwapEndTime(int ticks) : duration(ticks) , type(VwapDurationType::ByTicks) {}
-  VwapEndTime & operator = (const VwapEndTime &rhs) {
-    duration = rhs.duration;
-    type = rhs.type;
-    return *this;
-  }
-  VwapDuration duration;
-  VwapDurationType type;
-};
-
-struct VwapInputRecord {
+struct InputRecord {
   Time start_time;
-  VwapEndTime end_time;
+  vector<Duration> durations;
   Double limit_price;
   char side;
-  uint8_t flavor;
+  Flavor flavor;
   int id;
-  VwapInputRecord(int id, Time start_time, Time end_time, char side, Double limit_price, VwapFlavor flavor)
-    : start_time(start_time), end_time(end_time),
-      limit_price(limit_price), side(side), flavor((uint8_t)flavor), id(id) {}
-  VwapInputRecord(int id, Time start_time, pair<uint64_t, double> pov, char side, double limit_price, VwapFlavor flavor)
-    : start_time(start_time), end_time(pov),
-      limit_price(limit_price), side(side), flavor((uint8_t)flavor), id(id) {}
-  VwapInputRecord(int id, Time start_time, int ticks, char side, double limit_price, VwapFlavor flavor)
-    : start_time(start_time), end_time(ticks),
-      limit_price(limit_price), side(side), flavor((uint8_t)flavor), id(id) {}
-  VwapInputRecord(const VwapInputRecord& rhs) = default;
-  VwapInputRecord(VwapInputRecord&& rhs) = default;
-  VwapInputRecord & operator = (const VwapInputRecord & rhs) {
-    start_time = rhs.start_time;
-    end_time = rhs.end_time;
-    limit_price = rhs.limit_price;
-    side = rhs.side;
-    flavor = rhs.flavor;
-    id = rhs.id;
-    return *this;
+  InputRecord(int id, Time start_time, Time end_time, char side, Double limit_price, Flavor flavor)
+    : start_time(start_time), limit_price(limit_price), side(side), flavor(flavor), id(id) {
+    durations.emplace_back(end_time);
   }
+  InputRecord(int id, Time start_time, const DurationEnding::Pov & pov, char side, double limit_price, Flavor flavor)
+    : start_time(start_time), limit_price(limit_price), side(side), flavor(flavor), id(id) {
+    durations.emplace_back(pov);
+  }
+  InputRecord(int id, Time start_time, int ticks, char side, double limit_price, Flavor flavor)
+    : start_time(start_time), limit_price(limit_price), side(side), flavor(flavor), id(id) {
+    durations.emplace_back(ticks);
+  }
+  InputRecord(int id, Time start_time, vector<Duration> & durations, char side, double limit_price, Flavor flavor)
+    : start_time(start_time), durations(move(durations)),
+    limit_price(limit_price), side(side), flavor(flavor), id(id) {}
+
+  InputRecord(const InputRecord& rhs) = default;
+  InputRecord(InputRecord&& rhs) = default;
+  InputRecord& operator = (const InputRecord& rhs) = default;
 };
 
-class VwapExecutionUnit : public ExecutionUnit {
+class ExecutionUnit : public tick_calc::ExecutionUnit {
 public:
-  VwapExecutionUnit(const string& symbol, Date date, bool input_sorted, bool adjust_time, vector<VwapInputRecord> &input_records)
-    : symbol(symbol), date(date), input_sorted(input_sorted), adjust_time(adjust_time), input_records(move(input_records)) {}
-  ~VwapExecutionUnit() {}
+  ExecutionUnit(const string& symbol, Date date, bool adjust_time, bool input_sorted, vector<InputRecord> &input_records)
+    : tick_calc::ExecutionUnit(symbol, date, adjust_time), input_sorted(input_sorted), input_records(move(input_records)) {}
+  ~ExecutionUnit() {}
   void Execute() override;
-  const string symbol;
-  const Date date;
   const bool input_sorted;
-  const bool adjust_time;
-  vector<VwapInputRecord> input_records;
+  vector<InputRecord> input_records;
 };
 
-class VwapExecutionPlan : public ExecutionPlan {
+class ExecutionPlan : public tick_calc::ExecutionPlan {
 private:
 public:
-  VwapExecutionPlan(const FunctionDefinition& function, const Request& request, const vector<int>& argument_mapping);
-  void Input(InputRecord& input_record) override;
+  ExecutionPlan(const FunctionDefinition& function, const Request& request, const vector<int>& argument_mapping);
+  void Input(tick_calc::InputRecord& input_record) override;
   void Execute() override;
+  const vector<string>& ResultFields() const override {
+    return result_fields;
+  }
+
 private:
-  using InputRecordRange = vector<VwapInputRecord>;
-  void InputByTime(const InputRecord& input_record, InputRecordRange& input_range) const;
-  void InputByPov(const InputRecord& input_record, InputRecordRange& input_range) const;
-  void InputByTicks(const InputRecord& input_record, InputRecordRange& input_range) const;
+  void SetResultFieldsForMarkouts();
+  using InputRecordRange = vector<InputRecord>;
   const bool maybe_by_time;
   const bool maybe_by_pov;
   const bool maybe_by_ticks;
-  VwapDurationType duration_type;
+  const bool maybe_by_markouts;
+  size_t markouts_size;
+  Type type;
   map<SymbolDateKey, InputRecordRange> input_record_ranges;
+  vector<string> result_fields;
 };
 
+struct Result {
+  Result() : trade_count(0), trade_volume(0), vwap(0.0) {}
+  uint64_t trade_count;
+  uint64_t trade_volume;
+  double vwap;
+};
+
+class  Calculator {
+public:
+  using Trades = SortedConstVector<Trade>;
+  using TradeFilter = function<bool(const Trade& trd, char side, Double price)>;
+
+  Calculator(const Trades& trades, Time start_time, const Duration& duration, char side, Double limit_price, Flavor flavor);
+  Result Calculate(const Trade* it);
+
+  const Trades& trades;
+  const Time start_time;
+  const Duration& duration;
+  const char side;
+  const Double limit_price;
+  const Flavor flavor;
+private:
+  void Apply(const Trade& trade);
+  void CalculateByTime(const Trade* it);
+  void CalculateByPov(const Trade* it);
+  void CalculateByTick(const Trade* it);
+  TradeFilter filter;
+  Result result;
+};
+
+}
 }
 
 #endif
