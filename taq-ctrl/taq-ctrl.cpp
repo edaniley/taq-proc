@@ -76,7 +76,11 @@ void HandleSecMasterFile(const FileHeader& fh , const mm::mapped_region& mm_regi
       char buff[32];
       auto PrintPrice = [&buff](double px) {
         px  = px == numeric_limits<double>::max() ? .0 : px;
+        #ifdef __unix__
+        sprintf(buff, "%.6f", px);
+        #else
         sprintf_s(buff, sizeof(buff), "%.6f", px);
+        #endif
         return string(buff);
       };
       cout << sec.symb << "," << sec.utp_symb << "," << sec.exch << "," << sec.tape << "," << (int)sec.lot_size

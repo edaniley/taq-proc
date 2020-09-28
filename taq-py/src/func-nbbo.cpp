@@ -35,7 +35,7 @@ py::list ExecuteNBBO(const ptree& req_json, ip::tcp::iostream& tcptream, const p
   const size_t record_cnt = response.get<size_t>("output_records", 0);
 
   auto fields = AsVector<string>(response, "output_fields");
-  auto sets = (fields.size() - 1) / 3;
+  size_t sets = (fields.size() - 1) / 3;
 
   py::array_t<int> id((record_cnt));
 
@@ -49,7 +49,7 @@ py::list ExecuteNBBO(const ptree& req_json, ip::tcp::iostream& tcptream, const p
   v_askp.reserve(sets);
   vector<py::array_t<int>> v_asks;
   v_asks.reserve(sets);
-  for (auto i = 0; i < sets; i++) {
+  for (size_t i = 0; i < sets; i++) {
     v_time.emplace_back(record_cnt);
     auto& last = *v_time.rbegin();
     memset(last.mutable_data(), 0, last.nbytes());
@@ -66,7 +66,7 @@ py::list ExecuteNBBO(const ptree& req_json, ip::tcp::iostream& tcptream, const p
     values.clear();
     Split(values, line, '|');
     id.mutable_at(line_cnt) = TextToNumeric<int>(values[0]);
-    for (auto i = 0; i < sets; i++) {
+    for (size_t i = 0; i < sets; i++) {
       StringCopy(v_time[i].mutable_at(line_cnt), string(values[1]).c_str(), sizeof(str20));
       v_bidp[i].mutable_at(line_cnt) = TextToNumeric<double>(values[2]);
       v_bids[i].mutable_at(line_cnt) = TextToNumeric<int>(values[3]);
@@ -80,7 +80,7 @@ py::list ExecuteNBBO(const ptree& req_json, ip::tcp::iostream& tcptream, const p
   py::list retval;
   retval.append(json_str);
   retval.append(id);
-  for (auto i = 0; i < sets; i++) {
+  for (size_t i = 0; i < sets; i++) {
     retval.append(v_time[i]);
     retval.append(v_bidp[i]);
     retval.append(v_bids[i]);

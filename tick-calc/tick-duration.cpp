@@ -35,37 +35,35 @@ Duration::Duration(const string_view & str) {
   size_t z = str.find_first_not_of(".0123456789-+");
   if (z != string::npos) {
     string_view sval(str.substr(0, z));
-    auto [p, ec] = from_chars(sval.data(), sval.data() + sval.size(), val);
-    if (0 == (int)ec) {
-      DurationUnit unit = StringToUnit(str.substr(z));
-      switch (unit) {
-      case DurationUnit::Hour:
-        ending.time = Time(boost::posix_time::microseconds((uint64_t)(val * 3600 * 1000000 + (val < 0 ? -0.5 : 0.5))));
-        type = DurationType::Time;
-        break;
-      case DurationUnit::Min:
-        ending.time = Time(boost::posix_time::microseconds((uint64_t)(val * 60 * 1000000 + (val < 0 ? -0.5 : 0.5))));
-        type = DurationType::Time;
-        break;
-      case DurationUnit::Sec:
-        ending.time = Time(boost::posix_time::microseconds((uint64_t)(val * 1000000 + (val < 0 ? -0.5 : 0.5))));
-        type = DurationType::Time;
-        break;
-      case DurationUnit::Msec:
-        ending.time = Time(boost::posix_time::microseconds((uint64_t)(val * 1000 + (val < 0 ? -0.5 : 0.5))));
-        type = DurationType::Time;
-        break;
-      case DurationUnit::Usec:
-        ending.time = Time(boost::posix_time::microseconds((uint64_t)(val + (val < 0 ? -0.5 : 0.5))));
-        type = DurationType::Time;
-        break;
-      case DurationUnit::Tick:
-        ending.ticks = (int)(val + (val < 0 ? -0.5 : 0.5));
-        type = DurationType::Ticks;
-        break;
-      default:
-        break;
-      }
+    val = TextToNumeric<double>(sval);
+    DurationUnit unit = StringToUnit(str.substr(z));
+    switch (unit) {
+    case DurationUnit::Hour:
+      ending.time = Time(boost::posix_time::microseconds((uint64_t)(val * 3600 * 1000000 + (val < 0 ? -0.5 : 0.5))));
+      type = DurationType::Time;
+      break;
+    case DurationUnit::Min:
+      ending.time = Time(boost::posix_time::microseconds((uint64_t)(val * 60 * 1000000 + (val < 0 ? -0.5 : 0.5))));
+      type = DurationType::Time;
+      break;
+    case DurationUnit::Sec:
+      ending.time = Time(boost::posix_time::microseconds((uint64_t)(val * 1000000 + (val < 0 ? -0.5 : 0.5))));
+      type = DurationType::Time;
+      break;
+    case DurationUnit::Msec:
+      ending.time = Time(boost::posix_time::microseconds((uint64_t)(val * 1000 + (val < 0 ? -0.5 : 0.5))));
+      type = DurationType::Time;
+      break;
+    case DurationUnit::Usec:
+      ending.time = Time(boost::posix_time::microseconds((uint64_t)(val + (val < 0 ? -0.5 : 0.5))));
+      type = DurationType::Time;
+      break;
+    case DurationUnit::Tick:
+      ending.ticks = (int)(val + (val < 0 ? -0.5 : 0.5));
+      type = DurationType::Ticks;
+      break;
+    default:
+      break;
     }
   }
   if (type == DurationType::Unknown) {

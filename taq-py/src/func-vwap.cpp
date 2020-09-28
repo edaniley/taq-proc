@@ -73,7 +73,7 @@ py::list ExecuteVWAP(const ptree& req_json, ip::tcp::iostream& tcptream, const p
   const size_t record_cnt = response.get<size_t>("output_records", 0);
 
   auto fields = AsVector<string>(response, "output_fields");
-  auto sets = (fields.size() - 1) /3;
+  size_t sets = (fields.size() - 1) /3;
   
   py::array_t<int> id((record_cnt));
 
@@ -83,7 +83,7 @@ py::list ExecuteVWAP(const ptree& req_json, ip::tcp::iostream& tcptream, const p
   v_trd_vol.reserve(sets);
   vector<py::array_t<double>> v_vwap;
   v_vwap.reserve(sets);
-  for (auto i = 0; i < sets; i ++) {
+  for (size_t i = 0; i < sets; i ++) {
     v_trd_cnt.emplace_back(record_cnt);
     v_trd_vol.emplace_back(record_cnt);
     v_vwap.emplace_back(record_cnt);
@@ -96,7 +96,7 @@ py::list ExecuteVWAP(const ptree& req_json, ip::tcp::iostream& tcptream, const p
     values.clear();
     Split(values, line, '|');
     id.mutable_at(line_cnt) = TextToNumeric<int>(values[0]);
-    for (auto i = 0; i < sets; i ++) {
+    for (size_t i = 0; i < sets; i ++) {
       v_trd_cnt[i].mutable_at(line_cnt) = TextToNumeric<int>(values[1 + i * 3]);
       v_trd_vol[i].mutable_at(line_cnt) = TextToNumeric<int>(values[2 + i * 3]);
       v_vwap[i].mutable_at(line_cnt) = TextToNumeric<double>(values[3 + i * 3]);
@@ -108,7 +108,7 @@ py::list ExecuteVWAP(const ptree& req_json, ip::tcp::iostream& tcptream, const p
   py::list retval;
   retval.append(json_str);
   retval.append(id);
-  for (auto i = 0; i < sets; i++) {
+  for (size_t i = 0; i < sets; i++) {
     retval.append(v_trd_cnt[i]);
     retval.append(v_trd_vol[i]);
     retval.append(v_vwap[i]);

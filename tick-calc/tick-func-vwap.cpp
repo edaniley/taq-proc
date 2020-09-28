@@ -80,7 +80,7 @@ void ExecutionUnit::Execute() {
     const Time start_time = rec.start_time + taq_time_adjustment;
     it = trades.lower_bound(it, trades.end(), start_time);
     vector<Result> results(rec.durations.size());
-    for (auto i = 0; i < rec.durations.size(); i ++) {
+    for (size_t i = 0; i < rec.durations.size(); i ++) {
       Calculator calculator(trades, rec.start_time, rec.durations[i], rec.side, rec.limit_price, rec.flavor);
       results[i] = calculator.Calculate(it);
     }
@@ -88,7 +88,11 @@ void ExecutionUnit::Execute() {
     ss << rec.id;
     for (const Result &result : results) {
       char buf[64];
+      #ifdef __unix__
+      sprintf(buf, "|%lu|%lu|%f", result.trade_count, result.trade_volume, result.vwap);
+      #else
       sprintf_s(buf, sizeof(buf), "|%llu|%llu|%f", result.trade_count, result.trade_volume, result.vwap);
+      #endif
       ss << buf;
     }
     ss << endl;
@@ -173,7 +177,11 @@ void ExecutionPlan::SetResultFieldsForMarkouts() {
       for (const string &field : function.output_fields) {
         if (field != "ID") {
           char buf[32];
+          #ifdef __unix__
+          sprintf(buf, "%s_%lu", field.c_str(), i);
+          #else
           sprintf_s(buf, sizeof(buf), "%s_%llu", field.c_str(), i);
+          #endif
           result_fields.emplace_back(buf);
         }
       }

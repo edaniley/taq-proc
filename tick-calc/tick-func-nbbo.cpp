@@ -247,8 +247,12 @@ void ExecutionPlan::SetResultFieldsForMarkouts() {
     for (size_t i = 1; i <= markouts_size; ++i) {
       for (const string& field : function.output_fields) {
         if (field != "ID") {
-          char buf[32];
+          char buf[64];
+          #ifdef __unix__
+          sprintf(buf, "%s_%lu", field.c_str(), i);
+          #else
           sprintf_s(buf, sizeof(buf), "%s_%llu", field.c_str(), i);
+          #endif
           result_fields.emplace_back(buf);
         }
       }
