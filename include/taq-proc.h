@@ -54,10 +54,10 @@ struct Security {
   char tape;
   uint8_t trd_unit;
   uint8_t lot_size;
-  ExchangeMask exch_mask;
   char industry_code[5];
   char halt_reason;
   double shares_outstanding_m;
+  ExchangeMask exch_mask;
   // calculated fields
   uint64_t  volume_total;         // daily volume
   uint64_t  volume_regular;       // VWAP-eligible i.e. regular prints during main session, including auctions
@@ -75,8 +75,6 @@ struct Security {
   double    min_price_regular;    // minimum regular trade price during main session
   double    max_price_regular;    // maximum regular trade price during main session
   double    vwap_regular;         // unconstrained VWAP for regular trades during main session
-
-
 };
 
 struct Nbbo {

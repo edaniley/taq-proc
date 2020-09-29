@@ -2,6 +2,7 @@
 #include <iostream>
 #include <exception>
 #include <sstream>
+#include <string_view>
 #include <vector>
 #include <algorithm>
 #include <locale>
@@ -38,6 +39,14 @@ string ToString(int value, int width) {
   return str;
 }
 
+string_view ExchangeMaskToText(const ExchangeMask &exch_mask) {
+  static char buff[Exchange::Exch_Max];
+  for (size_t i = 0; i < exch_mask.size(); i ++) {
+    buff[i] = exch_mask[i] ? 'Y' : '.';
+  }
+  return string_view(buff, sizeof(buff));
+}
+
 void HandleSecMasterFile(const FileHeader& fh , const mm::mapped_region& mm_region) {
   if (sizeof(fh) + fh.symb_cnt * sizeof(Security) != mm_region.get_size()) {
     throw domain_error("Input file corruption : " + file_path);
@@ -54,7 +63,7 @@ void HandleSecMasterFile(const FileHeader& fh , const mm::mapped_region& mm_regi
     if (pretty) {
       cout << "cta_symb    utp_symb    prim_exch tape lot_size" << endl;
     } else {
-      cout << "cta_symb,utp_symb,prim_exch,tape,lot_size,"
+      cout << "cta_symb,utp_symb,prim_exch,tape,lot_size,exch,"
       "volume_total,volume_regular,volume_trf,volume_block,volume_pre_open,volume_post_close,"
       "open_time_primary,open_price_primary,open_volume_primary,"
       "close_time_primary,close_price_primary,close_volume_primary,"
@@ -84,6 +93,7 @@ void HandleSecMasterFile(const FileHeader& fh , const mm::mapped_region& mm_regi
         return string(buff);
       };
       cout << sec.symb << "," << sec.utp_symb << "," << sec.exch << "," << sec.tape << "," << (int)sec.lot_size
+        << "," << ExchangeMaskToText(sec.exch_mask)
         << "," << sec.volume_total << "," << sec.volume_regular << "," << sec.volume_trf << "," << sec.volume_block
         << "," << sec.volume_pre_open << "," << sec.volume_post_close
         << "," << sec.open_time_primary << "," << PrintPrice(sec.open_price_primary) << "," << sec.open_volume_primary
