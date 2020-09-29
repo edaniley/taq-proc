@@ -13,7 +13,6 @@ quotes = {}
 trades = {}
 requests = {}
 results = {}
-strict_functions = ["ROD", "Quote"]
 
 def AddSymbol(symbol : str, **kwargs):
   global symbols
@@ -86,6 +85,8 @@ def MakeSymbolQuotes(yyyymmdd : str, symb_grp : str, quote_list):
   tmp.flush()
   cmd = "taq-prep -t quote -d {} -s {} -i {} -o /tmp".format(yyyymmdd, symb_grp, tmp.name)
   proc = subprocess.run(cmd,shell=True)
+  cmd = "taq-prep -t quote-po -d {} -s {} -i {} -o /tmp".format(yyyymmdd, symb_grp, tmp.name)
+  proc = subprocess.run(cmd,shell=True)
   tmp.close()
 
 def MakeQuotes(yyyymmdd : str):
@@ -152,10 +153,11 @@ def AddRequest(**kwargs):
   function_name = kwargs["function_name"]
   if function_name not in taqpy.FunctionList():
     raise Exception("Unknown function")
-  if function_name in strict_functions:
-    for argument_name in taqpy.ArgumentNames(function_name):
-      if not argument_name in kwargs.keys():
-        raise Exception("Function:{} missing argument:{}".format(function_name, argument_name))
+  for argument in taqpy.ArgumentList(function_name):
+    argument_name = argument[0]
+    argument_required = argument[2]
+    if argument_required and not argument_name in kwargs.keys():
+      raise Exception("Function:{} missing required argument:{}".format(function_name, argument_name))
   AddFunctionRequest(**kwargs)
 
 def ExecuteFunction(function_name:str, yyyymmdd:str, tz="America/New_York"):
@@ -166,7 +168,7 @@ def ExecuteFunction(function_name:str, yyyymmdd:str, tz="America/New_York"):
   for arg in taqpy.ArgumentList(function_name):
     if arg[0] in req_args:
       arg_list.append(arg)
-  for arg_name,arg_type in arg_list:
+  for arg_name,arg_type,arg_req in arg_list:
     lst = [arr[arg_name] for arr in requests[function_name]]
     kwargs[arg_name] = np.array(lst, dtype=arg_type)
 
@@ -186,7 +188,7 @@ def ExecuteFunction(function_name:str, yyyymmdd:str, tz="America/New_York"):
   if "error_summary" not in ret_json.keys() or type(ret_json["error_summary"]) != type([]):
     ret_json["error_summary"] = []
 
-  arrs = { col_name[0] : ret[idx+1] for idx, col_name in enumerate(taqpy.ResultFields(function_name)) }
+  arrs = { col_name : ret[idx+1] for idx, col_name in enumerate(ret_json["output_fields"]) }
   results[function_name] = (ret_json, arrs)
 
 def ExecuteRequests(yyyymmdd:str, tz="America/New_York"):

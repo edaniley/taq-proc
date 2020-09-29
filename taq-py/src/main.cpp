@@ -157,7 +157,7 @@ py::list ArgumentList(const string function_name) {
   const auto fit = tick_functions.find(function_name);
   if (fit != tick_functions.end()) {
     for (const auto& fdef : fit->second.input_fields) {
-      retval.append(make_pair(fdef.name, fdef.dtype));
+      retval.append(make_tuple(fdef.name, fdef.dtype, fdef.required));
     }
   }
   return retval;

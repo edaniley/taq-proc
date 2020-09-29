@@ -145,8 +145,12 @@ void ExecutionPlan::Input(tick_calc::InputRecord & input_record) {
     }
     else if (type == Type::ByMarkouts) {
       vector<Duration> durations = DecodeMarkouts(input_record.values[argument_mapping[VwapFunction::Markouts]]);
-      if (markouts_size == 0)
+      if (durations.empty()) {
+        throw Exception(ErrorType::InvalidArgument);
+      }
+      else if (markouts_size == 0) {
         markouts_size = durations.size();
+      }
       else if (durations.size() != markouts_size) {
         throw Exception(ErrorType::InvalidArgument); // number of markouts entries must be consistent throughout all input records
       }

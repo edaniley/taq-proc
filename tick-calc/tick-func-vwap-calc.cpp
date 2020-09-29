@@ -7,24 +7,24 @@ using namespace Taq;
 namespace tick_calc {
 namespace VWAP {
 
-static bool IsPriceEligible(const Trade& trd, char side, Double price) {
+static bool IsEligible(const Trade& trd, char side, Double price) {
   return trd.attr.ve && (
     price.Empty()
-    || (side == 'B' && price.LessOrEqual(trd.price))
-    || (side == 'S' && price.GreaterOrEqual(trd.price))
+    || (side == 'B' && price.GreaterOrEqual(trd.price))
+    || (side == 'S' && price.LessOrEqual(trd.price))
     );
 }
 static bool IsRegular(const Trade& trd, char side, Double price) {
-  return IsPriceEligible(trd, side, price) && trd.attr.vwap_eligible;
+  return IsEligible(trd, side, price) && trd.attr.vwap_eligible;
 }
 static bool IsExchange(const Trade& trd, char side, Double price) {
-  return IsPriceEligible(trd, side, price) && trd.attr.vwap_eligible && (char)trd.attr.exch != 'D';
+  return IsEligible(trd, side, price) && trd.attr.vwap_eligible && (char)trd.attr.exch != 'D';
 }
 static bool IsTRF(const Trade& trd, char side, Double price) {
-  return IsPriceEligible(trd, side, price) && trd.attr.vwap_eligible && (char)trd.attr.exch == 'D';
+  return IsEligible(trd, side, price) && trd.attr.vwap_eligible && (char)trd.attr.exch == 'D';
 }
 static bool IsBlock(const Trade& trd, char side, Double price) {
-  return IsPriceEligible(trd, side, price) && trd.attr.vwap_eligible && trd.attr.block_trade;
+  return IsEligible(trd, side, price) && trd.attr.vwap_eligible && trd.attr.block_trade;
 }
 
 Calculator::Calculator(const Trades& trades, Time start_time, const Duration& duration, char side, Double limit_price, Flavor flavor)
@@ -32,7 +32,7 @@ Calculator::Calculator(const Trades& trades, Time start_time, const Duration& du
   filter = flavor == Flavor::Regular ? IsRegular
     : flavor == Flavor::Exchange ? IsExchange
     : flavor == Flavor::Block ? IsBlock
-    : flavor == Flavor::TRF ? IsTRF : IsPriceEligible;
+    : flavor == Flavor::TRF ? IsTRF : IsEligible;
 }
 
 void Calculator::Apply(const Trade& trade) {
@@ -74,14 +74,9 @@ void Calculator::CalculateByTime(const Trade* it) {
     if (it->time == start_time && filter(*it, side, limit_price)) {
       Apply(*it);
     }
-    if (it > trades.begin()) {
-      for (auto trd = it - 1; trd->time >= end_time; --trd) {
-        if (filter(*trd, side, limit_price)) {
-          Apply(*trd);
-        }
-        if (trd == trades.begin()) {
-          break;
-        }
+    for (auto trd = it - 1; it >= trades.begin() && trd->time >= end_time; --trd) {
+      if (filter(*trd, side, limit_price)) {
+        Apply(*trd);
       }
     }
   }
@@ -112,13 +107,11 @@ void Calculator::CalculateByTick(const Trade* it) {
       Apply(*it);
       target_cnt--;
     }
-    for (auto trd = it; target_cnt > 0; --trd) {
+    for (auto trd = it - 1; target_cnt > 0 && trd >= trades.begin(); --trd) {
       if (filter(*trd, side, limit_price)) {
         Apply(*trd);
         target_cnt--;
       }
-      if (trd == trades.begin())
-        break;
     }
   }
 }

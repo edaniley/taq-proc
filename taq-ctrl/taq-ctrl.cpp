@@ -218,7 +218,7 @@ void HandleTradeFile(const FileHeader& fh, const mm::mapped_region& mm_region) {
     cout << "data file     " << file_path << endl;
     cout << "file size     " << mm_region.get_size() << endl;
     cout << "record type   " "Trade" << endl;
-    cout << "record type   " << sizeof(Trade) << endl;
+    cout << "record size   " << sizeof(Trade) << endl;
     cout << "symbol count  " << fh.symb_cnt << endl << endl;
     cout.imbue(saved_locale);
   }
