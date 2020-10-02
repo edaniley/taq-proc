@@ -13076,10 +13076,10 @@ div#notebook {
 
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># sample to demonstrate TAQ processor Python API</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># sample code to demonstrate Tick Data Processor Python API</span>
 
 <span class="n">symbols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;BAC&quot;</span><span class="p">,</span><span class="s2">&quot;SPY&quot;</span><span class="p">,</span><span class="s2">&quot;ACEL+&quot;</span><span class="p">]</span>
 <span class="n">date</span> <span class="o">=</span> <span class="s2">&quot;20200331&quot;</span>
@@ -13095,7 +13095,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># helper routines</span>
@@ -13135,7 +13135,7 @@ ResultFields [(&#39;ID&#39;, &#39;int&#39;), (&#39;Timestamp&#39;, &#39;a36&#39;
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># generate sample dataset for quote request</span>
@@ -13181,7 +13181,7 @@ ResultFields [(&#39;ID&#39;, &#39;int&#39;), (&#39;Timestamp&#39;, &#39;a36&#39;
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[4]:</div>
+    <div class="prompt output_prompt">Out[3]:</div>
 
 
 
@@ -13212,17 +13212,17 @@ ResultFields [(&#39;ID&#39;, &#39;int&#39;), (&#39;Timestamp&#39;, &#39;a36&#39;
     <tr>
       <th>0</th>
       <td>BAC</td>
-      <td>2020-03-31 10:15:59.055463</td>
+      <td>2020-03-31 13:20:53.585863</td>
     </tr>
     <tr>
       <th>1</th>
       <td>SPY</td>
-      <td>2020-03-31 12:28:20.852925</td>
+      <td>2020-03-31 15:52:58.123250</td>
     </tr>
     <tr>
       <th>2</th>
       <td>ACEL+</td>
-      <td>2020-03-31 11:39:23.030279</td>
+      <td>2020-03-31 14:27:37.925588</td>
     </tr>
   </tbody>
 </table>
@@ -13237,7 +13237,7 @@ ResultFields [(&#39;ID&#39;, &#39;int&#39;), (&#39;Timestamp&#39;, &#39;a36&#39;
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># validate input</span>
@@ -13248,45 +13248,27 @@ ResultFields [(&#39;ID&#39;, &#39;int&#39;), (&#39;Timestamp&#39;, &#39;a36&#39;
 <span class="k">for</span> <span class="n">argument_name</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="n">required_flag</span> <span class="ow">in</span> <span class="n">taqpy</span><span class="o">.</span><span class="n">ArgumentList</span><span class="p">(</span><span class="n">function_name</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">required_flag</span> <span class="ow">and</span> <span class="n">argument_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">req_df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
           <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Function:</span><span class="si">{}</span><span class="s2"> missing argument:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">function_name</span><span class="p">,</span> <span class="n">argument_name</span><span class="p">))</span>
-<span class="n">req_argument_list</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">req_df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">taqpy</span><span class="o">.</span><span class="n">ArgumentNames</span><span class="p">(</span><span class="n">function_name</span><span class="p">):</span>
-        <span class="n">req_argument_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column_name</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">req_argument_list</span><span class="p">)</span>
 </pre></div>
 
     </div>
 </div>
 </div>
 
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>[&#39;Symbol&#39;, &#39;Timestamp&#39;]
-</pre>
-</div>
-</div>
-
-</div>
-</div>
-
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># prepare request json</span>
 
 <span class="kn">import</span> <span class="nn">uuid</span>
 <span class="kn">import</span> <span class="nn">json</span>
+
+<span class="n">req_argument_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">req_df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">taqpy</span><span class="o">.</span><span class="n">ArgumentNames</span><span class="p">(</span><span class="n">function_name</span><span class="p">):</span>
+        <span class="n">req_argument_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column_name</span><span class="p">)</span>
 
 <span class="n">hdr</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;tcp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">taqproc</span>
@@ -13317,7 +13299,7 @@ ResultFields [(&#39;ID&#39;, &#39;int&#39;), (&#39;Timestamp&#39;, &#39;a36&#39;
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>{&#34;tcp&#34;: &#34;127.0.0.1:3090&#34;, &#34;request_id&#34;: &#34;cb8c1fb4-0396-11eb-8113-6c96cff12815&#34;, &#34;function_list&#34;: [&#34;NBBO&#34;], &#34;argument_list&#34;: [&#34;Symbol&#34;, &#34;Timestamp&#34;], &#34;separator&#34;: &#34;|&#34;, &#34;input_sorted&#34;: true, &#34;input_cnt&#34;: 3, &#34;output_format&#34;: &#34;psv&#34;, &#34;time_zone&#34;: &#34;America/New_York&#34;}
+<pre>{&#34;tcp&#34;: &#34;127.0.0.1:3090&#34;, &#34;request_id&#34;: &#34;593052fe-0453-11eb-a206-6c96cff12815&#34;, &#34;function_list&#34;: [&#34;NBBO&#34;], &#34;argument_list&#34;: [&#34;Symbol&#34;, &#34;Timestamp&#34;], &#34;separator&#34;: &#34;|&#34;, &#34;input_sorted&#34;: true, &#34;input_cnt&#34;: 3, &#34;output_format&#34;: &#34;psv&#34;, &#34;time_zone&#34;: &#34;America/New_York&#34;}
 </pre>
 </div>
 </div>
@@ -13328,7 +13310,7 @@ ResultFields [(&#39;ID&#39;, &#39;int&#39;), (&#39;Timestamp&#39;, &#39;a36&#39;
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># prepare input</span>
@@ -13348,7 +13330,7 @@ ResultFields [(&#39;ID&#39;, &#39;int&#39;), (&#39;Timestamp&#39;, &#39;a36&#39;
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># execute query</span>
@@ -13363,7 +13345,7 @@ ResultFields [(&#39;ID&#39;, &#39;int&#39;), (&#39;Timestamp&#39;, &#39;a36&#39;
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># list is returned</span>
@@ -13391,7 +13373,7 @@ ResultFields [(&#39;ID&#39;, &#39;int&#39;), (&#39;Timestamp&#39;, &#39;a36&#39;
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>{    &#34;request_id&#34;: &#34;cb8c1fb4-0396-11eb-8113-6c96cff12815&#34;,    &#34;output_fields&#34;: [        &#34;ID&#34;,        &#34;Timestamp&#34;,        &#34;BestBidPx&#34;,        &#34;BestBidQty&#34;,        &#34;BestOfferPx&#34;,        &#34;BestOfferQty&#34;    ],    &#34;output_records&#34;: &#34;3&#34;,    &#34;error_summary&#34;: &#34;&#34;,    &#34;runtime_summary&#34;: {        &#34;parsing_input&#34;: &#34;00:00:00&#34;,        &#34;execution&#34;: &#34;00:00:01.001230000&#34;,        &#34;sorting_output&#34;: &#34;00:00:00&#34;    }}
+<pre>{    &#34;request_id&#34;: &#34;593052fe-0453-11eb-a206-6c96cff12815&#34;,    &#34;output_fields&#34;: [        &#34;ID&#34;,        &#34;Timestamp&#34;,        &#34;BestBidPx&#34;,        &#34;BestBidQty&#34;,        &#34;BestOfferPx&#34;,        &#34;BestOfferQty&#34;    ],    &#34;output_records&#34;: &#34;3&#34;,    &#34;error_summary&#34;: &#34;&#34;,    &#34;runtime_summary&#34;: {        &#34;parsing_input&#34;: &#34;00:00:00&#34;,        &#34;execution&#34;: &#34;00:00:01.012345000&#34;,        &#34;sorting_output&#34;: &#34;00:00:00&#34;    }}
 error_summary []
 </pre>
 </div>
@@ -13403,7 +13385,7 @@ error_summary []
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># optionally create result dataframe</span>
@@ -13415,6 +13397,96 @@ error_summary []
         <span class="n">data</span><span class="p">[</span><span class="n">ret_flds</span><span class="p">[</span><span class="n">fld</span><span class="p">]]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">ret</span><span class="p">[</span><span class="n">fld</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
     <span class="n">ret_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
+<span class="n">ret_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[9]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ID</th>
+      <th>Timestamp</th>
+      <th>BestBidPx</th>
+      <th>BestBidQty</th>
+      <th>BestOfferPx</th>
+      <th>BestOfferQty</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>b'13:20:53.542681700'</td>
+      <td>21.76</td>
+      <td>11700</td>
+      <td>21.77</td>
+      <td>21400</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2</td>
+      <td>b'15:52:58.098331570'</td>
+      <td>257.95</td>
+      <td>900</td>
+      <td>257.96</td>
+      <td>100</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3</td>
+      <td>b'13:25:39.678555910'</td>
+      <td>1.41</td>
+      <td>300</td>
+      <td>1.50</td>
+      <td>400</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># optionally convert timestamps</span>
+<span class="n">ret_df</span><span class="p">[</span><span class="s2">&quot;Timestamp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">trade_date</span> <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="n">ret_df</span><span class="p">[</span><span class="s2">&quot;Timestamp&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
 <span class="n">ret_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </pre></div>
 
@@ -13463,27 +13535,27 @@ error_summary []
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>b'10:15:58.951887479\x00\xfe'</td>
-      <td>22.25</td>
-      <td>4100</td>
-      <td>22.26</td>
-      <td>19700</td>
+      <td>2020-03-31 13:20:53.542681700</td>
+      <td>21.76</td>
+      <td>11700</td>
+      <td>21.77</td>
+      <td>21400</td>
     </tr>
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>b'12:28:20.838712589\x00\xfe'</td>
-      <td>260.08</td>
-      <td>800</td>
-      <td>260.09</td>
-      <td>300</td>
+      <td>2020-03-31 15:52:58.098331570</td>
+      <td>257.95</td>
+      <td>900</td>
+      <td>257.96</td>
+      <td>100</td>
     </tr>
     <tr>
       <th>2</th>
       <td>3</td>
-      <td>b'11:07:58.952038334\x00\xfe'</td>
-      <td>1.29</td>
-      <td>2000</td>
+      <td>2020-03-31 13:25:39.678555910</td>
+      <td>1.41</td>
+      <td>300</td>
       <td>1.50</td>
       <td>400</td>
     </tr>
@@ -13494,34 +13566,6 @@ error_summary []
 
 </div>
 
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># optionally convert timestamps</span>
-<span class="n">ret_df</span><span class="p">[</span><span class="s2">&quot;tstamp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">trade_date</span> <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="n">ret_df</span><span class="p">[</span><span class="s2">&quot;Timestamp&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
-<span class="n">ret_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span> 
-</pre></div>
-
-    </div>
 </div>
 </div>
 

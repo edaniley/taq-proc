@@ -4,7 +4,7 @@
     <LocalDebuggerCommand>python.exe</LocalDebuggerCommand>
     <LocalDebuggerWorkingDirectory>C:\Users\Ed\src\taq-proc\scripts</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>test-vwap.py </LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>test-nbbo.py </LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommand>python.exe</LocalDebuggerCommand>

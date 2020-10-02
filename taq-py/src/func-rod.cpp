@@ -70,7 +70,7 @@ py::list ExecuteROD(const ptree& req_json, ip::tcp::iostream& tcptream, const py
   while (getline(tcptream, line)) {
     values.clear();
     Split(values, line, '|');
-    StringCopy(ord_id.mutable_at(line_cnt), string(values[0]).c_str(), sizeof(str64));
+    memcpy(ord_id.mutable_at(line_cnt), values[0].data(), min(values[0].size(), sizeof(str64)));
     minus3.mutable_at(line_cnt) = TextToNumeric<double>(values[1]);
     minus2.mutable_at(line_cnt) = TextToNumeric<double>(values[2]);
     minus1.mutable_at(line_cnt) = TextToNumeric<double>(values[3]);

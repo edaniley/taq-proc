@@ -61,7 +61,7 @@ py::list ExecuteNBBOPrice(const ptree& req_json, ip::tcp::iostream& tcptream, co
     Split(values, line, '|');
     id.mutable_at(line_cnt) = TextToNumeric<int>(values[0]);
     for (size_t i = 0; i < sets; i++) {
-      StringCopy(v_time[i].mutable_at(line_cnt), string(values[1]).c_str(), sizeof(str20));
+      memcpy(v_time[i].mutable_at(line_cnt), values[1].data(), min(values[1].size(), sizeof(str20)));
       v_bidp[i].mutable_at(line_cnt) = TextToNumeric<double>(values[2]);
       v_askp[i].mutable_at(line_cnt) = TextToNumeric<double>(values[3]);
     }

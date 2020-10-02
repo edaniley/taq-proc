@@ -109,12 +109,4 @@ py::list ExecuteNBBO(const ptree& req_json, ip::tcp::iostream& tcptream, const p
 py::list ExecuteNBBOPrice(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
 py::list ExecuteVWAP(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
 
-inline void StringCopy(char* desc, const char* src, size_t len) {
-#ifdef _MSC_VER
-  strncpy_s(desc, len, src, len - 1);
-#else
-  strncpy(desc, src, len - 1);
-#endif
-}
-
 #endif
