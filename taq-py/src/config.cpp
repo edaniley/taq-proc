@@ -5,7 +5,7 @@ map<string, FunctionDef> tick_functions = {
   { 
     "NBBO",
     FunctionDef(
-        "America/New_York", {
+        "UTC", {
           FieldsDef("Symbol", typeid(char).name(), 18),
           FieldsDef("Timestamp", typeid(char).name(), 36),
           FieldsDef("Markouts", typeid(char).name(), 96, false)
@@ -22,7 +22,7 @@ map<string, FunctionDef> tick_functions = {
   {
     "NBBOPrice",
     FunctionDef(
-        "America/New_York", {
+        "UTC", {
           FieldsDef("Symbol", typeid(char).name(), 18),
           FieldsDef("Timestamp", typeid(char).name(), 36),
           FieldsDef("Markouts", typeid(char).name(), 96, false)
@@ -37,7 +37,7 @@ map<string, FunctionDef> tick_functions = {
   {
     "VWAP",
     FunctionDef(
-        "America/New_York", {
+        "UTC", {
           FieldsDef("Symbol", typeid(char).name(), 18),
           FieldsDef("Date", typeid(char).name(), 12),
           FieldsDef("StartTime", typeid(char).name(), 20),

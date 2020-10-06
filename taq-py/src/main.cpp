@@ -128,6 +128,7 @@ string Describe() {
       ptree fld;
       fld.put("name", fdef.name);
       fld.put("dtype", fdef.dtype);
+      fld.put("required"  , fdef.required);
       input_fields.push_back(make_pair("", fld));
     }
     for (const auto& fdef : function_def.output_fields) {
