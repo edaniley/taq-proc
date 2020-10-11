@@ -2,14 +2,17 @@
 #define TICK_JSON_INCLUDED
 
 #include <string>
+#include <vector>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-namespace js = boost::property_tree;
+using namespace std;
+
+using Json = boost::property_tree::ptree;
 
 template <typename T>
-vector<T> AsVector(js::ptree const& pt, js::ptree::key_type const& key) {
+vector<T> AsVector(Json const & pt, Json::key_type const& key) {
   vector<T> retval;
   try {
     for (auto& item : pt.get_child(key))
@@ -21,8 +24,9 @@ vector<T> AsVector(js::ptree const& pt, js::ptree::key_type const& key) {
   return retval;
 }
 
-js::ptree StringToJson(const string& json_str);
-string JsonToString(const js::ptree & root);
+Json StringToJson(const string & str);
+string JsonToString(const Json & json);
+string JsonRemoveWhiteChars(const string & str);
 
 
 #endif

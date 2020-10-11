@@ -1,4 +1,5 @@
 #include <queue>
+#include <map>
 #include <mutex>
 #include <iostream>
 #include <memory>
@@ -39,8 +40,20 @@ static auto pid = GetCurrentProcessId();
 static queue<unique_ptr<LogMsg>> message_queue;
 static mutex log_lock;
 static std::ofstream log;
+static LogLevel log_level;
+
+LogLevel LogTextToLevel(const string & str) {
+  static const map<string, LogLevel> valid_log_levels = {
+    {"warn", LogLevel::WARN},
+    {"info", LogLevel::INFO},
+    {"debug", LogLevel::DEBUG}
+  };
+  const auto it = valid_log_levels.find(str);
+  return it != valid_log_levels.end() ? it->second : LogLevel::INVALID;
+}
 
 void LogInitialize(AppAruments &args) {
+  log_level = LogTextToLevel(args.log_level);
   ostringstream ss;
   boost::filesystem::path file_path(args.log_dir);
   boost::gregorian::date today = boost::posix_time::microsec_clock::local_time().date();
@@ -56,9 +69,14 @@ void LogWrite(const LogMsg& log_msg) {
     << '|' << log_msg.message << endl;
 }
 
-void Log(LogLevel log_level, const string& message) {
-  unique_lock<mutex> lock(log_lock);
-  message_queue.emplace(make_unique<LogMsg>(log_level, message));
+void Log(LogLevel level, const string& message) {
+  if (level <= log_level) {
+    unique_lock<mutex> lock(log_lock);
+    message_queue.emplace(make_unique<LogMsg>(level, message));
+  }
+  if (log_level == LogLevel::DEBUG) {
+    cout << message << endl;
+  }
 }
 
 void LogPoll() {

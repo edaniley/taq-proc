@@ -162,6 +162,7 @@
     <ClCompile Include="tick-func.cpp" />
     <ClCompile Include="tick-json.cpp" />
     <ClCompile Include="tick-log.cpp" />
+    <ClCompile Include="tick-request.cpp" />
     <ClCompile Include="tick-winsock.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -181,6 +182,7 @@
     <ClInclude Include="tick-exec.h" />
     <ClInclude Include="tick-func.h" />
     <ClInclude Include="tick-json.h" />
+    <ClInclude Include="tick-output-builder.h" />
     <ClInclude Include="tick-request.h" />
     <ClInclude Include="tick-secmaster.h" />
   </ItemGroup>

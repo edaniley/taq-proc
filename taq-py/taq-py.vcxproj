@@ -19,11 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\exec.cpp" />
     <ClCompile Include="src\config.cpp" />
-    <ClCompile Include="src\func-nbbo-po.cpp" />
-    <ClCompile Include="src\func-nbbo.cpp" />
-    <ClCompile Include="src\func-rod.cpp" />
-    <ClCompile Include="src\func-vwap.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>

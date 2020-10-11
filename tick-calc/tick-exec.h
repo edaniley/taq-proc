@@ -70,9 +70,9 @@ struct InputRecordRange {
 
 struct OutputRecord {
   OutputRecord(int id) : id(id) {}
-  OutputRecord(int id, const string& value) : id(id), value(value) {}
+  OutputRecord(int id, const string& data) : id(id), data(data) {}
   int id;
-  string value;
+  string data;
 };
 
 typedef vector<OutputRecord> OutputRecordset;
@@ -86,10 +86,8 @@ public:
   virtual ~ExecutionUnit() {};
   virtual void Execute() = 0;
   void Error(ErrorType error_type, int count = 1) {
-    auto ret = errors.insert(make_pair(error_type, 0));
-    if (ret.second) {
-      ret.first->second = count;
-    } else {
+    auto ret = errors.insert(make_pair(error_type, count));
+    if (false == ret.second) {
       ret.first->second += count;
     }
   }
@@ -101,42 +99,45 @@ public:
   map<ErrorType, int> errors;
 };
 
+class Connection;
+class OutputRecordBuilder;
+
 class ExecutionPlan {
+friend class Connection;
+friend class OutputRecordBuilder;
 public:
-  enum class State {Busy, OuputReady, Done};
-  ExecutionPlan(const FunctionDefinition & function, const Request & request, const vector<int>& argument_mapping)
-      : function(function), request(request), argument_mapping(argument_mapping),
-        output_records_done(0), output_header_done(false), record_cnt(0) {
-        created = boost::posix_time::microsec_clock::local_time();
-      }
   virtual ~ExecutionPlan() {};
+  enum class State {Busy, Done};
+protected:
+  ExecutionPlan(const string& name, const FunctionDef& function_def, const Request& request, const ArgList& arg_list);
+private:
   virtual void Input(InputRecord&) = 0;
   virtual void Execute() = 0;
-  virtual const vector<string>& ResultFields() const {
-    return function.output_fields;
-  }
+
   void StartExecution() {
     execution_started = boost::posix_time::microsec_clock::local_time();
     Execute();
+    SetResultFields();
   }
   State CheckState();
-  int PullOutput(char * buffer, int available_size);
+  void SetResultFields();
 protected:
   void Error(ErrorType error_type, int count = 1);
-  string MakeReplyHeader() const;
-  const FunctionDefinition & function;
+
+  const string name;
+  const FunctionDef& function_def;
   const Request & request;
-  const vector<int> argument_mapping;
+  vector<int> argument_mapping;
   vector<shared_ptr<ExecutionUnit>> todo_list;
   vector<shared_ptr<ExecutionUnit>> done_list;
+  vector<FieldDef> output_fields;
   OutputRecordset output_records;
-  size_t output_records_done;
-  bool output_header_done;
-  size_t record_cnt;// remove
+  vector<int> output_record_ids;
+  size_t markouts_size;
   map<ErrorType, int> errors;
-  boost::posix_time::ptime created;
-  boost::posix_time::ptime execution_started;
-  boost::posix_time::ptime execution_ended;
+  Timestamp created;
+  Timestamp execution_started;
+  Timestamp execution_ended;
 };
 
 // public routines

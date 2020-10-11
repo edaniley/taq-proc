@@ -9,8 +9,5 @@ add_library (
     taqpy MODULE
     src/main.cpp
     src/config.cpp
-    src/func-nbbo.cpp
-    src/func-nbbo-po.cpp
-    src/func-rod.cpp
-    src/func-vwap.cpp
+    src/exec.cpp
 )

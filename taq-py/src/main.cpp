@@ -2,7 +2,7 @@
 
 extern map<string, FunctionDef> tick_functions;
 
-string JsonToString(const ptree& root) {
+string JsonToString(const Json& root) {
   stringstream ss;
   write_json(ss, root);
   string output = ss.str();
@@ -11,8 +11,8 @@ string JsonToString(const ptree& root) {
   return output;
 }
 
-ptree StringToJson(const string& json_str) {
-  ptree root;
+Json StringToJson(const string& json_str) {
+  Json root;
   stringstream ss;
   ss << json_str;
   try {
@@ -26,7 +26,7 @@ ptree StringToJson(const string& json_str) {
 
 string MakeReplyHeader(const string& request_id, const string& message) {
   stringstream ss;
-  ptree root, error_summary, error;
+  Json root, error_summary, error;
   error.put("type", "Client");
   error.put("count", 1);
   error_summary.push_front(make_pair("", error));
@@ -36,47 +36,26 @@ string MakeReplyHeader(const string& request_id, const string& message) {
   return JsonToString(root);
 }
 
-static void ValidateInputFields(const string& function_name, const py::kwargs& kwargs) {
-  const auto& field_definitions = InputFields(function_name);
-  for (const auto & fdef : field_definitions) {
-    if (fdef.required && false == kwargs.contains(fdef.name.c_str())) {
-      throw domain_error("Missing field name:" + fdef.name);
-    }
-  }
-}
-
-ptree ValidateRequest(const py::args& args, const py::kwargs& kwargs) {
+static Json ReadJson(const py::args& args, const py::kwargs& kwargs) {
   if (args.size() < 1) {
     throw domain_error("Missing request json");
   }
   string header(args[0].cast< py::str>());
-  const ptree req_json = StringToJson(header);
-  const string request_id = req_json.get<string>("request_id", "");
-  const string tcp = req_json.get<string>("tcp", "");
-  const int input_cnt = req_json.get<int>("input_cnt", 0);
-  const vector<string> function_list = AsVector<string>(req_json, "function_list");
+  const Json request = StringToJson(header);
+  const int input_cnt = request.get<int>("input_cnt", 0);
   if (input_cnt == 0) {
     throw domain_error("Invalid request missing:input_cnt");
-  } else if (tcp.size() == 0) {
-    throw domain_error("Invalid request missing:tcp");
-  } else if (function_list.size() == 0) {
-    throw domain_error("Missing function name");
-  } else if (function_list.size() > 1) {
-    throw domain_error("Multi-function request is not supported");
   }
-  const string & function_name = function_list[0];
-  ValidateInputFields(function_name, kwargs);
-  return req_json;
+  return request;
 }
 
 py::list Execute(py::args args, py::kwargs kwargs) {
   string message("Success");
   string request_id = "N/A";
   try {
-    ptree req_json = ValidateRequest(args, kwargs);
-    const string request_id = req_json.get<string>("request_id", "");
-
-    const string tcpip_addr = req_json.get<string>("tcp", "");
+    Json request = ReadJson(args, kwargs);
+    const string request_id = request.get<string>("request_id", "");
+    const string tcpip_addr = request.get<string>("service", "");
     auto z = tcpip_addr.find(":");
     if (z == string::npos) {
       throw domain_error("Invalid server address:" + tcpip_addr);
@@ -88,19 +67,7 @@ py::list Execute(py::args args, py::kwargs kwargs) {
     if (!tcptream) {
       throw domain_error(tcptream.error().message());
     }
-
-    const string function_name = AsVector<string>(req_json, "function_list")[0];
-    if (function_name == "ROD") {
-      return ExecuteROD(req_json, tcptream, kwargs);
-    } if (function_name == "NBBO") {
-      return ExecuteNBBO(req_json, tcptream, kwargs);
-    } if (function_name == "NBBOPrice") {
-      return ExecuteNBBOPrice(req_json, tcptream, kwargs);
-    } if (function_name == "VWAP") {
-      return ExecuteVWAP(req_json, tcptream, kwargs);
-    } else {
-      throw domain_error("Unknown function:" + function_name);
-    }
+    return ExecuteImlp(request, tcptream, kwargs);
   }
   catch (const exception& ex) {
     message.assign(ex.what());
@@ -119,20 +86,20 @@ const vector<FieldsDef>& InputFields(const string& function_name) {
 }
 
 string Describe() {
-  ptree root;
+  Json root;
   for (const auto fit : tick_functions) {
-    ptree function, input_fields, output_fields;
+    Json function, input_fields, output_fields;
     const string &function_name = fit.first;
     const FunctionDef& function_def = fit.second;
     for (const auto &fdef : function_def.input_fields) {
-      ptree fld;
+      Json fld;
       fld.put("name", fdef.name);
       fld.put("dtype", fdef.dtype);
       fld.put("required"  , fdef.required);
       input_fields.push_back(make_pair("", fld));
     }
     for (const auto& fdef : function_def.output_fields) {
-      ptree fld;
+      Json fld;
       fld.put("name", fdef.name);
       fld.put("dtype", fdef.dtype);
       output_fields.push_back(make_pair("", fld));
@@ -153,7 +120,7 @@ py::list FunctionList() {
   return retval;
 }
 
-py::list ArgumentList(const string function_name) {
+static py::list FunctionArgumentList(const string function_name) {
   py::list retval;
   const auto fit = tick_functions.find(function_name);
   if (fit != tick_functions.end()) {
@@ -162,6 +129,37 @@ py::list ArgumentList(const string function_name) {
     }
   }
   return retval;
+}
+
+static py::list AllArgumentList() {
+  py::list retval;
+  using ArgumentDef = pair<string, bool>; // type, required flag
+  map<string, ArgumentDef> args;
+  for (const auto fit : tick_functions) {
+    for (const auto& fdef : fit.second.input_fields) {
+      const auto it = args.find(fdef.name);
+      if (it == args.end()) {
+        args.emplace(make_pair(fdef.name, make_pair(fdef.dtype, fdef.required)));
+      } else { //validate our function definition
+        const string & dtype = it->second.first;
+        if (dtype == fdef.dtype) {
+          bool & required = it->second.second;
+          required &= fdef.required;
+        } else {
+          domain_error("Data type mismatch argument:" + fdef.name);
+        }
+      }
+    }
+  }
+  for (auto it : args) {
+    retval.append(make_tuple(it.first, it.second.first, it.second.second));
+  }
+  return  retval;
+}
+
+py::list ArgumentList(const string function_name) {
+  return (function_name.empty() || function_name == "*" || function_name == "%") ?
+    AllArgumentList() : FunctionArgumentList(function_name);
 }
 
 py::list ArgumentNames(const string function_name) {
@@ -200,3 +198,4 @@ PYBIND11_MODULE(taqpy, m) {
   m.attr("__version__") = "dev";
 #endif
 }
+  

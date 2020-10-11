@@ -12,10 +12,19 @@ using namespace Taq;
 namespace tick_calc {
 namespace ROD {
 
-static const bool registered = RegisterFunctionDefinition(make_unique<FunctionDefinition>("ROD",
-  vector<string> {"ID", "Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPx", "MPA", "ExecTime", "ExecQty"},
-  vector<string> {"ID", "MinusThree", "MinusTwo", "MinusOne", "Zero", "PlusOne", "PlusTwo", "PlusThree"})
-  );
+static const bool registered = RegisterFunctionDefinition(make_unique<FunctionDef>("ROD",
+  vector<string> {"OrdID", "Symbol", "Date", "StartTime", "EndTime", "Side", "OrdQty", "LimitPx", "MPA", "ExecTime", "ExecQty"},
+  vector<FieldDef> {
+    {"OrdID", typeid(char).name(), 64},
+    {"MinusThree", typeid(double).name(), sizeof(double)},
+    { "MinusTwo", typeid(double).name(), sizeof(double)},
+    { "MinusOne",typeid(double).name(), sizeof(double)},
+    { "Zero", typeid(double).name(), sizeof(double)},
+    { "PlusOne", typeid(double).name(), sizeof(double)},
+    { "PlusTwo", typeid(double).name(), sizeof(double)},
+    { "PlusThree", typeid(double).name(), sizeof(double)}
+  })
+);
 
 static char DecodeSide(const string_view& str) {
   if (str.size() > 0) {
@@ -49,7 +58,7 @@ static RestingType DecodeRestType(const string_view& str) {
   return RestingType::None;
 }
 
-static RestingType InvertRestType(const RestingType mpa) {
+static RestingType InvertRestingType(const RestingType mpa) {
   return (RestingType)(-1 * ((int)mpa - (int)RestingType::Zero) + (int)RestingType::Zero);
 }
 
@@ -83,7 +92,7 @@ static RestingType DetermineRestingType(const NbboPrice &nbbo, char side, const 
     } else if (mpa != RestingType::None) {
       retval = min(retval, mpa);
     }
-    retval = side == 'B' ? retval : InvertRestType(retval);
+    retval = side == 'B' ? retval : InvertRestingType(retval);
   }
   return retval;
 }
@@ -194,7 +203,6 @@ void ExecutionUnit::Execute() {
       for (size_t i = 0; i < rod_values.size(); i ++) {
         ss << '|' << rod_values[i];
       }
-      ss << endl;
       output_records.emplace_back(rec.id, ss.str());
     } catch (Exception & Ex) {
       Error(Ex.errtype());
@@ -244,15 +252,6 @@ void ExecutionPlan::Input(tick_calc::InputRecord& input_record) {
   catch (...) {
     Error(ErrorType::InvalidArgument);
   }
-  //if (IsVerbose()) {
-  //  record_cnt ++;
-  //  if (record_cnt % 1000 == 0) {
-  //    if (++progress_cnt == 100) {
-  //      cout << "." << record_cnt << endl;
-  //      progress_cnt = 0;
-  //    } else cout << ".";
-  //  }
-  //}
 }
 
 void ExecutionPlan::Execute() {

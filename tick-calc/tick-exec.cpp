@@ -20,6 +20,7 @@ namespace tick_calc {
 
 static ProducerConsumerQueue<ExecutionUnit> exec_queue;
 static vector<thread> thread_pool;
+static const auto nulltime = Timestamp();
 
 string CurrentTimestamp() {
   auto now = chrono::system_clock::now();
@@ -121,15 +122,50 @@ void AddExecutionUnit(shared_ptr<ExecutionUnit> & job) {
 
 /* ===================================================== page ========================================================*/
 
+ExecutionPlan::ExecutionPlan(
+          const string& name, const FunctionDef& function_def, const Request& request, const ArgList& arg_list)
+  : name(name), function_def(function_def), request(request), markouts_size(0) {
+  created = boost::posix_time::microsec_clock::local_time();
+  argument_mapping.reserve(function_def.argument_names.size());
+  for (const string& arg_name : function_def.argument_names) {
+    int pos = -1;
+    for (const ArgPos& arg_pos : arg_list) {
+      if (arg_pos.first == arg_name) {
+        pos = arg_pos.second - 1; // convert 1-based position to 0-based index
+        break;
+      }
+    }
+    argument_mapping.emplace_back(pos);
+  }
+}
+
+void ExecutionPlan::SetResultFields() {
+  if (markouts_size) {
+    for (size_t i = 1; i <= markouts_size; ++i) {
+      for (const auto& fld_def : function_def.output_fields) {
+        char fld_name[64];
+        #ifdef __unix__
+        sprintf(fld_name, "%s_%lu", field.c_str(), i);
+        #else
+        sprintf_s(fld_name, sizeof(fld_name), "%s_%llu", fld_def.name.c_str(), i);
+        #endif
+        output_fields.emplace_back(fld_name, fld_def.type);
+      }
+    }
+  } else {
+    for (const auto& fld_def : function_def.output_fields) {
+      output_fields.emplace_back(fld_def.name, fld_def.type);
+    }
+  }
+}
+
 ExecutionPlan::State ExecutionPlan::CheckState() {
-  static const auto nulltime = boost::posix_time::ptime();
   // move every completed unit from todo_list to done_list
   for (auto it = todo_list.begin(); it != todo_list.end(); ) {
     if ((*it)->done.load()) {
       done_list.push_back(*it);
       it = todo_list.erase(it);
-    }
-    else {
+    } else {
       ++it;
     }
   }
@@ -154,40 +190,11 @@ ExecutionPlan::State ExecutionPlan::CheckState() {
     sort(output_records.begin(), output_records.end(), [](const auto& left, const auto& right) {
       return left.id < right.id;
       });
+    output_record_ids.reserve(total_record_count);
+    for_each(output_records.begin(), output_records.end(), [&](const auto& rec) { output_record_ids.push_back(rec.id); });
   }
 
-  const bool done = execution_ended != nulltime;
-  const bool output_available = done && (output_records_done < output_records.size() || false  == output_header_done);
-  ExecutionPlan::State state = false == done ? ExecutionPlan::State::Busy
-                            : output_available ? ExecutionPlan::State::OuputReady : ExecutionPlan::State::Done;
-  return state;
-}
-
-int ExecutionPlan::PullOutput(char* buffer, int available_size) {
-  int bytes_written = 0;
-  auto WriteOutput = [&](const char* str, int size) {
-    memcpy(buffer, str, size);
-    buffer += size;
-    bytes_written += size;
-    available_size -= size;
-  };
-  if (buffer) {
-    if (false == output_header_done) {
-      const string replay_header = MakeReplyHeader();
-      WriteOutput(replay_header.c_str(), (int)replay_header.size());
-      output_header_done = true;
-    }
-    while (output_records_done < output_records.size()) {
-      const OutputRecord& rec = output_records[output_records_done];
-      const int rec_size = (int)rec.value.size();
-      if (available_size < rec_size) {
-        break;
-      }
-      WriteOutput(rec.value.c_str(), rec_size);
-      output_records_done++;
-    }
-  }
-  return bytes_written;
+  return execution_ended == nulltime ? ExecutionPlan::State::Busy : ExecutionPlan::State::Done;
 }
 
 void ExecutionPlan::Error(ErrorType error_type, int count) {
@@ -197,36 +204,6 @@ void ExecutionPlan::Error(ErrorType error_type, int count) {
   } else {
     ret.first->second += count;
   }
-}
-
-string ExecutionPlan::MakeReplyHeader() const {
-  js::ptree runtime_summary;
-  runtime_summary.put("parsing_input",  boost::posix_time::to_simple_string(execution_started - created));
-  runtime_summary.put("execution", boost::posix_time::to_simple_string(execution_ended - execution_started));
-  runtime_summary.put("sorting_output", boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::local_time() - execution_ended));
-
-  js::ptree output_fields;
-  const vector<string>& result_fields = ResultFields();
-  for (const auto & field : result_fields) {
-    js::ptree fld;
-    fld.put("", field);
-    output_fields.push_back(make_pair("", fld));
-  }
-  js::ptree error_summary;
-  for (const auto& error_cnt : errors) {
-    js::ptree err;
-    err.put("type", ErrorToString(error_cnt.first));
-    err.put("count", error_cnt.second);
-    error_summary.push_back(make_pair("", err));
-  }
-  js::ptree root;
-  root.put("request_id", request.id);
-  root.add_child("output_fields", output_fields);
-  root.put("output_records", output_records.size());
-  root.add_child("error_summary", error_summary);
-  root.add_child("runtime_summary", runtime_summary);
-
-  return JsonToString(root);
 }
 
 }

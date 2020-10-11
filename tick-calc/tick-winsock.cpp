@@ -22,7 +22,7 @@ struct WinConnection {
   SOCKET socket;
   Connection conn;
   string ip;
-  short tcp;
+  unsigned short tcp;
 };
 
 DWORD conn_count = 0;
@@ -52,7 +52,7 @@ void NetInitialize(AppAruments & args) {
   }
 }
 
-void CreateConnection(SOCKET s, const char *ip, short tcp) {
+void CreateConnection(SOCKET s, const char *ip, unsigned short tcp) {
   WinConnection* si = new WinConnection();
   si->socket = s;
   si->ip.assign(ip);
@@ -91,7 +91,7 @@ void NetPoll() {
       continue;
     }
     if (conn.output_buffer.DataSize() == 0) {
-      ConnectionPullOutput(conn);
+      conn.PullOutput();
     }
     if (conn.output_buffer.DataSize() > 0) {
       FD_SET(connections[i]->socket, &write_set);
@@ -136,7 +136,9 @@ void NetPoll() {
         DWORD Flags = 0;
         if (WSARecv(win_conn->socket, &wsa_buffer, 1, &byte_cnt, &Flags, NULL, NULL) == SOCKET_ERROR) {
           if (WSAGetLastError() != WSAEWOULDBLOCK) {
-            cerr << "WSARecv() failed : " << LastErrorToString();
+            ostringstream log_msg;
+            log_msg << "Client session " << win_conn->ip << ':' << win_conn->tcp << " error:'" << LastErrorToString() << ';';
+            Log(LogLevel::ERR, log_msg.str());
             FreeConnection(i);
           }
           continue;
@@ -147,15 +149,16 @@ void NetPoll() {
         }
         input_buffer.CommitWrite(byte_cnt);
         try {
-          ConnectionPushInput(conn);
+          conn.PushInput();
         } catch (exception & ex) {
           // to-do compose json response
-          //ostringstream ss;
-          //ss << ex.what();
-          //string err_msg = ss.str();
-          string err_msg = ex.what();
-          wsa_buffer.buf = const_cast<char *>(err_msg.c_str());
-          wsa_buffer.len = (ULONG)err_msg.size();
+          ostringstream log_msg;
+          log_msg << "Client session " << win_conn->ip << ':' << win_conn->tcp << " error:'" << ex.what() << ';';
+          Log(LogLevel::ERR, log_msg.str());
+          ostringstream err_msg;
+          err_msg << "{\"exception\":\"" << ex.what() << "\"";
+          wsa_buffer.buf = const_cast<char *>(err_msg.str().c_str());
+          wsa_buffer.len = (ULONG)err_msg.str().size();
           WSASend(win_conn->socket, &wsa_buffer, 1, &byte_cnt, 0, NULL, NULL);
           FreeConnection(i);
         }

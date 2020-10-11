@@ -50,20 +50,14 @@ public:
 
 class ExecutionPlan : public tick_calc::ExecutionPlan {
 public:
-  ExecutionPlan(const FunctionDefinition& function, const Request& request, const vector<int>& argument_mapping, Type type);
+  ExecutionPlan(const string& name, const FunctionDef& function_def, const Request& request, const ArgList& arg_list, Type type);
   void Input(tick_calc::InputRecord& input_record) override;
   void Execute() override;
-  const vector<string>& ResultFields() const override {
-    return result_fields;
-  }
 private:
-  void SetResultFieldsForMarkouts();
   const Type type;
   const bool with_markouts;
-  size_t markouts_size;
   using InputRecordRange = vector<InputRecord>;
   map<SymbolDateKey, InputRecordRange> input_record_ranges;
-  vector<string> result_fields;
 };
 
 }

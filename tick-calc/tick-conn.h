@@ -9,6 +9,7 @@
 #include "taq-proc.h"
 #include "tick-exec.h"
 #include "tick-json.h"
+#include "tick-output-builder.h"
 
 using namespace std;
 using namespace Taq;
@@ -82,25 +83,41 @@ private:
   char* write_ptr_;
 };
 
-struct Connection {
-  Connection() : fd(-1), request_buffer(), request_parsed(false), input_record_cnt(0),
-                 output_ready(false), exit_ready(false) {}
+class Connection {
+public:
+  Connection()
+    : fd(-1), exit_ready(false), request_parsed(false), input_record_cnt(0), output_record_count(0), output_records_sent(0) {
+    created = boost::posix_time::microsec_clock::local_time();
+  }
   Connection(int fd) : Connection() {this->fd = fd;}
+  void PushInput();
+  void PullOutput();
+private:
+  void ParseRequest();
+  void LoadExecutionPlans();
+  bool CheckOutputReady();
+  string BuildHeaderJson();
+  string BuildTrailerJson();
+public:
   int fd;
+  LineBuffer<1024 * 50> input_buffer;
+  OutputBuffer< 1024 * 50>  output_buffer;
+  bool          exit_ready;
+private:
   Request       request;
   stringstream  request_buffer;
-  js::ptree     request_json;
+  Json          request_json;
   bool          request_parsed;
-  LineBuffer<1024 * 50> input_buffer;
   int           input_record_cnt;
-  vector<unique_ptr<ExecutionPlan>> exec_plans;
-  OutputBuffer< 1024 * 10>  output_buffer;
-  bool          output_ready;
-  bool          exit_ready;
+  int           output_record_count;
+  int           output_records_sent;
+  Timestamp     created;
+  Timestamp     execution_started;
+  Timestamp     execution_ended;
+  vector<shared_ptr<ExecutionPlan>> exec_plans;
+  vector<shared_ptr<ExecutionPlan>> todo_list;
+  OutputRecordBuilder output_record_builder;
 };
-
-void ConnectionPushInput(Connection& conn);
-void ConnectionPullOutput(Connection& conn);
 
 }
 

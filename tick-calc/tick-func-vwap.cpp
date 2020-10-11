@@ -27,11 +27,11 @@ static Flavor DecodeFlavor(const string_view& str) {
   return Flavor::Regular;
 }
 
-class VwapFunction : public  FunctionDefinition {
+class VwapFunction : public  FunctionDef {
 public:
   enum ArgumentNo { Symbol, Date, StartTime, Side, LimitPx, Flavor, EndTime, TargetVolume, TargetPOV, Ticks, Markouts };
-  VwapFunction(const string& name, const vector<string>& argument_names, const vector<string>& output_fields) :
-    FunctionDefinition(name, argument_names, output_fields) {}
+  VwapFunction(const string& name, const vector<string>& argument_names, const vector<FieldDef>& output_fields) :
+    FunctionDef(name, argument_names, output_fields) {}
   void ValidateArgumentList(const vector<int>& argument_mapping) const override {
     bool valid = IsArgumentPresent(argument_mapping, Symbol)
               && IsArgumentPresent(argument_mapping, Date)
@@ -49,11 +49,14 @@ public:
 };
 
 static const bool registered = RegisterFunctionDefinition(make_unique<VwapFunction>("VWAP",
-    vector<string> {"Symbol", "Date", "StartTime", "Side", "LimitPx", "Flavor",
-                    "EndTime", "TargetVolume", "TargetPOV", "Ticks", "Markouts"},
-    vector<string> {"ID", "TradeCnt", "TradeVolume", "VWAP"})
-    );
-
+  vector<string> {"Symbol", "Date", "StartTime", "Side", "LimitPx", "Flavor",
+                  "EndTime", "TargetVolume", "TargetPOV", "Ticks", "Markouts"},
+  vector<FieldDef> {
+  {"TradeCnt", typeid(int).name(), sizeof(int)},
+  {"TradeVolume", typeid(int).name(), sizeof(int)},
+  {"VWAP", typeid(double).name(), sizeof(double)}
+  })
+);
 
 void ExecutionUnit::Execute() {
   auto& secmaster_mgr = SecurityMasterManager();
@@ -85,7 +88,6 @@ void ExecutionUnit::Execute() {
       results[i] = calculator.Calculate(it);
     }
     ostringstream ss;
-    ss << rec.id;
     for (const Result &result : results) {
       char buf[64];
       #ifdef __unix__
@@ -95,23 +97,19 @@ void ExecutionUnit::Execute() {
       #endif
       ss << buf;
     }
-    ss << endl;
-    output_records.emplace_back(rec.id, ss.str());
+    output_records.emplace_back(rec.id, ss.str().substr(1));
   }
   trade_mgr.UnloadSymbolRecordset(date, symbol);
   secmaster_mgr.Release(*secmaster);
 }
 
-ExecutionPlan::ExecutionPlan( const FunctionDefinition& function,
-                                      const Request& request,
-                                      const vector<int>& argument_mapping)
-  : tick_calc::ExecutionPlan(function, request, argument_mapping),
+ExecutionPlan::ExecutionPlan(const string& name, const FunctionDef& function_def, const Request& request, const ArgList& arg_list)
+  : tick_calc::ExecutionPlan(name, function_def, request, arg_list),
     maybe_by_time(IsArgumentPresent(argument_mapping, VwapFunction::EndTime)),
     maybe_by_pov(IsArgumentPresent(argument_mapping, VwapFunction::TargetVolume)
               && IsArgumentPresent(argument_mapping, VwapFunction::TargetPOV)),
     maybe_by_ticks(IsArgumentPresent(argument_mapping, VwapFunction::Ticks)),
     maybe_by_markouts(IsArgumentPresent(argument_mapping, VwapFunction::Markouts)),
-    markouts_size(0),
     type(maybe_by_time && false == maybe_by_pov && false == maybe_by_ticks && false == maybe_by_markouts ? Type::ByTime
       : false == maybe_by_time && maybe_by_pov && false == maybe_by_ticks && false == maybe_by_markouts ? Type::ByPov
       : false == maybe_by_time && false == maybe_by_pov && maybe_by_ticks && false == maybe_by_markouts ? Type::ByTicks
@@ -174,28 +172,6 @@ void ExecutionPlan::Input(tick_calc::InputRecord & input_record) {
   }
 }
 
-void ExecutionPlan::SetResultFieldsForMarkouts() {
-  if (markouts_size) {
-    result_fields.emplace_back("ID");
-    for (size_t i = 1; i <= markouts_size; ++ i) {
-      for (const string &field : function.output_fields) {
-        if (field != "ID") {
-          char buf[32];
-          #ifdef __unix__
-          sprintf(buf, "%s_%lu", field.c_str(), i);
-          #else
-          sprintf_s(buf, sizeof(buf), "%s_%llu", field.c_str(), i);
-          #endif
-          result_fields.emplace_back(buf);
-        }
-      }
-    }
-  }
-  else {
-    result_fields = function.output_fields;
-  }
-}
-
 void ExecutionPlan::Execute() {
   typedef tuple<string, Date, InputRecordRange*> InputRecordSlice;
   vector<InputRecordSlice> slices;
@@ -212,7 +188,6 @@ void ExecutionPlan::Execute() {
     todo_list.push_back(job);
     AddExecutionUnit(job);
   }
-  SetResultFieldsForMarkouts();
 }
 
 }

@@ -19,17 +19,18 @@ struct AppAruments {
   string in_cpu_list;
   uint16_t in_port;
   string log_dir;
+  string log_level;
 };
 
 void NetInitialize(AppAruments&);
 void NetPoll();
 void NetFinalize(AppAruments&);
-bool IsVerbose();
 
 enum class LogLevel {
-  CRITICAL, ERR, WARN, INFO, DEBUG
+  INVALID, CRITICAL, ERR, WARN, INFO, DEBUG
 };
 
+LogLevel LogTextToLevel(const string&);
 void LogInitialize(AppAruments&);
 void LogFinalize(AppAruments&);
 void Log(LogLevel, const string&);

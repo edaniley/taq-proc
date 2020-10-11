@@ -7,10 +7,10 @@ using namespace Taq;
 
 namespace tick_calc {
 
-using FunctionRegistry = map <string, unique_ptr<FunctionDefinition>>;
+using FunctionRegistry = map <string, unique_ptr<FunctionDef>>;
 static unique_ptr<FunctionRegistry> function_regisitry;
 
-bool RegisterFunctionDefinition(unique_ptr<FunctionDefinition> ptr) {
+bool RegisterFunctionDefinition(unique_ptr<FunctionDef> ptr) {
   if (!function_regisitry) {
     function_regisitry = make_unique<FunctionRegistry>();
   }
@@ -19,7 +19,7 @@ bool RegisterFunctionDefinition(unique_ptr<FunctionDefinition> ptr) {
   return true;
 }
 
-const FunctionDefinition& FindFunctionDefinition(const string& function_name) {
+const FunctionDef& FindFunctionDefinition(const string& function_name) {
   auto it = function_regisitry->find(function_name);
   if (it == function_regisitry->end()) {
     throw invalid_argument("Unknown function:" + function_name);

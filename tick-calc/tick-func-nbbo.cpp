@@ -14,11 +14,11 @@ using namespace Taq;
 namespace tick_calc {
 namespace NBBO {
 
-class NBBO : public  FunctionDefinition {
+class NBBO : public  FunctionDef {
 public:
   enum ArgumentNo { Symbol, Timestamp, Markouts };
-  NBBO(const string& name, const vector<string>& argument_names, const vector<string>& output_fields) :
-    FunctionDefinition(name, argument_names, output_fields) {}
+  NBBO(const string& name, const vector<string>& argument_names, const vector<FieldDef>& output_fields) :
+    FunctionDef(name, argument_names, output_fields) {}
   void ValidateArgumentList(const vector<int>& argument_mapping) const override {
     bool valid = IsArgumentPresent(argument_mapping, Symbol) && IsArgumentPresent(argument_mapping, Timestamp);
     if (!valid) {
@@ -30,12 +30,22 @@ public:
 static const bool registered[] = {
   RegisterFunctionDefinition(make_unique<NBBO>("NBBO",
     vector<string> {"Symbol", "Timestamp", "Markouts"},
-    vector<string> {"ID", "Timestamp", "BestBidPx", "BestBidQty", "BestOfferPx", "BestOfferQty"})
-    ),
+    vector<FieldDef> {
+      {"Time", typeid(char).name(), 20},
+      {"BidPx", typeid(double).name(), sizeof(double)},
+      {"BidQty", typeid(int).name(), sizeof(int)},
+      {"OfferPx", typeid(double).name(), sizeof(double)},
+      {"OfferQty", typeid(int).name(), sizeof(int)}
+    }
+  )),
   RegisterFunctionDefinition(make_unique<NBBO>("NBBOPrice",
     vector<string> {"Symbol", "Timestamp", "Markouts"},
-    vector<string> {"ID", "Timestamp", "BestBidPx", "BestOfferPx"})
-  )
+    vector<FieldDef> {
+      {"Time", typeid(char).name(), 20},
+      { "BidPx", typeid(double).name(), sizeof(double)},
+      { "OfferPx", typeid(double).name(), sizeof(double)}
+    }
+  ))
 };
 
 template<typename T>
@@ -103,58 +113,17 @@ void PrintNbboPrice(ostringstream& ss) {
 }
 
 void PriceQuantityExecutionUnit::Execute() {
-  auto & secmaster_mgr = SecurityMasterManager();
-  auto & quote_mgr = NbboRecordsetManager();
+  auto& secmaster_mgr = SecurityMasterManager();
+  auto& quote_mgr = NbboRecordsetManager();
   const SecMaster* secmaster = nullptr;
   const SymbolRecordset<Nbbo>* symbol_recordset = nullptr;
   int lot_size = 100;
   try {
     secmaster = &secmaster_mgr.Load(date);
-    const Security &security = secmaster->FindBySymbol(symbol);
+    const Security& security = secmaster->FindBySymbol(symbol);
     lot_size = security.lot_size;
     symbol_recordset = &quote_mgr.LoadSymbolRecordset(date, security.symb);
-  }
-  catch (...) {
-    Error(ErrorType::DataNotFound, (int)input_records.size());
-    return;
-  }
-  if (false == input_sorted) {
-    sort(input_records.begin(), input_records.end(), [] (const auto &lh, const auto& rh) {return lh.time < rh.time;});
-  }
-  auto & quotes = symbol_recordset->records;
-  auto it = quotes.begin();
-  for (auto rec : input_records) {
-    const Time requested_time = rec.time + taq_time_adjustment;
-    it = quotes.find_prior(it, quotes.end(), requested_time);
-    if (it != quotes.end()) {
-      ostringstream ss;
-      ss << rec.id;
-      PrintNbbo(ss, *it, lot_size);
-      for (const auto & duration: rec.durations) {
-        if (const Nbbo* nbbo = FindNbbo<Nbbo>(quotes, it, requested_time, duration)) {
-          PrintNbbo(ss, *nbbo, lot_size);
-        } else {
-          PrintNbbo(ss);
-        }
-      }
-      ss << endl;
-      output_records.emplace_back(rec.id, ss.str());
-    } else {
-      Error(ErrorType::DataNotFound);
-    }
-  }
-  quote_mgr.UnloadSymbolRecordset(date, symbol);
-  secmaster_mgr.Release(*secmaster);
-}
-
-
-void PriceOnlyExecutionUnit::Execute() {
-  auto& quote_mgr = NbboPoRecordsetManager();
-  const SymbolRecordset<NbboPrice>* symbol_recordset = nullptr;
-  try {
-    symbol_recordset = &quote_mgr.LoadSymbolRecordset(date, symbol);
-  }
-  catch (...) {
+  } catch (...) {
     Error(ErrorType::DataNotFound, (int)input_records.size());
     return;
   }
@@ -168,29 +137,74 @@ void PriceOnlyExecutionUnit::Execute() {
     it = quotes.find_prior(it, quotes.end(), requested_time);
     if (it != quotes.end()) {
       ostringstream ss;
-      ss << rec.id;
-      PrintNbboPrice(ss, *it);
-      for (const auto& duration : rec.durations) {
-        if (const NbboPrice* nbbo = FindNbbo<NbboPrice>(quotes, it, requested_time, duration)) {
-          PrintNbboPrice(ss, *nbbo);
-        }
-        else {
-          PrintNbbo(ss);
+      if (rec.durations.empty()) {
+        PrintNbbo(ss, *it, lot_size);
+      } else {
+        for (const auto& duration : rec.durations) {
+          if (const Nbbo* nbbo = FindNbbo<Nbbo>(quotes, it, requested_time, duration)) {
+            PrintNbbo(ss, *nbbo, lot_size);
+          } else {
+            PrintNbbo(ss);
+          }
         }
       }
-      ss << endl;
-      output_records.emplace_back(rec.id, ss.str());
-    }
-    else {
+      output_records.emplace_back(rec.id, ss.str().substr(1));
+    } else {
       Error(ErrorType::DataNotFound);
     }
   }
   quote_mgr.UnloadSymbolRecordset(date, symbol);
+  secmaster_mgr.Release(*secmaster);
 }
 
-ExecutionPlan::ExecutionPlan(const FunctionDefinition& function, const Request& request, const vector<int>& argument_mapping, Type type)
-  : tick_calc::ExecutionPlan(function, request, argument_mapping),
-  type(type), with_markouts(IsArgumentPresent(argument_mapping, NBBO::Markouts)), markouts_size(0) {}
+void PriceOnlyExecutionUnit::Execute() {
+  auto& secmaster_mgr = SecurityMasterManager();
+  auto& quote_mgr = NbboPoRecordsetManager();
+  const SecMaster* secmaster = nullptr;
+  const SymbolRecordset<NbboPrice>* symbol_recordset = nullptr;
+  int lot_size = 100;
+  try {
+    secmaster = &secmaster_mgr.Load(date);
+    const Security& security = secmaster->FindBySymbol(symbol);
+    lot_size = security.lot_size;
+    symbol_recordset = &quote_mgr.LoadSymbolRecordset(date, security.symb);
+  } catch (...) {
+    Error(ErrorType::DataNotFound, (int)input_records.size());
+    return;
+  }
+  if (false == input_sorted) {
+    sort(input_records.begin(), input_records.end(), [](const auto& lh, const auto& rh) {return lh.time < rh.time; });
+  }
+  auto& quotes = symbol_recordset->records;
+  auto it = quotes.begin();
+  for (auto rec : input_records) {
+    const Time requested_time = rec.time + taq_time_adjustment;
+    it = quotes.find_prior(it, quotes.end(), requested_time);
+    if (it != quotes.end()) {
+      ostringstream ss;
+      if (rec.durations.empty()) {
+        PrintNbboPrice(ss, *it);
+      } else {
+        for (const auto& duration : rec.durations) {
+          if (const NbboPrice* nbbo = FindNbbo<NbboPrice>(quotes, it, requested_time, duration)) {
+            PrintNbboPrice(ss, *nbbo);
+          } else {
+            PrintNbboPrice(ss);
+          }
+        }
+      }
+      output_records.emplace_back(rec.id, ss.str().substr(1));
+    } else {
+      Error(ErrorType::DataNotFound);
+    }
+  }
+  quote_mgr.UnloadSymbolRecordset(date, symbol);
+  secmaster_mgr.Release(*secmaster);
+}
+
+ExecutionPlan::ExecutionPlan(const string& name, const FunctionDef& function_def, const Request& request, const ArgList& arg_list, Type type)
+  : tick_calc::ExecutionPlan(name, function_def, request, arg_list),
+  type(type), with_markouts(IsArgumentPresent(argument_mapping, NBBO::Markouts)) {}
 
 
 void ExecutionPlan::Input(tick_calc::InputRecord& input_record) {
@@ -238,30 +252,8 @@ void ExecutionPlan::Execute() {
     todo_list.push_back(job);
     AddExecutionUnit(job);
   }
-  SetResultFieldsForMarkouts();
-}
-
-void ExecutionPlan::SetResultFieldsForMarkouts() {
-  result_fields = function.output_fields;
-  if (markouts_size) {
-    for (size_t i = 1; i <= markouts_size; ++i) {
-      for (const string& field : function.output_fields) {
-        if (field != "ID") {
-          char buf[64];
-          #ifdef __unix__
-          sprintf(buf, "%s_%lu", field.c_str(), i);
-          #else
-          sprintf_s(buf, sizeof(buf), "%s_%llu", field.c_str(), i);
-          #endif
-          result_fields.emplace_back(buf);
-        }
-      }
-    }
-  }
-  else {
-    result_fields = function.output_fields;
-  }
 }
 
 }
 }
+ 

@@ -73,13 +73,8 @@ if function_name not in taqpy.FunctionList():
     raise Exception("Unknown function")
 
 for col in req_df.columns:
-    found = False
-    for arg in taqpy.ArgumentList(function_name):
-        if col == arg[0]:
-            found = True
-            break
-    if not found:
-        raise Exception("Function:{} unknown argument:{}".format(function_name, col))
+    if not col in taqpy.ArgumentNames(function_name):
+      raise Exception("Function:{} unknown argument:{}".format(function_name, col))
 
 # prepare input
 

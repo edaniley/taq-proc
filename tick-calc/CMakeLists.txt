@@ -2,6 +2,7 @@
 add_executable( tick-calc
     tick-calc.cpp
     tick-conn.cpp
+    tick-request.cpp
     tick-data.cpp
     tick-duration.cpp
     tick-exec.cpp

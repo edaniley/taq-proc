@@ -58,8 +58,8 @@ public:
     
 private:
 public:
-  ExecutionPlan(const FunctionDefinition& function, const Request& request, const vector<int>& argument_mapping)
-    : tick_calc::ExecutionPlan(function, request, argument_mapping), progress_cnt(0) {}
+  ExecutionPlan(const string& name, const FunctionDef& function_def, const Request& request, const ArgList& arg_list)
+    : tick_calc::ExecutionPlan(name, function_def, request, arg_list), progress_cnt(0) {}
   void Input(tick_calc::InputRecord& input_record) override;
   void Execute() override;
 private:

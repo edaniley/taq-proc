@@ -5,32 +5,47 @@
 
 using namespace std;
 using namespace Taq;
+using namespace tick_calc;
 
-js::ptree StringToJson(const string& json_str) {
-  js::ptree root;
+static string RemoveWhiteChars(const string & str) {
+  string retval(str);
+  retval.erase(
+    remove_if(retval.begin(), retval.end(), [](char c) {
+      static const string unwanted_chars = " \t\n";
+      return unwanted_chars.find(c) != string::npos;
+    }),
+    retval.end());
+  return retval;
+}
+
+Json StringToJson(const string & str) {
+  Log(LogLevel::INFO, RemoveWhiteChars(str));
+  Json json;
   stringstream ss;
-  ss << json_str;
+  ss << str;
   try {
-    js::read_json(ss, root);
-    if (tick_calc::IsVerbose()) {
-      js::write_json(cout, root);
-    }
+    boost::property_tree::read_json(ss, json);
   }
   catch (const exception& ex) {
     throw domain_error(string("Inbound json parsing failure:") + ex.what());
   }
-  return root;
+  return json;
 }
 
-string JsonToString(const js::ptree& root) {
+string JsonToString(const Json & json) {
   stringstream ss;
-  js::write_json(ss, root);
-  if (tick_calc::IsVerbose()) {
-    cout << ss.str();
-  }
-  string output = ss.str();
-  output.erase(remove_if(output.begin(), output.end(), [](char c) {return c == '\n'; }), output.end());
-  replace(output.begin(), output.end(), '\t', ' ');
-  output.append("\n");
-  return output;
+  boost::property_tree::write_json(ss, json);
+  string str(RemoveWhiteChars(ss.str()));
+  Log(LogLevel::INFO, str);
+  str.append("\n");
+  return str;
+}
+
+string JsonRemoveWhiteChars(const string & str) {
+  string retval(str);
+  retval.erase(remove_if(retval.begin(), retval.end(), [] (char c) {
+    static const string unwanted_chars = " \t\n";
+    return unwanted_chars.find(c) != string::npos;
+    }), retval.end());
+  return retval;
 }

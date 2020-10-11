@@ -57,6 +57,9 @@
     <ClCompile Include="tick-json.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tick-request.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tick-calc.h">
@@ -112,6 +115,9 @@
     </ClInclude>
     <ClInclude Include="..\include\taq-double.h">
       <Filter>Header Files\taq-proc</Filter>
+    </ClInclude>
+    <ClInclude Include="tick-output-builder.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -9,7 +9,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-d ../data -v on  -t 3091</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-d ../data -v debug  -t 3091</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)data</LocalDebuggerWorkingDirectory>
   </PropertyGroup>

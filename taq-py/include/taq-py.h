@@ -48,7 +48,8 @@
 using namespace std;
 using namespace Taq;
 using namespace boost::asio;
-using namespace boost::property_tree;
+
+using Json = boost::property_tree::ptree;
 namespace py = pybind11;
 
 using str6 = char[6];
@@ -72,14 +73,14 @@ struct FieldsDef {
     if (ctype == typeid(char).name()) {
       ss << 'a' << size;
     } else if (ctype == typeid(double).name()) {
-      ss << "float";
+      ss << "double";
     } else if (ctype == typeid(int).name()) {
       ss << "int";
     }
     return ss.str();
   }
-
 };
+
 struct FunctionDef {
   FunctionDef(const string &default_tz, const vector<FieldsDef>& input_fields, const vector<FieldsDef>& output_fields)
     : default_tz(default_tz), input_fields(input_fields), output_fields(output_fields) {}
@@ -89,7 +90,7 @@ struct FunctionDef {
 };
 
 template <typename T>
-vector<T> AsVector(ptree const& pt, ptree::key_type const& key) {
+vector<T> AsVector(Json const& pt, Json::key_type const& key) {
   vector<T> retval;
   try {
     for (auto& item : pt.get_child(key))
@@ -100,13 +101,11 @@ vector<T> AsVector(ptree const& pt, ptree::key_type const& key) {
   return retval;
 }
 
+using FunctionFieldsDef = map<string, const FieldsDef&>;
 const vector<FieldsDef>& InputFields(const string& function_name);
-string JsonToString(const ptree &);
-ptree StringToJson(const string &);
+string JsonToString(const Json&);
+Json StringToJson(const string &);
 
-py::list ExecuteROD(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
-py::list ExecuteNBBO(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
-py::list ExecuteNBBOPrice(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
-py::list ExecuteVWAP(const ptree& req_json, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
+py::list ExecuteImlp(const Json& request, ip::tcp::iostream& tcptream, const py::kwargs& kwargs);
 
 #endif

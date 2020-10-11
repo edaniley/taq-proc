@@ -11,11 +11,11 @@ map<string, FunctionDef> tick_functions = {
           FieldsDef("Markouts", typeid(char).name(), 96, false)
         }, {
           FieldsDef("ID", typeid(int).name(), sizeof(int)),
-          FieldsDef("Timestamp", typeid(char).name(), 36),
-          FieldsDef("BestBidPx", typeid(double).name(), sizeof(double)),
-          FieldsDef("BestBidQty", typeid(int).name(), sizeof(int)),
-          FieldsDef("BestOfferPx", typeid(double).name(), sizeof(double)),
-          FieldsDef("BestOfferQty", typeid(int).name(), sizeof(int))
+          FieldsDef("Time", typeid(char).name(), 20),
+          FieldsDef("BidPx", typeid(double).name(), sizeof(double)),
+          FieldsDef("BidQty", typeid(int).name(), sizeof(int)),
+          FieldsDef("OfferPx", typeid(double).name(), sizeof(double)),
+          FieldsDef("OfferQty", typeid(int).name(), sizeof(int))
         }
       )
   },
@@ -28,9 +28,9 @@ map<string, FunctionDef> tick_functions = {
           FieldsDef("Markouts", typeid(char).name(), 96, false)
         }, {
           FieldsDef("ID", typeid(int).name(), sizeof(int)),
-          FieldsDef("Timestamp", typeid(char).name(), 36),
-          FieldsDef("BestBidPx", typeid(double).name(), sizeof(double)),
-          FieldsDef("BestOfferPx", typeid(double).name(), sizeof(double))
+          FieldsDef("Time", typeid(char).name(), 20),
+          FieldsDef("BidPx", typeid(double).name(), sizeof(double)),
+          FieldsDef("OfferPx", typeid(double).name(), sizeof(double))
         }
       )
   },
@@ -61,7 +61,7 @@ map<string, FunctionDef> tick_functions = {
     "ROD",
     FunctionDef(
       "UTC", {
-        FieldsDef("ID", typeid(char).name(), 64),
+        FieldsDef("OrdID", typeid(char).name(), 64),
         FieldsDef("Symbol", typeid(char).name(), 18),
         FieldsDef("Date", typeid(char).name(), 12),
         FieldsDef("StartTime", typeid(char).name(), 20),
@@ -73,7 +73,7 @@ map<string, FunctionDef> tick_functions = {
         FieldsDef("ExecTime", typeid(char).name(), 20),
         FieldsDef("ExecQty", typeid(double).name(),  sizeof(double))
       }, {
-        FieldsDef("Symbol", typeid(char).name(), 64),
+        FieldsDef("OrdID", typeid(char).name(), 64),
         FieldsDef("MinusThree", typeid(double).name(), sizeof(double)),
         FieldsDef("MinusTwo", typeid(double).name(), sizeof(double)),
         FieldsDef("MinusOne", typeid(double).name(), sizeof(double)),
@@ -86,3 +86,18 @@ map<string, FunctionDef> tick_functions = {
   }
 };
 
+map<string, FunctionFieldsDef> tick_arguments;
+static bool InitializeConfig() {
+  for (const auto & fit  : tick_functions) {
+    const string & function_name = fit.first;
+    const FunctionDef & function_def = fit.second;
+    FunctionFieldsDef defs;
+    for (const auto& it : function_def.input_fields) {
+      defs.emplace(it.name, it);
+    }
+    tick_arguments.insert(make_pair(function_name, move(defs)));
+  }
+  return true;
+}
+
+static bool intialized = InitializeConfig();
