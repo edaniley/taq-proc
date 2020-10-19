@@ -162,11 +162,9 @@ void PriceOnlyExecutionUnit::Execute() {
   auto& quote_mgr = NbboPoRecordsetManager();
   const SecMaster* secmaster = nullptr;
   const SymbolRecordset<NbboPrice>* symbol_recordset = nullptr;
-  int lot_size = 100;
   try {
     secmaster = &secmaster_mgr.Load(date);
     const Security& security = secmaster->FindBySymbol(symbol);
-    lot_size = security.lot_size;
     symbol_recordset = &quote_mgr.LoadSymbolRecordset(date, security.symb);
   } catch (...) {
     Error(ErrorType::DataNotFound, (int)input_records.size());

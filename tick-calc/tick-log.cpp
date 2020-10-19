@@ -27,6 +27,7 @@ struct LogMsg {
     case LogLevel::WARN: return "WARNING";
     case LogLevel::CRITICAL: return "CRITICAL";
     case LogLevel::DEBUG: return "DEBUG";
+    case LogLevel::INVALID: return "INVALID";
     }
     return "";
   }

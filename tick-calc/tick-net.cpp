@@ -44,9 +44,9 @@ static void RaiseError(const char * err_msg, int err_no) {
 
 
 static void ConnectionCreate() {
-  struct sockaddr in_addr;
+  struct sockaddr_in client_info;
   socklen_t in_len = sizeof(in_addr);
-  int client_fd = accept(listen_fd, &in_addr, &in_len);
+  int client_fd = accept(listen_fd, (struct sockaddr *)&client_info, &in_len);
   if (client_fd == SOCKET_ERROR) {
     if (errno == EAGAIN || errno == EWOULDBLOCK)
       return;
@@ -57,7 +57,10 @@ static void ConnectionCreate() {
   flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
 
-  client_connections[client_fd] = make_unique<Connection>(client_fd);
+  char buff[INET_ADDRSTRLEN];
+  const char *ip = inet_ntop(AF_INET, &client_info.sin_addr, buff, sizeof(buff));
+  const uint16_t tcp = ntohs(client_info.sin_port);
+  client_connections[client_fd] = make_unique<Connection>(client_fd, string(ip), tcp);
   epoll_event evt;
   evt.events = EPOLLIN;
   evt.data.fd = client_fd;
@@ -65,10 +68,18 @@ static void ConnectionCreate() {
   conn_fds.insert(client_fd);
 
   epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &evt);
+
+  ostringstream ss;
+  ss << "Accepted client connection " << ip << ':' << tcp;
+  Log(LogLevel::INFO, ss.str());
+
 }
 
 static void ConnectionFree(Connection &conn) {
   close(conn.fd);
+  ostringstream ss;
+  ss << "Teminated client connection " << conn.ip << ':' << conn.tcp;
+  Log(LogLevel::INFO, ss.str());
   conn_fds.erase(conn.fd);
   client_connections[conn.fd].reset();
 }
@@ -80,12 +91,14 @@ void ConnectionRead(Connection &conn) {
     if (byte_cnt > 0) {
       input_buffer.CommitWrite(byte_cnt);
       try {
-        ConnectionPushInput(conn);
+        conn.PushInput();
       } catch (exception & ex) {
-        // to-do compose json response
-        //ostringstream ss;
-        string err_msg = ex.what();
-        write(conn.fd, err_msg.c_str(), err_msg.size());
+        ostringstream log_msg;
+        log_msg << "Client session " << conn.ip << ':' << conn.tcp << " error:'" << ex.what() << "'";
+        Log(LogLevel::ERR, log_msg.str());
+        ostringstream err_msg;
+        err_msg << "{\"exception\":\"" << ex.what() << "\"}";
+        write(conn.fd, err_msg.str().c_str(), (int)err_msg.str().size());
         ConnectionFree(conn);
       }
 
@@ -122,7 +135,7 @@ void NetPoll() {
           continue;
       }
       if (conn.output_buffer.DataSize() == 0) {
-        ConnectionPullOutput(conn);
+        conn.PullOutput();
       }
       if (conn.output_buffer.DataSize() > 0 && !conn.output_ready) {
         epoll_event evt;

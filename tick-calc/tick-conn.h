@@ -85,11 +85,12 @@ private:
 
 class Connection {
 public:
-  Connection()
-    : fd(-1), exit_ready(false), request_parsed(false), input_record_cnt(0), output_record_count(0), output_records_sent(0) {
-    created = boost::posix_time::microsec_clock::local_time();
-  }
-  Connection(int fd) : Connection() {this->fd = fd;}
+  Connection(int fd, const string &ip, uint16_t tcp)
+    : fd(fd), ip(ip), tcp(tcp),
+      output_ready(false), exit_ready(false), request_parsed(false),
+      input_record_cnt(0), output_record_count(0), output_records_sent(0) {
+        created = boost::posix_time::microsec_clock::local_time();
+      }
   void PushInput();
   void PullOutput();
 private:
@@ -99,9 +100,12 @@ private:
   string BuildHeaderJson();
   string BuildTrailerJson();
 public:
-  int fd;
+  int             fd;
+  const string    ip;
+  const uint16_t  tcp;
   LineBuffer<1024 * 50> input_buffer;
   OutputBuffer< 1024 * 50>  output_buffer;
+  bool          output_ready; // for epoll on Linux
   bool          exit_ready;
 private:
   Request       request;

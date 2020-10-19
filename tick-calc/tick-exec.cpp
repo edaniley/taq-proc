@@ -145,7 +145,7 @@ void ExecutionPlan::SetResultFields() {
       for (const auto& fld_def : function_def.output_fields) {
         char fld_name[64];
         #ifdef __unix__
-        sprintf(fld_name, "%s_%lu", field.c_str(), i);
+        sprintf(fld_name, "%s_%lu", fld_def.name.c_str(), i);
         #else
         sprintf_s(fld_name, sizeof(fld_name), "%s_%llu", fld_def.name.c_str(), i);
         #endif

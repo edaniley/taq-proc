@@ -284,7 +284,6 @@ py::list ExecuteImlp(const Json& request, ip::tcp::iostream& tcptream, const py:
     result_func.push_back(BindResultRoutines(fld.second, record_cnt));
   }
 
-  int line_cnt = 0;
   vector<string_view> values;
   for (size_t line_cnt = 0; line_cnt < record_cnt && getline(tcptream, line); ++line_cnt) {
     values.clear();
