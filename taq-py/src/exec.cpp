@@ -124,7 +124,6 @@ static string MakeNewJson(const Json& root, vector<InputArgList>& input_args_map
     ss << "]]";
   }
   ss << "}]}";
-  string tmp = ss.str();
   return ss.str();
 }
 

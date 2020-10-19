@@ -137,15 +137,12 @@ void PriceQuantityExecutionUnit::Execute() {
     it = quotes.find_prior(it, quotes.end(), requested_time);
     if (it != quotes.end()) {
       ostringstream ss;
-      if (rec.durations.empty()) {
-        PrintNbbo(ss, *it, lot_size);
-      } else {
-        for (const auto& duration : rec.durations) {
-          if (const Nbbo* nbbo = FindNbbo<Nbbo>(quotes, it, requested_time, duration)) {
-            PrintNbbo(ss, *nbbo, lot_size);
-          } else {
-            PrintNbbo(ss);
-          }
+      PrintNbbo(ss, *it, lot_size);
+      for (const auto& duration : rec.durations) {
+        if (const Nbbo* nbbo = FindNbbo<Nbbo>(quotes, it, requested_time, duration)) {
+          PrintNbbo(ss, *nbbo, lot_size);
+        } else {
+          PrintNbbo(ss);
         }
       }
       output_records.emplace_back(rec.id, ss.str().substr(1));
@@ -180,15 +177,12 @@ void PriceOnlyExecutionUnit::Execute() {
     it = quotes.find_prior(it, quotes.end(), requested_time);
     if (it != quotes.end()) {
       ostringstream ss;
-      if (rec.durations.empty()) {
-        PrintNbboPrice(ss, *it);
-      } else {
-        for (const auto& duration : rec.durations) {
-          if (const NbboPrice* nbbo = FindNbbo<NbboPrice>(quotes, it, requested_time, duration)) {
-            PrintNbboPrice(ss, *nbbo);
-          } else {
-            PrintNbboPrice(ss);
-          }
+      PrintNbboPrice(ss, *it);
+      for (const auto& duration : rec.durations) {
+        if (const NbboPrice* nbbo = FindNbbo<NbboPrice>(quotes, it, requested_time, duration)) {
+          PrintNbboPrice(ss, *nbbo);
+        } else {
+          PrintNbboPrice(ss);
         }
       }
       output_records.emplace_back(rec.id, ss.str().substr(1));
@@ -249,6 +243,25 @@ void ExecutionPlan::Execute() {
     }
     todo_list.push_back(job);
     AddExecutionUnit(job);
+  }
+}
+
+void ExecutionPlan::SetResultFields() {
+  for (const auto& fld_def : function_def.output_fields) {
+    output_fields.emplace_back(fld_def.name, fld_def.type);
+  }
+  if (markouts_size) {
+    for (size_t i = 1; i <= markouts_size; ++i) {
+      for (const auto& fld_def : function_def.output_fields) {
+        char fld_name[64];
+        #ifdef __unix__
+        sprintf(fld_name, "%s_%lu", fld_def.name.c_str(), i);
+        #else
+        sprintf_s(fld_name, sizeof(fld_name), "%s_%llu", fld_def.name.c_str(), i);
+        #endif
+        output_fields.emplace_back(fld_name, fld_def.type);
+      }
+    }
   }
 }
 

@@ -25,19 +25,19 @@ void DataCleanup() {
   nbbo_data_manager.release();
 }
 
-tick_calc::SecMasterManager & SecurityMasterManager() {
+SecMasterManager & SecurityMasterManager() {
   return *secmaster_manager;
 }
 
-tick_calc::RecordsetManager<Nbbo>& NbboRecordsetManager() {
+RecordsetManager<Nbbo>& NbboRecordsetManager() {
   return *nbbo_data_manager;
 }
 
-tick_calc::RecordsetManager<NbboPrice>& NbboPoRecordsetManager() {
+RecordsetManager<NbboPrice>& NbboPoRecordsetManager() {
   return *nbbo_po_data_manager;
 }
 
-tick_calc::RecordsetManager<Trade>& TradeRecordsetManager() {
+RecordsetManager<Trade>& TradeRecordsetManager() {
   return *trade_data_manager;
 }
 

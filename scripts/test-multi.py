@@ -7,6 +7,7 @@ date = "20200331"
 # helper routines
 import taqpy
 
+#taqpy.Describe()
 #print("FunctionList {}".format(taqpy.FunctionList()))
 #for function_name in taqpy.FunctionList():
 #  print("ArgumentNames {}".format(taqpy.ArgumentNames(function_name))) # lists argument names and expected formats
@@ -28,7 +29,7 @@ sides       = ["B","S",""]
 flavors     = [1,2,3,4,5]     # 1 - Regular exchange, 2 - Regular TRF, 3 - Regular, 4 - Block, 5 - All
 volumes     = [100,500,1000]  # target volume
 povs        = [.1, .01, .5]   # target participation
-markouts    = "10t,100ms,45s,0.5h"
+markouts    = "10t,1s"#,45s,0.5h"
 
 USEC_MIN = 1000000*(9*3600+30*60)
 USEC_MAX = 1000000*(16*3600)
@@ -64,7 +65,6 @@ stime.sort()
 for i in range(len(stime)):
     symbol = symbols[symbols_idx[0]]
     timestamp = trade_date + datetime.timedelta(microseconds=stime[i])
-    #print("{}|{}".format(symbol,timestamp.isoformat('T')))
     start_time = str(trade_date + datetime.timedelta(microseconds=stime[i])).split()[1]
     end_time = str(trade_date + datetime.timedelta(microseconds=min(stime[i] + dtime[i], USEC_MAX))).split()[1]
     times_by_symbol[symbol].append((timestamp, start_time, end_time))
@@ -97,6 +97,7 @@ req_df = pd.DataFrame({"symbol" : pd.Series(req_symb)
                       ,"ticks" : pd.Series(req_ticks)
                       })
 print(req_df.head(10))
+print(req_df.iloc[0])
 
 
 # prepare input
