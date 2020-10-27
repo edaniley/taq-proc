@@ -4,7 +4,7 @@
     <LocalDebuggerCommand>python.exe</LocalDebuggerCommand>
     <LocalDebuggerWorkingDirectory>C:\Users\Ed\src\taq-proc\scripts</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>test-multi.py </LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>taq-proc-perf-exec.py -f NBBOPrice,VWAP,NBBOPrice -i taq-proc-test-10k.hdf -m 4 -d 20200331</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommand>python.exe</LocalDebuggerCommand>

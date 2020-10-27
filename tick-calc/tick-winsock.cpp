@@ -152,10 +152,11 @@ void NetPoll() {
           ostringstream log_msg;
           log_msg << "Client session " << conn.ip << ':' << conn.tcp << " error:'" << ex.what() << "'";
           Log(LogLevel::ERR, log_msg.str());
-          ostringstream err_msg;
-          err_msg << "{\"exception\":\"" << ex.what() << "\"}";
-          wsa_buffer.buf = const_cast<char *>(err_msg.str().c_str());
-          wsa_buffer.len = (ULONG)err_msg.str().size();
+          ostringstream ss;
+          ss << "{\"exception\":\"" << ex.what() << "\"}\n";
+          const string err_msg = ss.str();
+          wsa_buffer.buf = const_cast<char *>(err_msg.c_str());
+          wsa_buffer.len = (ULONG)err_msg.size();
           WSASend(win_conn->socket, &wsa_buffer, 1, &byte_cnt, 0, NULL, NULL);
           FreeConnection(i);
         }

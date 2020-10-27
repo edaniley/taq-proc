@@ -73,12 +73,11 @@ const T* FindNbboByTick(const SortedConstVector<T>& quotes, const T* it, int tic
   const T* retval = it < quotes.end() ? it : nullptr;
   int target_cnt = abs(ticks_offset);
   if (ticks_offset >= 0) { // forward
-    for (; target_cnt > 0 && it != quotes.end(); ++ it, target_cnt --) {
-      if (it != quotes.end())
-        retval = it;
+    for (; target_cnt >= 0 && it < quotes.end(); ++ it, target_cnt --) {
+      retval = it;
     }
   }
-  else if (it != quotes.end()) { // reverse
+  else if (it < quotes.end()) { // reverse
     for (; target_cnt > 0 && it > quotes.begin(); -- it, target_cnt --) {
       retval = it;
     }
