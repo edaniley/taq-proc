@@ -10,7 +10,7 @@ import taqpy
 import warnings
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
-taqproc = "127.0.0.1:3091"
+taqproc = "127.0.0.1:3090"
 
 query_time = None
 
@@ -22,12 +22,17 @@ def Execute(args):
   else:
     raise Exception("Unknown Date format")
 
-  df = pd.read_hdf(args.input_file)
-  #df = df.head(10)
-  df["Date"] = trade_date.strftime("%Y%m%d").encode('utf-8')
-  df['Timestamp'] =df['Timestamp'].apply(lambda x: trade_date.strftime("%Y-%m-%d").encode('utf-8') + x[10:])
+  req_df = pd.read_hdf(args.input_file)
+  if args.markouts > 0:
+    if not "Markouts" in req_df.columns:
+      raise Exception("Input data file doesn't contain required 'Markouts' column")
+    else:
+      old_val = req_df.at[0, "Markouts"].decode('utf-8')
+      new_val = ",".join(old_val.split(",")[:args.markouts])
+      req_df["Markouts"] = new_val.encode('utf-8')
+  req_df["Date"] = trade_date.strftime("%Y%m%d").encode('utf-8')
+  req_df['Timestamp'] = req_df['Timestamp'].apply(lambda x: trade_date.strftime("%Y-%m-%d").encode('utf-8') + x[10:])
   kwargs = {}
-
 
   function_list =  args.function.split(",")
   function_cnts = {x:0 for x in set(function_list)}
@@ -47,38 +52,36 @@ def Execute(args):
     function_cnts[function_name] += 1
     alias = "{}_{}".format(function_name, function_cnts[function_name])
     for arg, dtype in function_args[function_name].items():
-      if arg in df.columns:
+      if arg in req_df.columns:
+        if arg == "Markouts" and args.markouts == 0:
+          continue
         # VWAP only: EndTime and Markouts are mutually exclusive
         if function_name == "VWAP":
           if (arg == "EndTime" and args.markouts > 0) or (arg == "Markouts" and args.markouts == 0):
-            continue;
+            continue
         arguments.append((arg, arg))
         if not arg in kwargs.keys():
-          kwargs[arg] = np.array(df[arg], dtype=function_args[function_name][arg])
+          kwargs[arg] = np.array(req_df[arg], dtype=function_args[function_name][arg])
     argument_mapping.append({"function" : function_name, "alias" : alias, "arguments" : arguments})
   hdr = {}
   hdr["request_id"] = str(uuid.uuid1())
   hdr["service"] = taqproc
-  hdr["input_cnt"] = len(df)
+  hdr["input_cnt"] = len(req_df)
   hdr["input_sorted"] = True
   hdr["time_zone"] = "America/New_York"
   hdr["argument_mapping"] = argument_mapping
   request = json.dumps(hdr)
 
-  #print(df.head())
-  #print(request)
   global query_time
   started = datetime.datetime.now()
   ret = taqpy.Execute(request, **kwargs)
   query_time = datetime.datetime.now() - started
   # list is returned
   # 1st entry is json with execution summary
-  #print(ret[0])
   ret_json = json.loads(ret[0])
   # may or may not contain errors
   if "error_summary" not in ret_json.keys() or type(ret_json["error_summary"]) != type([]):
       ret_json["error_summary"] = []
-  #print("error_summary {}".format(ret_json["error_summary"]))
   # optionally create result dataframe
   ret_df = None
   if "result_fields" in ret_json.keys() and len(ret) > 1:
@@ -90,29 +93,49 @@ def Execute(args):
           data["{}.{}".format(function, fld_name)] = pd.Series(ret[idx])
           idx += 1
       ret_df = pd.DataFrame(data)
-      #print (ret_df.head(10))
-      #print (ret_df.iloc[0])
-      ret_df.to_hdf("out.hdf", key = "perf")
+      if len(args.output_file) > 0:
+        ret_df.to_hdf(args.output_file, key = "perf")
+      return ret_json["runtime_summary"]
 
-
+def StringToDuration(val):
+  tmp = val.split('.')
+  if len(tmp) == 1:
+    val += ".000000"
+  elif len(tmp[1]) > 6:
+    to_trim = len(tmp[1]) - 6
+    val = val[:len(val)-(len(tmp[1]) - 6)]
+  elif len(tmp[1]) < 6:
+    val = tmp[0] + '.' + '{:<06s}'.format(tmp[1])
+  dt = datetime.datetime.strptime(val, "%H:%M:%S.%f")
+  return datetime.timedelta(hours=dt.hour, minutes=dt.minute, seconds=dt.second, microseconds=dt.microsecond)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument("-i", "--input-file", type=str, default="taq-proc-test.hdf", help="exec: input hdf file")
+  parser.add_argument("-i", "--input-file", type=str, default="taq-proc-test.hdf", help="input hdf file")
   parser.add_argument("-f", "--function", type=str, default="", help="prep: comma-separated list of functions: NBBOPrice VWAP ROD")
   parser.add_argument("-d", "--date", type=str, default="", help="prep: trade date in YYYYMMDD or YYYY-MM-DD formats")
   parser.add_argument("-m", "--markouts", type=int, default=0, help="prep: markouts size; pass zero not to generate markouts")
+  parser.add_argument("-o", "--output-file", type=str, default="", help="output hdf file")
   try:
     args = parser.parse_args()
+    request_parsing_sorting = datetime.timedelta(microseconds=0)
+    execution = datetime.timedelta(microseconds=0)
+    result_merging_sorting = datetime.timedelta(microseconds=0)
     started = datetime.datetime.now()
-    Execute(args)
+    runtime_summary = Execute(args)
     finished = datetime.datetime.now()
+    if runtime_summary:
+      request_parsing_sorting = StringToDuration(runtime_summary["request_parsing_sorting"])
+      execution = StringToDuration(runtime_summary["execution"])
+      result_merging_sorting = StringToDuration(runtime_summary["result_merging_sorting"])
+
     if query_time:
-      print("started:{} finished:{} run-time:{} query-time:{}".format(started, finished, finished - started, query_time))
+      print("started={} finished={} run-time={} query-time={} request_parsing_sorting={} execution={} result_merging_sorting={}".format(
+        started, finished, finished - started, query_time, request_parsing_sorting, execution, result_merging_sorting))
     else:
       print("started:{} finished:{} run-time:{}".format(started, finished, finished - started))
   except IOError as e:
     if e.errno != 32: # broken pipe
       print("I/O error({0}): {1}".format(e.errno, e.strerror))
   except Exception as ex:
-    print("row:{} err:{}".format(row_cnt, ex))
+    print("err:{}".format(ex))

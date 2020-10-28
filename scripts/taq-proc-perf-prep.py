@@ -29,6 +29,8 @@ for name,dtype,req in taqpy.ArgumentList("ROD"):
 
 
 def ReadSymbolsFromFile(input_file):
+  if len(input_file) == 0:
+    raise Exception("Missing symbol file path")
   symbols = [] # list of tuples (symbol, reference price)
   f = open(input_file)
   line = f.readline()
@@ -96,7 +98,8 @@ def Prepare(args):
   df["EndTime"] = end_time_arr
   df["Side"] = side_arr
   df["LimitPx"] = price_arr
-  df["Markouts"] = markouts_arr
+  if args.markouts > 0:
+    df["Markouts"] = markouts_arr
   df.to_hdf(args.out_file, key="perf")
 
 def MakeROD(args, idx:int = 0):
