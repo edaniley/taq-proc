@@ -12,6 +12,3 @@ elif [ "$(echo $1|grep SPLITS_US_ALL_BBO_)" != "" ];then
     zcat $fname | taq-prep -o /data -t quote-po -d $tdate -s $symgr
   fi
 fi
-
-
-

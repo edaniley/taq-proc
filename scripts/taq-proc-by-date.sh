@@ -7,5 +7,6 @@ for f in $(ls -S /data/$1/raw/SPLITS_US_ALL_BBO_*.gz); do
   printf "%s\n" $f >> $cmdfile
   printf "%s po\n" $f >> $cmdfile
 done
-cat $cmdfile |parallel -j12 --colsep ' ' /data/proc/taq-proc.sh {1} {2}
+
+cat $cmdfile |parallel -j14 --colsep ' ' /data/proc/taq-proc.sh {1} {2}
 rm $cmdfile
