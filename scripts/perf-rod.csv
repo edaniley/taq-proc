@@ -1,0 +1,4 @@
+Job No.,Test Cnt.,Parallel Cnt.,Test Data,Markouts,Function List,Avg. Time,Min. Time,Max. Time,TDP input proc.,TDP exec.,TDP output proc.
+single,10,1,sample.csv,n/a,"ROD"," 0:00:47.659973"," 0:00:40.192953"," 0:00:49.252440",71%,8%,6%
+parallel-4,10,4,sample.csv,n/a,"ROD"," 0:02:37.424089"," 0:01:39.140013"," 0:03:03.696961",73%,4%,18%
+parallel-10,10,10,sample.csv,n/a,"ROD"," 0:02:52.704477"," 0:02:28.897155"," 0:03:05.102121",72%,3%,20%

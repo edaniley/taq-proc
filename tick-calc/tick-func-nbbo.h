@@ -53,6 +53,7 @@ public:
   ExecutionPlan(const string& name, const FunctionDef& function_def, const Request& request, const ArgList& arg_list, Type type);
   void Input(tick_calc::InputRecord& input_record) override;
   void Execute() override;
+  void SetResultFields() override;
 private:
   const Type type;
   const bool with_markouts;

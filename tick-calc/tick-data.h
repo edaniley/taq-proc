@@ -236,10 +236,10 @@ private:
 
 void DataInitialize(const string& data_dir);
 void DataCleanup();
-tick_calc::SecMasterManager & SecurityMasterManager();
-tick_calc::RecordsetManager<Nbbo> & NbboRecordsetManager();
-tick_calc::RecordsetManager<NbboPrice>& NbboPoRecordsetManager();
-tick_calc::RecordsetManager<Trade>& TradeRecordsetManager();
+SecMasterManager & SecurityMasterManager();
+RecordsetManager<Nbbo> & NbboRecordsetManager();
+RecordsetManager<NbboPrice>& NbboPoRecordsetManager();
+RecordsetManager<Trade>& TradeRecordsetManager();
 
 }
 

@@ -120,7 +120,7 @@ private:
     SetResultFields();
   }
   State CheckState();
-  void SetResultFields();
+  virtual void SetResultFields();
 protected:
   void Error(ErrorType error_type, int count = 1);
 

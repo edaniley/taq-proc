@@ -124,7 +124,6 @@ static string MakeNewJson(const Json& root, vector<InputArgList>& input_args_map
     ss << "]]";
   }
   ss << "}]}";
-  string tmp = ss.str();
   return ss.str();
 }
 
@@ -254,7 +253,9 @@ py::list ExecuteImlp(const Json& request, ip::tcp::iostream& tcptream, const py:
   // build new request JSON; in "argument_mapping" section replace
   //  each (input argument, TDP argument) pair
   //  with (TDP argument, field's position in request record)
-  tcptream << MakeNewJson(request, input_args_mapping) << endl;;
+  auto xx = MakeNewJson(request, input_args_mapping);
+  tcptream << xx << endl;;
+  //tcptream << MakeNewJson(request, input_args_mapping) << endl;;
   ostringstream ss;
   for (auto i = 0; i < input_cnt; i++) {
     for_each(input_func.begin(), input_func.end(), [&](auto fn) {fn(ss, i); });
@@ -292,7 +293,6 @@ py::list ExecuteImlp(const Json& request, ip::tcp::iostream& tcptream, const py:
     for (size_t i = 0; i < result_func.size(); ++ i) {
       result_func[i].first(values[i], line_cnt);
     }
-    cout << line << endl;
   }
 
   py::list retval;

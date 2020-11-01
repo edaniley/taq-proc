@@ -216,8 +216,11 @@ void ExecutionUnit::Execute() {
 }
 
 void ExecutionPlan::Input(tick_calc::InputRecord& input_record) {
-  enum args {ID, SYMBOL, DATE, START_TIME, END_TIME, SIDE, ORD_QTY, LMT_PX, MPA, EXEC_TIME, EXEC_QTY};
+  enum args {ID, SYMBOL, DATE, START_TIME, END_TIME, SIDE, ORD_QTY, LMT_PX, MPA, EXEC_TIME, EXEC_QTY, MAX};
   try {
+    if (input_record.values.size() != (size_t)MAX) {
+      throw Exception(ErrorType::InvalidArgument);
+    }
     if (input_record.values[SYMBOL].empty())
       throw Exception(ErrorType::MissingSymbol);
 
@@ -240,7 +243,8 @@ void ExecutionPlan::Input(tick_calc::InputRecord& input_record) {
       rec = &(it->second);
     }
     const auto & qty = input_record.values[EXEC_QTY];
-    if (LooksLikeNumber(qty)) {
+    const auto & time = input_record.values[EXEC_TIME];
+    if (time.size() && LooksLikeNumber(qty)) {
       const Time exec_time = MkTime(input_record.values[EXEC_TIME]);
       const int exec_qty = TextToNumeric<int>(qty);
       rec->executions.emplace_back(exec_time, exec_qty);

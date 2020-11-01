@@ -12,17 +12,6 @@ enum class ErrorType {
   InvalidSide, InvalidQuantity, InvalidPrice
 };
 
-class Exception : public std::runtime_error {
-public:
-  Exception(ErrorType error_type) noexcept
-    : std::runtime_error(""), error_type_(error_type) {}
-  Exception(ErrorType error_type, const std::string& message) noexcept
-    : std::runtime_error(message), error_type_(error_type) {}
-  ErrorType errtype() const { return error_type_; }
-private:
-  const ErrorType error_type_;
-};
-
 inline const char * ErrorToString(ErrorType error_type) {
   switch (error_type) {
   case ErrorType::DataNotFound: return "DataNotFound";
@@ -38,6 +27,17 @@ inline const char * ErrorToString(ErrorType error_type) {
   }
   return "Unknown";
 }
+
+class Exception : public std::runtime_error {
+public:
+  Exception(ErrorType error_type) noexcept
+    : std::runtime_error(ErrorToString(error_type)), error_type(error_type) {}
+  Exception(ErrorType error_type, const std::string& message) noexcept
+    : std::runtime_error(message), error_type(error_type) {}
+  ErrorType errtype() const { return error_type; }
+private:
+  const ErrorType error_type;
+};
 
 }
 

@@ -31,7 +31,7 @@ void Connection::LoadExecutionPlans() {
       ss << function_name;
       pair<int, int>& counts = function_call_counts[function_name];
       if (counts.first > 1) {
-        ss << '_' <<  ++ counts.first;
+        ss << '_' <<  ++ counts.second;
       }
       plan_name = ss.str();
     }
