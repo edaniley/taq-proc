@@ -5,7 +5,8 @@
     <ProjectGuid>905a34e7-f5d0-4d30-b5b0-8ec2906b50ec</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>test-rod.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>..\scripts</WorkingDirectory>
@@ -30,37 +31,21 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="taq-proc-perf-report.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="taq-proc-perf-prep.py" />
-    <Compile Include="taq-proc-perf-exec.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="study-auction-prints.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="test-multi.py" />
-    <Compile Include="test-nbbo.py" />
-    <Compile Include="test-rod.py" />
-    <Compile Include="test-taqproc.py" />
-    <Compile Include="test-vwap.py" />
-    <Compile Include="testing.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="sys-test.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="scratchpad.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="taqprep.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="taqproc_testkit.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="test-taqpy.py" />
+    <Compile Include="taq-proc-perf-exec.py" />
+    <Compile Include="taq-proc-perf-prep.py" />
+    <Compile Include="taq-proc-perf-report.py" />
+    <Compile Include="taqproc_testkit.py" />
+    <Compile Include="test-multi.py" />
+    <Compile Include="test-rod.py" />
+    <Compile Include="test_nbbo.py" />
+    <Compile Include="test_taqproc.py" />
+    <Compile Include="test_vwap.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="build.sh" />
@@ -68,11 +53,6 @@
     <Content Include="build_pybind.sh" />
     <Content Include="env.sh" />
     <Content Include="install.sh" />
-    <Content Include="make-most-active-list.sh" />
-    <Content Include="perf-test-case.lst" />
-    <Content Include="perf-test.sh" />
-    <Content Include="taq-proc-by-date.sh" />
-    <Content Include="taq-proc.sh" />
     <Content Include="taqpy_sample.ipynb" />
   </ItemGroup>
   <ItemGroup>
