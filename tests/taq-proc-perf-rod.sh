@@ -4,7 +4,7 @@ for i in {1..10}; do
 done
 
 cmdfile=$(mktemp)
-echo "job:single runs:10 parallel:4 file:sample.csv markouts:n/a function:ROD"
+echo "job:parallel-4 runs:10 parallel:4 file:sample.csv markouts:n/a function:ROD"
 for i in {1..10}; do
   echo "-t35.239.195.67:3090 -isample.csv -s4173312" >> $cmdfile
 done
@@ -13,7 +13,7 @@ for i in {1..10}; do
 done
 
 cp /dev/null $(mktemp)
-echo "job:single runs:10 parallel:10 file:sample.csv markouts:n/a function:ROD"
+echo "job:job:parallel-4 runs:10 parallel:10 file:sample.csv markouts:n/a function:ROD"
 for i in {1..10}; do
   echo "-t35.239.195.67:3090 -isample.csv -s4173312" >> $cmdfile
 done

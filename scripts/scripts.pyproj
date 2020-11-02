@@ -31,21 +31,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="study-auction-prints.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="scratchpad.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="taq-proc-perf-exec.py" />
-    <Compile Include="taq-proc-perf-prep.py" />
-    <Compile Include="taq-proc-perf-report.py" />
-    <Compile Include="taqproc_testkit.py" />
-    <Compile Include="test-multi.py" />
-    <Compile Include="test-rod.py" />
-    <Compile Include="test_nbbo.py" />
-    <Compile Include="test_taqproc.py" />
-    <Compile Include="test_vwap.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="build.sh" />
@@ -53,6 +41,8 @@
     <Content Include="build_pybind.sh" />
     <Content Include="env.sh" />
     <Content Include="install.sh" />
+    <Content Include="taq-proc-by-date.sh" />
+    <Content Include="taq-proc.sh" />
     <Content Include="taqpy_sample.ipynb" />
   </ItemGroup>
   <ItemGroup>

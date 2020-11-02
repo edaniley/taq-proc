@@ -10,10 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{44641B7D-2BF5-48F2-A77A-2200697BFF6D}"
 	ProjectSection(SolutionItems) = preProject
 		CMakeLists.txt = CMakeLists.txt
-		taq-py\MANIFEST.in = taq-py\MANIFEST.in
 		README.md = README.md
-		taq-py\setup.py = taq-py\setup.py
-		test.json.txt = test.json.txt
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "taq-ctrl", "taq-ctrl\taq-ctrl.vcxproj", "{BBCA46B3-46CD-494F-97D5-7747302DFCE5}"
@@ -21,6 +18,8 @@ EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "scripts", "scripts\scripts.pyproj", "{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "taq-py", "taq-py\taq-py.vcxproj", "{7E356C6A-0228-440E-B298-0E90E350BC95}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "tests", "tests\tests.pyproj", "{F23F6C5C-D87C-420F-9570-858E9775B715}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -138,12 +137,25 @@ Global
 		{7E356C6A-0228-440E-B298-0E90E350BC95}.RelWithDebInfo|x64.Build.0 = Release|x64
 		{7E356C6A-0228-440E-B298-0E90E350BC95}.RelWithDebInfo|x86.ActiveCfg = Release|Win32
 		{7E356C6A-0228-440E-B298-0E90E350BC95}.RelWithDebInfo|x86.Build.0 = Release|Win32
+		{F23F6C5C-D87C-420F-9570-858E9775B715}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F23F6C5C-D87C-420F-9570-858E9775B715}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F23F6C5C-D87C-420F-9570-858E9775B715}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F23F6C5C-D87C-420F-9570-858E9775B715}.MinSizeRel|Any CPU.ActiveCfg = Debug|Any CPU
+		{F23F6C5C-D87C-420F-9570-858E9775B715}.MinSizeRel|x64.ActiveCfg = Debug|Any CPU
+		{F23F6C5C-D87C-420F-9570-858E9775B715}.MinSizeRel|x86.ActiveCfg = Debug|Any CPU
+		{F23F6C5C-D87C-420F-9570-858E9775B715}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F23F6C5C-D87C-420F-9570-858E9775B715}.Release|x64.ActiveCfg = Release|Any CPU
+		{F23F6C5C-D87C-420F-9570-858E9775B715}.Release|x86.ActiveCfg = Release|Any CPU
+		{F23F6C5C-D87C-420F-9570-858E9775B715}.RelWithDebInfo|Any CPU.ActiveCfg = Release|Any CPU
+		{F23F6C5C-D87C-420F-9570-858E9775B715}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
+		{F23F6C5C-D87C-420F-9570-858E9775B715}.RelWithDebInfo|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{905A34E7-F5D0-4D30-B5B0-8EC2906B50EC} = {44641B7D-2BF5-48F2-A77A-2200697BFF6D}
+		{F23F6C5C-D87C-420F-9570-858E9775B715} = {44641B7D-2BF5-48F2-A77A-2200697BFF6D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A4FA8403-58E7-4449-BF4C-0B316342BBB4}
